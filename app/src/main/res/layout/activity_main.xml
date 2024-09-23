@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:gravity="center"
+    android:background="@color/background_color"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".activity.MainActivity">
+
+    <!-- Start Game Button -->
+    <Button
+        android:id="@+id/startGameButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Start Game"
+        android:textSize="24sp"
+        android:padding="16dp"
+        android:layout_marginBottom="24dp"
+        android:layout_centerInParent="true"/>
+
+    <!-- Who is Playing Button -->
+    <Button
+        android:id="@+id/whoIsPlayingButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Who is Playing"
+        android:textSize="24sp"
+        android:padding="16dp"
+        android:layout_below="@id/startGameButton"
+        android:layout_centerHorizontal="true"/>
+
+</RelativeLayout>
