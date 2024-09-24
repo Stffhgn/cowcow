@@ -42,8 +42,8 @@ class GameActivity : AppCompatActivity() {
         setupDrawer()
 
         // Set up the "Who's Playing" button to open the drawer
-        binding.playerButton.setOnClickListener {
-            binding.drawerLayout.openDrawer(GravityCompat.END)
+        binding.playerButton?.setOnClickListener {
+            binding.drawerLayout?.openDrawer(GravityCompat.END)
         }
 
         // Set up buttons

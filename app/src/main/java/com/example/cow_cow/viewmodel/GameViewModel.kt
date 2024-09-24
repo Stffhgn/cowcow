@@ -32,6 +32,8 @@ class GameViewModel : ViewModel() {
 
     // Team Management
 
+    // Function to get the list of players
+
     // Load team from storage
     fun loadTeam(context: Context) {
         if (team.isEmpty()) {
@@ -45,11 +47,13 @@ class GameViewModel : ViewModel() {
             }
         }
     }
+
     // Clear the Team if needed
     fun clearTeam(context: Context) {
         team.clear()
         saveTeam(context)
     }
+
     // Save team to storage
     fun saveTeam(context: Context) {
         DataUtils.saveTeam(context, team)
@@ -84,6 +88,19 @@ class GameViewModel : ViewModel() {
 
     // Score Management
 
+    fun addPointsToPlayer(player: Player, points: Int) {
+        player.cowCount += 1 // if incrementing cow points
+        player.bonusPoints += 5 // if adding bonus points
+        player.churchCount +=2 // Church
+        player.waterTowerCount +=3 // Water Tower
+
+    }
+
+    fun getPlayerPoints(playerName: String): Int {
+        val player = players.find { it.name == playerName }
+        return player?.totalScore ?: 0
+    }
+
     // Increment player's counts based on action
     fun incrementPlayerCount(player: Player, action: String) {
         when (action) {
@@ -92,8 +109,6 @@ class GameViewModel : ViewModel() {
             "Water Tower" -> player.waterTowerCount += 1
         }
     }
-
-    // Utility Methods
 
     // Calculate team score
     fun calculateTeamScore(): Int {
@@ -105,7 +120,7 @@ class GameViewModel : ViewModel() {
         return players.filter { !team.contains(it) }
     }
 
-    // Data Persistence (Optional)
+    // Data Persistence
 
     // Load players from storage
     fun loadPlayers(context: Context) {

@@ -4,16 +4,27 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:padding="16dp"
+    android:gravity="center_vertical">
 
     <!-- Player Name -->
     <TextView
         android:id="@+id/playerNameTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="1.5"
+        android:minWidth="120dp"
         android:text="Player Name"
-        android:textSize="16sp"
-        android:layout_weight="1"/>
+        android:textSize="20sp"
+        android:maxLines="1"
+        android:layout_margin="8dp"
+        android:textStyle="bold"
+        android:fontFamily="@font/notosans"
+        android:textColor="#32CD32"
+        android:shadowColor="#000000"
+        android:shadowDx="2"
+        android:shadowDy="2"
+        android:shadowRadius="4" />
 
     <!-- Player Score -->
     <TextView
@@ -21,7 +32,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Score: 0"
-        android:textSize="16sp"/>
+        android:textSize="20sp"
+        android:fontFamily="@font/notosans"
+        android:textColor="#FFD700"
+        android:layout_marginStart="16dp" />
 
     <!-- Team Status -->
     <TextView
@@ -29,6 +43,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Individual"
-        android:textSize="14sp"
-        android:layout_marginStart="8dp"/>
+        android:textSize="18sp"
+        android:fontFamily="@font/notosans"
+        android:textColor="#87CEEB"
+        android:layout_marginStart="16dp" />
+
 </LinearLayout>

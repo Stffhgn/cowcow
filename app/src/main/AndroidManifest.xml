@@ -1,16 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.cow_cow">
+
+    <!-- Required Permissions -->
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/ic_launcher_round"
         android:supportsRtl="true"
+        android:resizeableActivity="true"
+        android:windowFullscreen="true"
+        android:windowNoTitle="true"
         android:theme="@style/Theme.CowCow">
 
         <!-- Declare Activities -->
-        <activity android:name=".activity.MainActivity"
+        <activity
+            android:name=".activity.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,5 +31,39 @@
         <activity android:name=".activity.EditPlayerActivity" />
         <activity android:name=".activity.TeamSelectionActivity" />
 
+        <!-- Declare Car App Service for Android Auto -->
+        <service
+            android:name=".services.MyAutoService"
+            android:exported="true"
+            android:permission="android.car.permission.BIND_CAR_APP">
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+            </intent-filter>
+
+            <!-- Metadata for Android Auto -->
+            <meta-data
+                android:name="androidx.car.app.minCarApiLevel"
+                android:value="1" />
+            <meta-data
+                android:name="androidx.car.app.version"
+                android:value="1.1.0" />
+
+            <!-- Linking XML resource for Android Auto -->
+            <meta-data
+                android:name="androidx.car.app.navigation"
+                android:resource="@xml/auto_app_metadata" />
+        </service>
+
+        <!-- Declare Media Browser Service -->
+        <service
+            android:name=".YourMediaService"
+            android:exported="true"
+            android:permission="android.permission.BIND_MEDIA_BROWSER_SERVICE">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
+
     </application>
+
 </manifest>

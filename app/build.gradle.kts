@@ -66,6 +66,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.media:media:1.3.1") // Media library
+    implementation("androidx.car.app:app:1.3.0-alpha01") // Update to the correct version
     implementation("androidx.fragment:fragment-ktx:1.5.2") // Ensure you have this dependency
     implementation("com.google.code.gson:gson:2.8.8") // Add this line
     implementation("com.google.android.material:material:1.8.0")

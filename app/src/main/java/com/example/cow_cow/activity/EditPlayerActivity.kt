@@ -2,6 +2,7 @@ package com.example.cow_cow.activity
 
 import android.os.Bundle
 import android.util.Log
+import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.cow_cow.databinding.ActivityEditPlayerBinding
@@ -37,7 +38,21 @@ class EditPlayerActivity : AppCompatActivity() {
 
         player?.let { player ->
             // Update UI with player details
-            binding.playerNameEditText.setText(player.name)
+            binding.playerNameEditText.setOnFocusChangeListener { view, hasFocus ->
+                if (!hasFocus) {
+                    // Hide the keyboard when the user finishes editing
+                    val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.hideSoftInputFromWindow(view.windowToken, 0)
+
+                    // Make it non-editable again
+                    binding.playerNameEditText.apply {
+                        isFocusable = false
+                        isClickable = true  // Enable clicking again
+                    }
+                }
+            }
+
+
             binding.playerScoreTextView.text = "Total Score: ${player.totalScore}"
             binding.cowStatTextView.text = player.cowCount.toString()
             binding.churchStatTextView.text = player.churchCount.toString()
