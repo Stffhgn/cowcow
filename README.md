@@ -14,21 +14,6 @@ Interactive User Interface: Buttons for each object, player selection, and point
 Fun Stats: Track how many cows, churches, and water towers each player has spotted.
 Customizable: Edit player names, team status, and track detailed player stats.
 
-🛠️ Project Structure
-The project is organized as follows:
-
-Cow_Cow/
-├── app/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/example/cow_cow/
-│   │   │   │   ├── activity/         # Main app activities (Main, Game, WhoIsPlaying, etc.)
-│   │   │   │   ├── models/           # Player model, Parcelable implementation
-│   │   │   │   ├── utils/            # Utility classes for data persistence
-│   │   │   │   ├── viewmodel/        # GameViewModel, managing player/team logic
-│   │   │   └── res/                  # Resources (layouts, drawables, values)
-│   ├── build.gradle                  # Gradle configuration
-└── README.md                         # Project documentation
 🎮 How to Play
 Add Players: Add up to 10 players from the player management screen.
 Start the Game:
