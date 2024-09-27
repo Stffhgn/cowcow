@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Game Rules"
+        android:textSize="24sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Example Rule: Toggle Quiet Game -->
+    <Switch
+        android:id="@+id/quietGameSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enable Quiet Game"
+        android:checked="false"
+        android:textSize="18sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Example Rule: Penalty for False Calls -->
+    <Switch
+        android:id="@+id/noRepeatRuleSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enable No Repeat Rule"
+        android:checked="true"
+        android:textSize="18sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- More game rules can be added here -->
+
+    <Button
+        android:id="@+id/saveSettingsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Save Rules"
+        android:textSize="18sp"
+        android:layout_gravity="center"
+        android:layout_marginTop="24dp" />
+</LinearLayout>
