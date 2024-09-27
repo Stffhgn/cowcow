@@ -1,47 +1,94 @@
 package com.example.cow_cow.repositories
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.example.cow_cow.models.Player
-import com.example.cow_cow.utils.DataUtils
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class PlayerRepository {
 
-    fun getPlayers(context: Context): List<Player> {
-        // This method may need a Context if you're loading players from storage
-        // Adjust accordingly if needed
-        return DataUtils.loadPlayers(context) // Placeholder
+    // Constants for SharedPreferences
+    private val PREFS_NAME = "com.example.cow_cow.PREFERENCES"
+    private val PLAYERS_KEY = "PLAYERS_KEY"
+    private val TEAM_KEY = "TEAM_KEY"
+    private val gson = Gson()
+
+    /**
+     * Get the SharedPreferences instance.
+     */
+    private fun getSharedPreferences(context: Context): SharedPreferences {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
+    /**
+     * Retrieve the list of players from SharedPreferences.
+     */
+    fun getPlayers(context: Context): List<Player> {
+        val prefs = getSharedPreferences(context)
+        val json = prefs.getString(PLAYERS_KEY, null)
+        return if (json != null) {
+            val type = object : TypeToken<List<Player>>() {}.type
+            gson.fromJson(json, type)
+        } else {
+            emptyList()
+        }
+    }
+
+    /**
+     * Save the list of players to SharedPreferences.
+     */
+    fun savePlayers(players: List<Player>, context: Context) {
+        val prefs = getSharedPreferences(context)
+        val editor = prefs.edit()
+        val json = gson.toJson(players)
+        editor.putString(PLAYERS_KEY, json)
+        editor.apply()
+    }
+
+    /**
+     * Update a player's information and save to SharedPreferences.
+     */
     fun updatePlayer(player: Player, context: Context) {
-        // Convert the list of players to a MutableList
-        val players = DataUtils.loadPlayers(context).toMutableList()
-
-        // Find the index of the player to update
+        val players = getPlayers(context).toMutableList()
         val index = players.indexOfFirst { it.id == player.id }
-
-        // If the player is found, update the player and save the list
         if (index != -1) {
             players[index] = player
-            DataUtils.savePlayers(context, players)
+            savePlayers(players, context)
         }
     }
 
-    fun deletePlayer(player: Player, context: Context): Player? {
-        val players = DataUtils.loadPlayers(context).toMutableList()
-
-        // Find and remove the player by ID, returning the player if found
-        val isRemoved = players.removeAll { it.id == player.id }
-
-        // Save the updated list back to storage
-        if (isRemoved) {
-            DataUtils.savePlayers(context, players)
-            return player // Return the deleted player
-        }
-
-        return null // Return null if the player was not found or deleted
+    /**
+     * Remove a player by their ID and save changes.
+     */
+    fun removePlayerById(playerId: Int, context: Context) {
+        val players = getPlayers(context).toMutableList()
+        val updatedPlayers = players.filter { it.id != playerId }
+        savePlayers(updatedPlayers, context)
     }
 
-    fun savePlayers(players: List<Player>, context: Context) {
-        DataUtils.savePlayers(context, players)
+    /**
+     * Retrieve the team from SharedPreferences.
+     */
+    fun getTeam(context: Context): List<Player> {
+        val prefs = getSharedPreferences(context)
+        val json = prefs.getString(TEAM_KEY, null)
+        return if (json != null) {
+            val type = object : TypeToken<List<Player>>() {}.type
+            gson.fromJson(json, type)
+        } else {
+            emptyList()
+        }
+    }
+
+    /**
+     * Save the team to SharedPreferences.
+     */
+    fun saveTeam(team: List<Player>, context: Context) {
+        val prefs = getSharedPreferences(context)
+        val editor = prefs.edit()
+        val json = gson.toJson(team)
+        editor.putString(TEAM_KEY, json)
+        editor.apply()
     }
 }

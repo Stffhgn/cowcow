@@ -36,7 +36,7 @@ object GameUtils {
 
     // Function to update the total team score
     private fun updateTeamScore(team: Team) {
-        team.teamScore = team.members.sumOf { it.totalScore }
+        team.teamScore = team.members.sumOf { it.calculateTotalPoints() }
     }
 
     // Function to distribute points evenly among team members
@@ -71,6 +71,6 @@ object GameUtils {
 
     // Function to get the player with the highest total score
     fun getPlayerWithHighestScore(players: List<Player>): Player? {
-        return players.maxByOrNull { it.totalScore }
+        return players.maxByOrNull { it.calculateTotalPoints() }
     }
 }

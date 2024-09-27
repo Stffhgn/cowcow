@@ -42,6 +42,7 @@ class PlayerDrawerAdapter(
         }
     }
 
+
     inner class TeamViewHolder(private val binding: ItemTeamBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(team: List<Player>) {
             binding.teamNameTextView.text = "Team"
@@ -55,8 +56,8 @@ class PlayerDrawerAdapter(
     inner class PlayerViewHolder(private val binding: ItemPlayerBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(player: Player, team: List<Player>) {
             binding.playerNameTextView.text = player.name
-            val totalScore = player.totalScore
-            binding.playerScoreTextView.text = "Score: $totalScore"
+            val totalScore = player.calculateTotalPoints()
+            binding.playerScoreTextView.text = "Score: $totalScore"  // Update the score in the drawer
             binding.playerStatusTextView.text = if (team.contains(player)) "On Team" else "Individual"
         }
     }

@@ -7,6 +7,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.cow_cow.R
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.ActivityWhoIsPlayingBinding
 import com.example.cow_cow.models.Player
@@ -28,9 +29,11 @@ class WhoIsPlayingActivity : AppCompatActivity() {
         binding = ActivityWhoIsPlayingBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize ViewModel with context
+        // Initialize the PlayerRepository
         val repository = PlayerRepository()
-        val viewModelFactory = PlayerViewModelFactory(repository, this) // Pass context here
+
+        // Initialize ViewModel with the application and repository
+        val viewModelFactory = PlayerViewModelFactory(application, repository)
         playerViewModel = ViewModelProvider(this, viewModelFactory).get(PlayerViewModel::class.java)
 
         // Setup RecyclerView and Adapter
@@ -75,7 +78,7 @@ class WhoIsPlayingActivity : AppCompatActivity() {
             if (playerName.isNotBlank()) {
                 // Create a new player and add to ViewModel
                 val newPlayer = Player(id = playerViewModel.players.value?.size ?: 0, name = playerName)
-                playerViewModel.addPlayer(newPlayer, this)  // Pass context when adding player
+                playerViewModel.addPlayer(newPlayer)
             }
             dialog.dismiss()
         }

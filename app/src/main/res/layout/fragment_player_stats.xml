@@ -96,29 +96,13 @@
             android:textStyle="bold"
             android:layout_marginBottom="16dp" />
 
-        <!-- List of Achievements (Placeholder Text) -->
-        <LinearLayout
+        <!-- RecyclerView for Achievements -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/achievementsRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/achievement1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="First Cow Call"
-                android:textSize="18sp"
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:id="@+id/achievement2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Reached 50 Points"
-                android:textSize="18sp"
-                android:layout_marginBottom="8dp" />
-
-        </LinearLayout>
+            android:layout_marginBottom="16dp"
+            android:scrollbars="vertical"/>
 
     </LinearLayout>
 </ScrollView>

@@ -38,7 +38,7 @@ class PlayerStatsFragment : Fragment() {
 
         // Initialize PlayerRepository and PlayerViewModelFactory
         val playerRepository = PlayerRepository()
-        val factory = PlayerViewModelFactory(playerRepository, requireContext()) // Pass context here
+        val factory = PlayerViewModelFactory(requireActivity().application, playerRepository) // Pass application here
 
         // Initialize PlayerViewModel using ViewModelProvider and factory
         playerViewModel = ViewModelProvider(this, factory).get(PlayerViewModel::class.java)
@@ -49,7 +49,7 @@ class PlayerStatsFragment : Fragment() {
         // Bind player data to the UI
         player?.let {
             binding.playerNameTextView.text = it.name
-            binding.playerTotalScoreTextView.text = "Total Score: ${it.totalScore}"
+            binding.playerTotalScoreTextView.text = "Total Score: ${it.calculateTotalPoints()}"
             binding.cowStatTextView.text = it.cowCount.toString()
             binding.churchStatTextView.text = it.churchCount.toString()
             binding.waterTowerStatTextView.text = it.waterTowerCount.toString()

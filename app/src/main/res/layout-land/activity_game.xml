@@ -85,6 +85,49 @@
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginBottom="16dp"
             android:layout_marginStart="16dp" />
+        <Button
+            android:id="@+id/gameSettingsButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:padding="16dp"
+            android:text="Game Settings"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toTopOf="@+id/startGameButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent" />
+        <Button
+            android:id="@+id/doublePointsButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            android:text="Supers"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.794"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/powerUpText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Power-Up: None"
+            android:textSize="18sp"
+            android:textColor="@android:color/holo_green_light"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="16dp"/>
+
+        <!-- Penalty Indicator -->
+        <TextView
+            android:id="@+id/penaltyText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Penalty: None"
+            android:textSize="18sp"
+            android:textColor="@android:color/holo_red_light"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="16dp"/>
 
         <TextView
             android:id="@+id/teamPointsTextView"
@@ -110,6 +153,11 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginBottom="16dp"
             android:layout_marginEnd="16dp" />
+        <Switch
+            android:id="@+id/falseCallPenaltySwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enable False Call Penalty" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Right-side Navigation Drawer -->
@@ -118,6 +166,7 @@
         android:layout_width="350dp"
         android:layout_height="match_parent"
         android:layout_gravity="end"
+        android:background="@color/purple_200"
         android:fitsSystemWindows="true">
 
         <!-- Drawer Header (Optional) -->
@@ -131,8 +180,8 @@
                 android:id="@+id/drawerHeaderText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Players"
-                android:textSize="24sp"
+                android:text=""
+                android:textSize="16sp"
                 android:textStyle="bold"/>
         </LinearLayout>
 

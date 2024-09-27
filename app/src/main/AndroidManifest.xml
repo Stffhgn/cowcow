@@ -30,39 +30,9 @@
         <activity android:name=".activity.WhoIsPlayingActivity" />
         <activity android:name=".activity.EditPlayerActivity" />
         <activity android:name=".activity.TeamSelectionActivity" />
+        <activity android:name=".activity.GameSettingsActivity">
 
-        <!-- Declare Car App Service for Android Auto -->
-        <service
-            android:name=".services.MyAutoService"
-            android:exported="true"
-            android:permission="android.car.permission.BIND_CAR_APP">
-            <intent-filter>
-                <action android:name="androidx.car.app.CarAppService" />
-            </intent-filter>
-
-            <!-- Metadata for Android Auto -->
-            <meta-data
-                android:name="androidx.car.app.minCarApiLevel"
-                android:value="1" />
-            <meta-data
-                android:name="androidx.car.app.version"
-                android:value="1.1.0" />
-
-            <!-- Linking XML resource for Android Auto -->
-            <meta-data
-                android:name="androidx.car.app.navigation"
-                android:resource="@xml/auto_app_metadata" />
-        </service>
-
-        <!-- Declare Media Browser Service -->
-        <service
-            android:name=".YourMediaService"
-            android:exported="true"
-            android:permission="android.permission.BIND_MEDIA_BROWSER_SERVICE">
-            <intent-filter>
-                <action android:name="android.media.browse.MediaBrowserService" />
-            </intent-filter>
-        </service>
+        </activity>
 
     </application>
 
