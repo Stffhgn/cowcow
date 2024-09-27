@@ -1,64 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@drawable/title_background_portrait"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".activity.MainActivity">
-
-    <!-- Start Game Button -->
-
-    <!-- Who is Playing Button -->
+    tools:context=".activity.MainMenuActivity">
 
     <Button
         android:id="@+id/startGameButton"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:padding="16dp"
         android:text="Start Game"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@id/whoIsPlayingButton"
+        app:layout_constraintBottom_toTopOf="@+id/settingsButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/whoIsPlayingButton"
-        android:layout_width="0dp"
+        android:id="@+id/settingsButton"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:padding="16dp"
-        android:text="Who is Playing"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@id/howToPlayButton"
+        android:text="Settings"
+        app:layout_constraintBottom_toTopOf="@+id/addPlayerButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-    <Button
-        android:id="@+id/gameSettingsButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:padding="16dp"
-        android:text="Game Settings"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@+id/startGameButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <ImageButton
+    <Button
+        android:id="@+id/addPlayerButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Player"
+        app:layout_constraintBottom_toTopOf="@+id/storeButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/storeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Store"
+        app:layout_constraintBottom_toTopOf="@+id/howToPlayButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
         android:id="@+id/howToPlayButton"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:scaleType="fitCenter"
-        android:background="?attr/selectableItemBackground"
-        android:contentDescription="How to Play"
-        android:src="@drawable/ic_question_mark"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="How to Play"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

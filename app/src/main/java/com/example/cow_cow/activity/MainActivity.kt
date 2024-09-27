@@ -1,66 +1,51 @@
 package com.example.cow_cow.activity
 
-import android.content.Intent
 import android.os.Bundle
-import android.os.CountDownTimer
-import android.util.Log
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import com.example.cow_cow.R
 import com.example.cow_cow.databinding.ActivityMainBinding
+import com.example.cow_cow.gameFragments.*
 
 class MainActivity : AppCompatActivity() {
 
+    // View binding for the main activity
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Using View Binding
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Start Game Button
+        // Initially load the start screen fragment or main fragment
+        loadFragment(StartFragment())
+
+        // Set up button click listeners for fragment navigation
         binding.startGameButton.setOnClickListener {
-            val intent = Intent(this, GameActivity::class.java)
-            startActivity(intent)
+            loadFragment(StartFragment())
         }
 
-        // Game Settings Button
-        binding.gameSettingsButton?.setOnClickListener {
-            val intent = Intent(this, GameSettingsActivity::class.java)
-            startActivity(intent)
+        binding.settingsButton.setOnClickListener {
+            loadFragment(SettingsFragment())
         }
 
-        // Who is Playing Button
-        binding.whoIsPlayingButton.setOnClickListener {
-            val intent = Intent(this, WhoIsPlayingActivity::class.java)
-            startActivity(intent)
+        binding.addPlayerButton.setOnClickListener {
+            loadFragment(AddPlayerFragment())
+        }
+
+        binding.storeButton.setOnClickListener {
+            loadFragment(StoreFragment())
         }
 
         binding.howToPlayButton.setOnClickListener {
-            Log.d("MainActivity", "How to Play button clicked")
-            showHowToPlayDialog()
+            loadFragment(HowToPlayFragment())
         }
     }
 
-    private lateinit var scavengerHuntTimer: CountDownTimer
-
-    private fun showHowToPlayDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("How to Play")
-        builder.setMessage(
-            """
-            1. Each player is assigned a name in the game.
-            2. Press the 'Cow,' 'Church,' or 'Water Tower' buttons when you see one on your journey.
-            3. Select the player who spotted it first to award points.
-               - Cow: 1 point
-               - Church: 2 points
-               - Water Tower: 3 points
-            4. Players can join or leave teams using the White Fence button.
-            5. The goal is to spot as many as possible during the trip and score the highest points!
-            """.trimIndent()
-        )
-        builder.setPositiveButton("Got it!") { dialog, _ -> dialog.dismiss() }
-        builder.show()
+    // Function to load the fragments
+    private fun loadFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .commit()
     }
 }

@@ -26,11 +26,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.GameActivity" />
+        <activity android:name=".activity.SplashActivity" />
         <activity android:name=".activity.WhoIsPlayingActivity" />
         <activity android:name=".activity.EditPlayerActivity" />
         <activity android:name=".activity.TeamSelectionActivity" />
-        <activity android:name=".activity.GameSettingsActivity">
+        <activity android:name=".activity.SettingsActivity">
 
         </activity>
 
