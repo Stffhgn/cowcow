@@ -5,7 +5,9 @@ import com.example.cow_cow.models.Team
 
 object GameUtils {
 
-    // Function to add counts to a player based on action
+    /**
+     * Adds the relevant object to the player's count.
+     */
     fun addCowToPlayer(player: Player) {
         player.cowCount += 1
     }
@@ -18,58 +20,50 @@ object GameUtils {
         player.waterTowerCount += 1
     }
 
-    // Function to add a player to a team
-    fun addPlayerToTeam(player: Player, team: Team) {
-        if (!team.members.contains(player)) {
-            team.members.add(player)
-            updateTeamScore(team)
-        }
-    }
-
-    // Function to remove a player from a team
-    fun removePlayerFromTeam(player: Player, team: Team) {
-        if (team.members.contains(player)) {
-            team.members.remove(player)
-            updateTeamScore(team)
-        }
-    }
-
-    // Function to update the total team score
-    private fun updateTeamScore(team: Team) {
-        team.teamScore = team.members.sumOf { it.calculateTotalPoints() }
-    }
-
-    // Function to distribute points evenly among team members
-    fun distributeTeamPoints(team: Team, totalPoints: Int) {
-        val pointsPerPlayer = totalPoints / team.members.size
-        for (player in team.members) {
-            // Decide how to distribute points to counts
-            // For simplicity, we'll add points to cowCount
-            player.cowCount += pointsPerPlayer
-        }
-        updateTeamScore(team)
-    }
-
-    // Function to reset a player's counts
+    /**
+     * Resets a player's counts for Cow, Church, and Water Tower.
+     */
     fun resetPlayerCounts(player: Player) {
         player.cowCount = 0
         player.churchCount = 0
         player.waterTowerCount = 0
     }
 
-    // Function to reset all players' counts
+    /**
+     * Resets all players' counts for Cow, Church, and Water Tower.
+     */
     fun resetAllPlayersCounts(players: List<Player>) {
-        for (player in players) {
-            resetPlayerCounts(player)
+        players.forEach { resetPlayerCounts(it) }
+    }
+
+    /**
+     * Distributes points evenly among all team members.
+     */
+    fun distributeTeamPoints(team: Team, totalPoints: Int) {
+        if (team.members.isNotEmpty()) {
+            val pointsPerPlayer = totalPoints / team.members.size
+            team.members.forEach { it.cowCount += pointsPerPlayer }
+            updateTeamScore(team)
         }
     }
 
-    // Function to determine which player called the most "Cows"
+    /**
+     * Updates the total team score based on member scores.
+     */
+    private fun updateTeamScore(team: Team) {
+        team.teamScore = team.members.sumOf { it.calculateTotalPoints() }
+    }
+
+    /**
+     * Determines the player with the most cows called.
+     */
     fun getPlayerWithMostCows(players: List<Player>): Player? {
         return players.maxByOrNull { it.cowCount }
     }
 
-    // Function to get the player with the highest total score
+    /**
+     * Returns the player with the highest total score.
+     */
     fun getPlayerWithHighestScore(players: List<Player>): Player? {
         return players.maxByOrNull { it.calculateTotalPoints() }
     }

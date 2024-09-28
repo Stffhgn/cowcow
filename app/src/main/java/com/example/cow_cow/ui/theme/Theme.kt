@@ -5,36 +5,35 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color // Add this import for Color
 
 // Define dark and light color schemes
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF6200EE),
-    secondary = Color(0xFF03DAC6),
-    background = Color(0xFF121212)
+    primary = PrimaryColor,
+    secondary = SecondaryColor,
+    background = BackgroundDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF6200EE),
-    secondary = Color(0xFF03DAC6),
-    background = Color(0xFFFFFFFF)
+    primary = PrimaryColor,
+    secondary = SecondaryColor,
+    background = BackgroundLight
 )
 
-// Define the theme function
+// Define the theme function to apply dark and light themes
 @Composable
 fun CowCowTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colors = if (darkTheme) {
+    val colorScheme = if (darkTheme) {
         DarkColorScheme
     } else {
         LightColorScheme
     }
 
     MaterialTheme(
-        colorScheme = colors,
-        typography = CustomTypography, // Reference to your custom typography
+        colorScheme = colorScheme,
+        typography = CustomTypography,
         content = content
     )
 }

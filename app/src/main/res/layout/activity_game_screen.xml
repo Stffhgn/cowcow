@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.GameScreenActivity">
+
+    <!-- Main Game Content (CowCow Fragment) -->
+    <FrameLayout
+        android:id="@+id/gameFragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <!-- Bottom Bar with Buttons and Rotating TextView -->
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- Left Drawer Button -->
+        <Button
+            android:id="@+id/leftDrawerButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Menu"
+            android:layout_weight="1" />
+
+        <!-- Rotating TextView (News, Toast, Timer) -->
+        <TextView
+            android:id="@+id/rotatingTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Latest Updates"
+            android:gravity="center"
+            android:layout_weight="2"
+            android:clickable="true"
+            android:focusable="true"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:ellipsize="marquee"
+            android:singleLine="true"
+            android:scrollHorizontally="true"/>
+
+        <!-- Right Drawer Button -->
+        <Button
+            android:id="@+id/rightDrawerButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Options"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <!-- Left Drawer (Player Stats, Team Management, etc.) -->
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/leftDrawer"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/background"
+        app:drawerElevation="16dp">
+
+        <!-- Left Drawer Content (e.g., RecyclerView for Player Stats) -->
+        <FrameLayout
+            android:id="@+id/leftDrawerContent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+
+    <!-- Right Drawer (Settings, More Options) -->
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/rightDrawer"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="@color/background"
+        app:drawerElevation="16dp">
+
+        <!-- Right Drawer Content -->
+        <FrameLayout
+            android:id="@+id/rightDrawerContent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>

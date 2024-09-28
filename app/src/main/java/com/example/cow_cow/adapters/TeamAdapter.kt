@@ -7,33 +7,50 @@ import com.example.cow_cow.databinding.ItemPlayerBinding
 import com.example.cow_cow.models.Player
 
 class TeamAdapter(
-    private var players: List<Player>,
-    private val onPlayerTeamToggle: (Player) -> Unit
+    private var teamPlayers: MutableList<Player>,
+    private val onPlayerClick: ((Player) -> Unit)? = null // Optional lambda for player click actions
 ) : RecyclerView.Adapter<TeamAdapter.TeamViewHolder>() {
 
+    inner class TeamViewHolder(private val binding: ItemPlayerBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(player: Player) {
+            binding.playerNameTextView.text = player.name
+            binding.playerScoreTextView.text = "Score: ${player.calculateTotalPoints()}"
+
+            // Handling player clicks if the lambda is provided
+            binding.root.setOnClickListener {
+                onPlayerClick?.invoke(player)
+            }
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TeamViewHolder {
-        val binding = ItemPlayerBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val inflater = LayoutInflater.from(parent.context)
+        val binding = ItemPlayerBinding.inflate(inflater, parent, false)
         return TeamViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: TeamViewHolder, position: Int) {
-        val player = players[position]
-        holder.bind(player, onPlayerTeamToggle)
+        holder.bind(teamPlayers[position])
     }
 
-    override fun getItemCount(): Int = players.size
+    override fun getItemCount(): Int = teamPlayers.size
 
-    fun updatePlayers(newPlayers: List<Player>) {
-        players = newPlayers
+    // Method to update the team player data
+    fun updateData(newTeamPlayers: List<Player>) {
+        teamPlayers.clear()
+        teamPlayers.addAll(newTeamPlayers)
         notifyDataSetChanged()
     }
 
-    class TeamViewHolder(private val binding: ItemPlayerBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(player: Player, onPlayerTeamToggle: (Player) -> Unit) {
-            binding.playerNameTextView.text = player.name
-            binding.root.setOnClickListener {
-                onPlayerTeamToggle(player)
-            }
-        }
+    // Optional method to remove a player from the team (if needed)
+    fun removePlayer(player: Player) {
+        teamPlayers.remove(player)
+        notifyDataSetChanged()
+    }
+
+    // Optional method to add a player to the team (if needed)
+    fun addPlayer(player: Player) {
+        teamPlayers.add(player)
+        notifyItemInserted(teamPlayers.size - 1)
     }
 }

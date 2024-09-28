@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/whos_playing_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Who’s Playing?"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Player Name Input -->
+    <EditText
+        android:id="@+id/player_name_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter player name"
+        android:inputType="textPersonName"/>
+
+    <!-- Add Player Button -->
+    <Button
+        android:id="@+id/add_player_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Player"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"/>
+
+    <!-- Player List Title -->
+    <TextView
+        android:id="@+id/player_list_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Players"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp"/>
+
+    <!-- List of Players -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/player_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:scrollbars="vertical"/>
+
+</LinearLayout>

@@ -3,7 +3,8 @@
     package="com.example.cow_cow">
 
     <!-- Required Permissions -->
-    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+    <!-- Removed MEDIA_CONTENT_CONTROL if not in use -->
+    <!-- Kept READ_EXTERNAL_STORAGE if necessary for user file access -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
@@ -13,8 +14,6 @@
         android:roundIcon="@drawable/ic_launcher_round"
         android:supportsRtl="true"
         android:resizeableActivity="true"
-        android:windowFullscreen="true"
-        android:windowNoTitle="true"
         android:theme="@style/Theme.CowCow">
 
         <!-- Declare Activities -->
@@ -26,13 +25,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".activity.SplashActivity" />
         <activity android:name=".activity.WhoIsPlayingActivity" />
         <activity android:name=".activity.EditPlayerActivity" />
         <activity android:name=".activity.TeamSelectionActivity" />
-        <activity android:name=".activity.SettingsActivity">
-
-        </activity>
+        <activity android:name=".activity.SettingsActivity" />
 
     </application>
 

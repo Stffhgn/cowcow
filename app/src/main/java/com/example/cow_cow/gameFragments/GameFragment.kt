@@ -5,6 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.example.cow_cow.R
 import com.example.cow_cow.databinding.FragmentGameBinding
 
 class GameFragment : Fragment() {
@@ -25,22 +27,38 @@ class GameFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Set up button click listeners
-        binding.cowButton.setOnClickListener {
-            // Logic for handling "Cow" button click
-            // For example, navigate to WhoCalledItFragment to select the player
-        }
+        setupButtons()
+    }
 
-        binding.churchButton.setOnClickListener {
-            // Logic for handling "Church" button click
-        }
+    // Set up click listeners for the game buttons
+    private fun setupButtons() {
+        binding.apply {
+            // When the Cow button is clicked, navigate to WhoCalledItFragment
+            cowButton.setOnClickListener {
+                navigateToWhoCalledIt("Cow")
+            }
 
-        binding.waterTowerButton.setOnClickListener {
-            // Logic for handling "Water Tower" button click
-        }
+            // When the Church button is clicked, navigate to WhoCalledItFragment
+            churchButton.setOnClickListener {
+                navigateToWhoCalledIt("Church")
+            }
 
-        binding.whiteFenceButton.setOnClickListener {
-            // Logic for handling "White Fence" button click (team selection)
+            // When the Water Tower button is clicked, navigate to WhoCalledItFragment
+            waterTowerButton.setOnClickListener {
+                navigateToWhoCalledIt("Water Tower")
+            }
+
+            // When White Fence button is clicked, navigate to team selection fragment
+            whiteFenceButton.setOnClickListener {
+                findNavController().navigate(R.id.action_gameFragment_to_teamManagementFragment)
+            }
         }
+    }
+
+    // Function to navigate to WhoCalledItFragment and pass the called object type
+    private fun navigateToWhoCalledIt(objectType: String) {
+        val action = GameFragmentDirections.actionGameFragmentToWhoCalledItFragment(objectType)
+        findNavController().navigate(action)
     }
 
     override fun onDestroyView() {
