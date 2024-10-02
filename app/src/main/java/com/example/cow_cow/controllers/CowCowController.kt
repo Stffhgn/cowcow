@@ -1,5 +1,6 @@
 package com.example.cow_cow.controllers
 
+import com.example.cow_cow.enums.PowerUpType
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.CustomRule
 import com.example.cow_cow.models.Penalty
@@ -40,7 +41,7 @@ class CowCowController {
         }
 
         // Update the player's score
-        player.addPoints(points)
+        player.addBasePoints(points)
         updateObjectCount(player, objectType)
 
         return points
@@ -112,7 +113,7 @@ class CowCowController {
     private fun applyPowerUpEffect(powerUp: PowerUp, points: Int): Int {
         return when (powerUp.type) {
             PowerUpType.DOUBLE_POINTS -> points * 2
-            PowerUpType.EXTRA_POINTS -> points + powerUp.effectValue
+            PowerUpType.SCORE_MULTIPLIER -> points + powerUp.effectValue
             else -> points // No modification for other power-ups
         }
     }

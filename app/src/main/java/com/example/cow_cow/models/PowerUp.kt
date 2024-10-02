@@ -25,6 +25,7 @@ data class PowerUp(
 
         when (type) {
             PowerUpType.DOUBLE_POINTS -> player.basePoints *= 2
+            PowerUpType.SCORE_MULTIPLIER -> player.basePoints *= 5
             PowerUpType.BONUS_POINTS -> player.addBonusPoints(effectValue)
             PowerUpType.EXTRA_TIME -> player.timePlayed += effectValue.toLong()
             PowerUpType.IMMUNITY -> player.isSilenced = false // Removes silencing penalties

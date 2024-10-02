@@ -4,12 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.CompoundButton
 import android.widget.SeekBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.cow_cow.databinding.FragmentSettingsBinding
-import com.example.cow_cow.models.DifficultyLevel
+import com.example.cow_cow.enums.DifficultyLevel
 import com.example.cow_cow.viewModels.SettingsViewModel
 
 class GameSettingsFragment : Fragment() {
@@ -94,7 +95,7 @@ class GameSettingsFragment : Fragment() {
             binding.soundSwitch.isChecked = !isMuted
         }
 
-        settingsViewModel.difficultyLevel.observe(viewLifecycleOwner) { level ->
+        settingsViewModel.difficultyLevel.observe(viewLifecycleOwner) { level: DifficultyLevel ->
             binding.difficultySpinner.setSelection(getDifficultyPosition(level))
         }
 

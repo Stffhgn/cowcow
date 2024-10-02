@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.os.Bundle
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
+import com.example.cow_cow.R
 import com.example.cow_cow.databinding.DialogEditProfileBinding
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.viewModels.PlayerViewModel

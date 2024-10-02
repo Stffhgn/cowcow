@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentTeamManagementBinding
+import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.viewModels.PlayerViewModel
 import com.example.cow_cow.viewModels.PlayerViewModelFactory
@@ -63,7 +64,7 @@ class TeamManagementFragment : Fragment() {
         playerViewModel.errorMessage.observe(viewLifecycleOwner) { error ->
             error?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-                playerViewModel.clearErrorMessage() // Clear the error after displaying
+                playerViewModel.clearError() // Clear the error after displaying
             }
         }
 

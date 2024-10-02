@@ -43,6 +43,32 @@ class PlayerListViewModel(
         playerRepository.savePlayers(updatedPlayers)
     }
 
+    fun incrementPlayerGamesPlayed(playerId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val player = getPlayerById(playerId)
+            player?.let {
+                it.incrementGamesPlayed()
+                repository.updatePlayer(it)
+                withContext(Dispatchers.Main) {
+                    loadPlayers()  // Reload players to reflect changes
+                }
+            }
+        }
+    }
+
+    fun updatePlayerRank(playerId: Int, newRank: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val player = getPlayerById(playerId)
+            player?.let {
+                it.updateRank(newRank)
+                repository.updatePlayer(it)
+                withContext(Dispatchers.Main) {
+                    loadPlayers()  // Reload players to reflect changes
+                }
+            }
+        }
+    }
+
     /**
      * Remove a player by ID and update the list.
      */

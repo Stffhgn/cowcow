@@ -9,6 +9,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="background_color">#FFFFFF</color> <!-- Change to your desired color -->
     <color name="ad_background_color">#EEEEEE</color> <!-- Change to your desired color -->
+    <color name="background">#FFFFFF</color> <!-- Replace with your preferred color -->
     <color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryVariant">#3700B3</color>
     <color name="colorOnPrimary">#FFFFFF</color>

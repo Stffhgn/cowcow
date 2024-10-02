@@ -1,54 +1,66 @@
 package com.example.cow_cow.PlayerFragment
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.cow_cow.adapters.AchievementsAdapter
+import androidx.navigation.fragment.navArgs
+import com.example.cow_cow.R
 import com.example.cow_cow.databinding.FragmentPlayerStatsBinding
+import com.example.cow_cow.models.Player
 import com.example.cow_cow.viewModels.PlayerViewModel
 
-class PlayerStatsFragment : Fragment() {
+class PlayerStatsFragment : Fragment(R.layout.fragment_player_stats) {
 
-    private lateinit var binding: FragmentPlayerStatsBinding
+    private var _binding: FragmentPlayerStatsBinding? = null
+    private val binding get() = _binding!!
+
     private lateinit var playerViewModel: PlayerViewModel
-    private lateinit var achievementsAdapter: AchievementsAdapter
+    private val args: PlayerStatsFragmentArgs by navArgs()
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentPlayerStatsBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+    private var playerId: Int = 0
+    private lateinit var playerName: String
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize ViewModel
-        playerViewModel = ViewModelProvider(requireActivity()).get(PlayerViewModel::class.java)
+        // Initialize binding
+        _binding = FragmentPlayerStatsBinding.bind(view)
 
-        // Initialize the RecyclerView for achievements
-        achievementsAdapter = AchievementsAdapter(mutableListOf())
-        binding.achievementsRecyclerView.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = achievementsAdapter
-        }
+        // Retrieve arguments using Safe Args
+        playerId = args.playerID
+        playerName = args.playerName
 
-        // Observe player data
-        playerViewModel.selectedPlayer.observe(viewLifecycleOwner, Observer { player ->
+        // Initialize PlayerViewModel
+        playerViewModel = ViewModelProvider(this).get(PlayerViewModel::class.java)
+
+        // Fetch the player data using playerId and observe changes
+        playerViewModel.getPlayerById(playerId)?.observe(viewLifecycleOwner) { player ->
             player?.let {
-                // Update UI with player data
-                binding.playerNameTextView.text = it.name
-                binding.totalScoreTextView.text = "Total Score: ${it.calculateTotalPoints()}"
+                bindPlayerData(it)
+            } ?: showError("Player not found")
+        }
+    }
 
-                // Update achievements
-                achievementsAdapter.updateAchievements(it.achievements)
-            }
-        })
+    // Method to bind player data to the UI
+    private fun bindPlayerData(player: Player) {
+        binding.apply {
+            playerNameTextView.text = player.name
+            //playerTotalScoreView.text = getString(R.string.total_score, player.calculateTotalPoints())
+            cowStatTextView.text = player.cowCount.toString()
+            churchStatTextView.text = player.churchCount.toString()
+            waterTowerStatTextView.text = player.waterTowerCount.toString()
+        }
+    }
+
+    // Method to show error messages via Toast
+    private fun showError(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

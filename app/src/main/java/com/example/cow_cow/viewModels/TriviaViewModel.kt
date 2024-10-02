@@ -18,23 +18,54 @@ class TriviaViewModel(private val triviaManager: TriviaManager, private val play
     private val _isAnswerCorrect = MutableLiveData<Boolean>()
     val isAnswerCorrect: LiveData<Boolean> get() = _isAnswerCorrect
 
+    private val _triviaCompleted = MutableLiveData<Boolean>()
+    val triviaCompleted: LiveData<Boolean> get() = _triviaCompleted
+
     init {
         _score.value = player.calculateTotalPoints()
+        loadTriviaQuestions()
+    }
+
+    /**
+     * Load trivia questions from the manager.
+     */
+    private fun loadTriviaQuestions() {
+        triviaManager.loadQuestions(shuffle = true)  // Shuffle questions if needed
+        loadNextQuestion()
     }
 
     /**
      * Load the next trivia question.
+     * If there are no more questions, mark the trivia game as completed.
      */
     fun loadNextQuestion() {
-        _currentQuestion.value = triviaManager.getNextQuestion()
+        val nextQuestion = triviaManager.getNextQuestion()
+        if (nextQuestion == null) {
+            _triviaCompleted.value = true
+        } else {
+            _currentQuestion.value = nextQuestion
+        }
     }
 
     /**
-     * Submit answer and validate it.
+     * Submit the player's answer and validate it.
+     * Update score and whether the answer was correct.
      */
     fun submitAnswer(selectedAnswer: String) {
         val isCorrect = triviaManager.validateAnswer(player, selectedAnswer)
         _isAnswerCorrect.value = isCorrect
         _score.value = player.calculateTotalPoints()
+
+        // Load next question after validation
+        loadNextQuestion()
+    }
+
+    /**
+     * Reset the trivia game and reload questions.
+     */
+    fun resetTriviaGame() {
+        triviaManager.resetTriviaGame()
+        _triviaCompleted.value = false
+        loadTriviaQuestions()
     }
 }

@@ -11,7 +11,7 @@
     <FrameLayout
         android:id="@+id/gameFragmentContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
     <!-- Bottom Bar with Buttons and Rotating TextView -->
     <LinearLayout
@@ -44,7 +44,7 @@
             android:marqueeRepeatLimit="marquee_forever"
             android:ellipsize="marquee"
             android:singleLine="true"
-            android:scrollHorizontally="true"/>
+            android:scrollHorizontally="true" />
 
         <!-- Right Drawer Button -->
         <Button
@@ -57,13 +57,13 @@
     </LinearLayout>
 
     <!-- Left Drawer (Player Stats, Team Management, etc.) -->
-    <androidx.drawerlayout.widget.DrawerLayout
+    <LinearLayout
         android:id="@+id/leftDrawer"
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="@color/background"
-        app:drawerElevation="16dp">
+        android:orientation="vertical">
 
         <!-- Left Drawer Content (e.g., RecyclerView for Player Stats) -->
         <FrameLayout
@@ -71,16 +71,16 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-    </androidx.drawerlayout.widget.DrawerLayout>
+    </LinearLayout>
 
     <!-- Right Drawer (Settings, More Options) -->
-    <androidx.drawerlayout.widget.DrawerLayout
+    <LinearLayout
         android:id="@+id/rightDrawer"
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="end"
         android:background="@color/background"
-        app:drawerElevation="16dp">
+        android:orientation="vertical">
 
         <!-- Right Drawer Content -->
         <FrameLayout
@@ -88,6 +88,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-    </androidx.drawerlayout.widget.DrawerLayout>
+    </LinearLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.cow_cow.databinding.FragmentPlayerStatsBinding
+import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.viewModels.PlayerViewModel
 import com.example.cow_cow.viewModels.PlayerViewModelFactory
@@ -35,7 +36,7 @@ class PlayerStatsFragment : Fragment() {
 
         // Get the player ID from the arguments (if passed)
         arguments?.let {
-            playerId = it.getInt("PLAYER_ID", 0)
+            playerId = it.getInt("playerId", 0)
         }
 
         // Show an error if the playerId is invalid
@@ -83,7 +84,7 @@ class PlayerStatsFragment : Fragment() {
 
         // Update the UI with player data
         binding.playerNameTextView.text = player.name
-        binding.playerTotalScoreTextView.text = "Total Score: ${player.calculateTotalPoints()}"
+        binding.totalScoreTextView.text = "Total Score: ${player.calculateTotalPoints()}"
         binding.cowStatTextView.text = player.cowCount.toString()
         binding.churchStatTextView.text = player.churchCount.toString()
         binding.waterTowerStatTextView.text = player.waterTowerCount.toString()

@@ -2,6 +2,8 @@ package com.example.cow_cow.models
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.example.cow_cow.enums.PowerUpType
+import com.example.cow_cow.enums.RankType
 
 data class Player(
     val id: Int,
@@ -24,6 +26,13 @@ data class Player(
     // Game states (flags)
     var isSilenced: Boolean = false,
     var isPowerUpActive: Boolean = false
+
+    //Notifications
+    var notificationsEnabled: Boolean = true
+
+    // New fields for games played and rank
+    var gamesPlayed: Int = 0,    // Tracks the number of games played by the player
+    var rank: RankType = RankType.BEGINNER  // Tracks the player's rank (default: "Beginner")
 ) : Parcelable {
 
     // --- Point Management ---
@@ -67,7 +76,7 @@ data class Player(
         activePowerUps.filter { it.isActive }.forEach { powerUp ->
             when (powerUp.type) {
                 PowerUpType.DOUBLE_POINTS -> totalPoints *= 2
-                PowerUpType.EXTRA_POINTS -> totalPoints += powerUp.effectValue
+                PowerUpType.SCORE_MULTIPLIER -> totalPoints += powerUp.effectValue
                 PowerUpType.BONUS_POINTS -> totalPoints += powerUp.effectValue
                 PowerUpType.EXTRA_TIME -> {
                     // No direct impact on points, handled elsewhere (like in GameViewModel)

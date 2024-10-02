@@ -13,7 +13,7 @@ class TeamController(private val gameViewModel: GameViewModel) {
         if (player.isOnTeam) {
             return false // Player is already on the team
         }
-        gameViewModel.addToTeam(player)
+        gameViewModel.addPlayerToTeam(player)  // Updated to call the correct method
         return true
     }
 
@@ -25,7 +25,7 @@ class TeamController(private val gameViewModel: GameViewModel) {
         if (!player.isOnTeam) {
             return false // Player is not on the team
         }
-        gameViewModel.removeFromTeam(player)
+        gameViewModel.removePlayerFromTeam(player)  // Updated to call the correct method
         return true
     }
 
@@ -33,21 +33,21 @@ class TeamController(private val gameViewModel: GameViewModel) {
      * Calculate and return the current team score.
      */
     fun updateTeamScore(): Int {
-        return gameViewModel.calculateTeamScore()
+        return gameViewModel.calculateTeamScore()  // Assuming you have this function in your ViewModel
     }
 
     /**
      * Get the list of players who are currently on the team.
      */
     fun getTeamPlayers(): List<Player> {
-        return gameViewModel.players.value?.filter { it.isOnTeam } ?: emptyList()
+        return gameViewModel.team.value ?: emptyList()
     }
 
     /**
      * Get the list of individual players who are not on the team.
      */
     fun getIndividualPlayers(): List<Player> {
-        return gameViewModel.getIndividualPlayers()
+        return gameViewModel.players.value?.filter { !it.isOnTeam } ?: emptyList()
     }
 
     /**

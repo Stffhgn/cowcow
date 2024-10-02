@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Main church body -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M12 2C12.55 2 13 2.45 13 3V5.83L14.59 7.41C14.99 7.81 15.65 7.81 16.05 7.41C16.45 7.01 16.45 6.35 16.05 5.95L12.7 2.59C12.31 2.2 11.68 2.2 11.29 2.59L7.94 5.95C7.54 6.35 7.54 7.01 7.94 7.41C8.34 7.81 9 7.81 9.4 7.41L11 5.83V3C11 2.45 11.45 2 12 2Z"/>
+
+    <!-- Church main building -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M6 10V21C6 21.55 6.45 22 7 22H17C17.55 22 18 21.55 18 21V10H6Z" />
+
+    <!-- Church door -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M10 14C10.55 14 11 14.45 11 15V19C11 19.55 10.55 20 10 20C9.45 20 9 19.55 9 19V15C9 14.45 9.45 14 10 14Z" />
+
+</vector>

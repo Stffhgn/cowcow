@@ -8,59 +8,171 @@
     <fragment
         android:id="@+id/startFragment"
         android:name="com.example.cow_cow.mainFragments.StartFragment"
-        android:label="Start"
+        android:label="Start Fragment"
         tools:layout="@layout/fragment_start">
+
+        <!-- Action to navigate to Game Fragment -->
+        <action
+            android:id="@+id/action_startFragment_to_gameFragment"
+            app:destination="@id/gameFragment" />
+
+        <!-- Action to navigate to App Settings -->
         <action
             android:id="@+id/action_startFragment_to_appSettingsFragment"
             app:destination="@id/appSettingsFragment" />
+
+        <!-- Action to navigate to Who's Playing (Add Player) -->
         <action
             android:id="@+id/action_startFragment_to_whosPlayingFragment"
             app:destination="@id/whosPlayingFragment" />
+
+        <!-- Action to navigate to Store -->
         <action
             android:id="@+id/action_startFragment_to_storeFragment"
             app:destination="@id/storeFragment" />
+
+        <!-- Action to navigate to How to Play -->
         <action
             android:id="@+id/action_startFragment_to_howToPlayFragment"
             app:destination="@id/howToPlayFragment" />
-
-        <action
-            android:id="@+id/action_gameFragment_to_whoCalledItFragment"
-            app:destination="@id/whoCalledItFragment"
-            app:argumentType="string"
-            app:defaultValue="Cow" />
-
-        <action
-            android:id="@+id/action_gameFragment_to_teamManagementFragment"
-            app:destination="@id/teamManagementFragment" />
     </fragment>
 
-    <!-- App Settings Fragment -->
+    <!-- Main Game Fragment (Entry Point) -->
+    <fragment
+        android:id="@+id/mainGameFragment"
+        android:name="com.example.cow_cow.GameFragments.MainGameFragment"
+        android:label="Main Game Fragment"
+        tools:layout="@layout/fragment_main_game" />
+
+    <!-- Player List Fragment -->
+    <fragment
+        android:id="@+id/playerListFragment"
+        android:name="com.example.cow_cow.PlayerFragment.PlayerListFragment"
+        android:label="Player List"
+        tools:layout="@layout/fragment_player_list">
+
+        <!-- Action to navigate to Player Stats Fragment with playerName argument -->
+        <action
+            android:id="@+id/action_playerListFragment_to_playerStatsFragment"
+            app:destination="@id/playerStatsFragment">
+            <argument
+                android:name="playerName"
+                app:argType="string" />
+            <argument
+                android:name="playerID"
+                app:argType="integer" />
+        </action>
+    </fragment>
+
+    <!-- Player Stats Fragment -->
+    <fragment
+        android:id="@+id/playerStatsFragment"
+        android:name="com.example.cow_cow.PlayerFragment.PlayerStatsFragment"
+        android:label="Player Stats"
+        tools:layout="@layout/fragment_player_stats">
+
+        <!-- Argument for Player Name -->
+        <argument
+            android:name="playerName"
+            app:argType="string" />
+        <argument
+            android:name="playerID"
+            app:argType="integer" />
+    </fragment>
+
+    <!-- Onboarding Fragment -->
+    <fragment
+        android:id="@+id/onboardingFragment"
+        android:name="com.example.cow_cow.PlayerFragment.OnboardingFragment"
+        android:label="Onboarding Fragment"
+        tools:layout="@layout/fragment_onboarding">
+
+        <!-- Navigate to Main Game Fragment -->
+        <action
+            android:id="@+id/action_onboardingFragment_to_mainGameFragment"
+            app:destination="@id/mainGameFragment" />
+    </fragment>
+
+    <!-- Settings Fragment (for app settings) -->
     <fragment
         android:id="@+id/appSettingsFragment"
         android:name="com.example.cow_cow.mainFragments.AppSettingsFragment"
-        android:label="App Settings"
+        android:label="App Settings Fragment"
         tools:layout="@layout/fragment_app_settings" />
 
-    <!-- Whos Playing Fragment -->
+    <!-- Who's Playing Fragment (Add Player) -->
     <fragment
         android:id="@+id/whosPlayingFragment"
         android:name="com.example.cow_cow.mainFragments.WhosPlayingFragment"
-        android:label="Who's Playing"
+        android:label="Who's Playing Fragment"
         tools:layout="@layout/fragment_whos_playing" />
 
     <!-- Store Fragment -->
     <fragment
         android:id="@+id/storeFragment"
         android:name="com.example.cow_cow.mainFragments.StoreFragment"
-        android:label="Store"
+        android:label="Store Fragment"
         tools:layout="@layout/fragment_store" />
 
-    <!-- How To Play Fragment -->
+    <!-- How to Play Fragment -->
     <fragment
         android:id="@+id/howToPlayFragment"
         android:name="com.example.cow_cow.mainFragments.HowToPlayFragment"
-        android:label="How To Play"
+        android:label="How to Play Fragment"
         tools:layout="@layout/fragment_how_to_play" />
 
-    <!-- Add other fragments based on your structure -->
+    <!-- Game Fragment -->
+    <fragment
+        android:id="@+id/gameFragment"
+        android:name="com.example.cow_cow.gameFragments.GameFragment"
+        android:label="Game Fragment"
+        tools:layout="@layout/fragment_game">
+
+        <!-- Action to navigate to Who Called It Fragment with objectType argument -->
+        <action
+            android:id="@+id/action_gameFragment_to_whoCalledItFragment"
+            app:destination="@id/whoCalledItFragment">
+            <argument
+                android:name="objectType"
+                app:argType="string" />
+        </action>
+
+        <!-- Action to navigate to Team Management Fragment -->
+        <action
+            android:id="@+id/action_gameFragment_to_teamManagementFragment"
+            app:destination="@id/teamManagementFragment" />
+    </fragment>
+
+    <!-- Who Called It Fragment -->
+    <fragment
+        android:id="@+id/whoCalledItFragment"
+        android:name="com.example.cow_cow.gameFragments.WhoCalledItFragment"
+        android:label="Who Called It"
+        tools:layout="@layout/fragment_who_called_it">
+
+        <argument
+            android:name="objectType"
+            app:argType="string" />
+    </fragment>
+
+    <!-- Team Management Fragment -->
+    <fragment
+        android:id="@+id/teamManagementFragment"
+        android:name="com.example.cow_cow.mainFragments.TeamManagementFragment"
+        android:label="Team Management"
+        tools:layout="@layout/fragment_team_management" />
+
+    <!-- Scavenger Hunt Fragment -->
+    <fragment
+        android:id="@+id/scavengerHuntFragment"
+        android:name="com.example.cow_cow.gameFragments.ScavengerHuntFragment"
+        android:label="Scavenger Hunt Fragment"
+        tools:layout="@layout/fragment_scavenger_hunt" />
+
+    <!-- Trivia Fragment -->
+    <fragment
+        android:id="@+id/triviaFragment"
+        android:name="com.example.cow_cow.gameFragments.TriviaFragment"
+        android:label="Trivia Fragment"
+        tools:layout="@layout/fragment_trivia" />
 </navigation>

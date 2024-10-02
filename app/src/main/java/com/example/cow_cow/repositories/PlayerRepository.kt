@@ -58,11 +58,22 @@ class PlayerRepository {
         }
     }
 
+    // New method to update the player's name
+    fun updatePlayerName(playerId: Int, newName: String, context: Context) {
+        val players = getPlayers(context).toMutableList()
+        val index = players.indexOfFirst { it.id == playerId }
+        if (index != -1) {
+            players[index] = players[index].copy(name = newName)
+            savePlayers(players, context)
+        }
+    }
+
     fun removePlayerById(playerId: Int, context: Context) {
         val players = getPlayers(context).toMutableList()
         val updatedPlayers = players.filter { it.id != playerId }
         savePlayers(updatedPlayers, context)
     }
+
 
     fun getPlayersSortedByScore(context: Context): List<Player> {
         val players = getPlayers(context)

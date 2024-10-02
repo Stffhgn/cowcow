@@ -35,7 +35,7 @@ object PlayerManager {
      * @param playerId The ID of the player to retrieve.
      * @return The player object, or null if not found.
      */
-    fun getPlayerById(playerId: Int): Player? {
+    fun getPlayerById(playerId: String): Player? {
         return players.find { it.id == playerId }
     }
 

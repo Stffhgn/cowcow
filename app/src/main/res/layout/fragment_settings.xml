@@ -52,10 +52,10 @@
         android:id="@+id/timerSeekBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:max="900"  <!-- Maximum of 900 seconds (15 minutes) -->
-    app:layout_constraintTop_toBottomOf="@id/notificationsSwitch"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    android:layout_margin="16dp"/>
+        android:max="900"
+        app:layout_constraintTop_toBottomOf="@id/notificationsSwitch"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="16dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

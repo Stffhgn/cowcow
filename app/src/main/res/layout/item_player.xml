@@ -32,6 +32,30 @@
         app:layout_constraintEnd_toStartOf="@+id/isPlayingCheckbox"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
+    <!-- Avatar Image View -->
+    <ImageView
+        android:id="@+id/avatarImageView"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/ic_launcher_round"
+        android:contentDescription="@string/avatar_image"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- Player Name Edit Text -->
+    <EditText
+        android:id="@+id/playerNameEditText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="@string/player_name_hint"
+        android:textSize="16sp"
+        app:layout_constraintStart_toEndOf="@id/avatarImageView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:inputType="textPersonName" />
 
     <!-- Is Playing CheckBox -->
     <CheckBox

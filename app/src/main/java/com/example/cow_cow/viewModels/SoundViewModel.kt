@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.cow_cow.enums.SoundSettings
 import com.example.cow_cow.enums.SoundType
 import com.example.cow_cow.repositories.SoundRepository
 
@@ -24,7 +25,7 @@ class SoundViewModel(application: Application, private val soundRepository: Soun
     // Initialize with default settings (can be adjusted later)
     init {
         _isSoundPlaying.value = false
-        _soundSettings.value = SoundSettings(volume = 1.0f) // Default volume at 100%
+        _soundSettings.value = SoundSettings(volume = 1.0f, isMuted = false) // Default volume at 100%
     }
 
     /**

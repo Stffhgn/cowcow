@@ -1,22 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    tools:context=".PlayerFragment.PlayerStatsFragment">
 
-    <!-- Player Name -->
+    <!-- Progress bar for loading state -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Error message TextView -->
+    <TextView
+        android:id="@+id/errorTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Error"
+        android:textColor="@android:color/holo_red_dark"
+        android:visibility="gone"
+        android:textSize="18sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Player name TextView -->
     <TextView
         android:id="@+id/playerNameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Player Name"
-        android:textSize="24sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
 
-    <!-- Total Score -->
+    <!-- Player total score TextView -->
     <TextView
         android:id="@+id/totalScoreTextView"
         android:layout_width="wrap_content"
@@ -24,29 +53,87 @@
         android:text="Total Score: 0"
         android:textSize="18sp"
         app:layout_constraintTop_toBottomOf="@id/playerNameTextView"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <!-- Achievements Section -->
-    <TextView
-        android:id="@+id/achievementsTitleTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Achievements"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/totalScoreTextView"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp"/>
-
-    <!-- RecyclerView for Achievements -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/achievementsRecyclerView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/achievementsTitleTextView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginTop="8dp" />
+
+    <!-- Stats container for cows, churches, water towers -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/totalScoreTextView"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="16dp">
+
+        <!-- Cow stats -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_margin="16dp">
+
+            <TextView
+                android:id="@+id/cowStatTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cows"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- Church stats -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_margin="16dp">
+
+            <TextView
+                android:id="@+id/churchStatTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Churches"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- Water tower stats -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_margin="16dp">
+
+            <TextView
+                android:id="@+id/waterTowerStatTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Water Towers"
+                android:textSize="16sp" />
+        </LinearLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

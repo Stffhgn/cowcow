@@ -2,8 +2,9 @@ package com.example.cow_cow.managers
 
 import com.example.cow_cow.models.TriviaQuestion
 import com.example.cow_cow.models.Player
+import com.example.cow_cow.repositories.TriviaRepository
 
-class TriviaManager {
+class TriviaManager(private val repository: TriviaRepository) {
 
     private var currentQuestionIndex: Int = 0
     private var triviaQuestions: List<TriviaQuestion> = listOf()
@@ -11,6 +12,19 @@ class TriviaManager {
     private var totalIncorrectAnswers: Int = 0
     private var playerProgress: MutableMap<Player, Int> = mutableMapOf() // Track each player's progress
     private var gameActive: Boolean = false
+
+    init {
+        // Load questions from the repository at initialization
+        triviaQuestions = TriviaRepository().loadTriviaQuestions()
+    }
+
+    /**
+     * Load trivia questions from the repository and initialize the game.
+     */
+    fun loadQuestions(shuffle: Boolean = false) {
+        triviaQuestions = repository.loadTriviaQuestions()
+        initializeTriviaQuestions(triviaQuestions, shuffle)
+    }
 
     /**
      * Initialize the trivia questions for the game.
@@ -36,7 +50,7 @@ class TriviaManager {
         return if (currentQuestionIndex < triviaQuestions.size) {
             triviaQuestions[currentQuestionIndex]
         } else {
-            null  // No more questions available
+            null  // No more questions
         }
     }
 
@@ -45,10 +59,11 @@ class TriviaManager {
      */
     fun getNextQuestion(): TriviaQuestion? {
         return if (currentQuestionIndex < triviaQuestions.size) {
+            val question = triviaQuestions[currentQuestionIndex]
             currentQuestionIndex++
-            getCurrentQuestion()
+            question
         } else {
-            null  // No more questions
+            null  // No more questions available
         }
     }
 
@@ -57,14 +72,11 @@ class TriviaManager {
      */
     fun validateAnswer(player: Player, selectedAnswer: String): Boolean {
         val currentQuestion = getCurrentQuestion()
-        if (currentQuestion != null && selectedAnswer == currentQuestion.correctAnswer) {
-            totalCorrectAnswers++
+        return if (currentQuestion?.correctAnswer == selectedAnswer) {
             player.addBonusPoints(currentQuestion.points)
-            playerProgress[player] = playerProgress.getOrDefault(player, 0) + 1
-            return true
+            true
         } else {
-            totalIncorrectAnswers++
-            return false
+            false
         }
     }
 

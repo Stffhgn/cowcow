@@ -17,6 +17,10 @@ class PlayerViewModel(
     private val repository: PlayerRepository
 ) : AndroidViewModel(application) {
 
+    // LiveData for loading state
+    private val _loading = MutableLiveData<Boolean>()
+    val loading: LiveData<Boolean> get() = _loading
+
     // --- LiveData for Players ---
     private val _players = MutableLiveData<MutableList<Player>>(mutableListOf())
     val players: LiveData<MutableList<Player>> get() = _players
@@ -33,6 +37,10 @@ class PlayerViewModel(
     private val _selectedPlayer = MutableLiveData<Player>()
     val selectedPlayer: LiveData<Player> get() = _selectedPlayer
 
+    // Define MutableLiveData for error messages
+    private val _errorMessage = MutableLiveData<String?>()
+    val errorMessage: LiveData<String?> get() = _errorMessage
+
     // --- Initialization ---
     init {
         loadPlayers()
@@ -41,21 +49,30 @@ class PlayerViewModel(
 
     // --- Player Management ---
 
-
+    /**
+     * Set the selected player.
+     */
     fun setSelectedPlayer(player: Player) {
         _selectedPlayer.value = player
     }
+
     /**
      * Load players from the repository asynchronously.
      */
-    private fun loadPlayers() {
+    fun loadPlayers() {
+        _loading.value = true // Start loading
         viewModelScope.launch {
-            val context = getApplication<Application>().applicationContext
-            val loadedPlayers = withContext(Dispatchers.IO) {
-                repository.getPlayers(context)
+            try {
+                val context = getApplication<Application>().applicationContext
+                val playerList = withContext(Dispatchers.IO) {
+                    repository.getPlayers(context)
+                }
+                _players.value = playerList
+            } catch (e: Exception) {
+                // Handle the error
+            } finally {
+                _loading.value = false // Stop loading
             }
-            _players.value = loadedPlayers.toMutableList()
-            loadPlayerSettings()
         }
     }
 
@@ -63,9 +80,9 @@ class PlayerViewModel(
      * Save players to the repository asynchronously.
      */
     private fun savePlayers(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _players.value?.let { playerList ->
-                repository.savePlayers(playerList, context)
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                repository.savePlayers(_players.value ?: emptyList(), context)
             }
         }
     }
@@ -82,17 +99,30 @@ class PlayerViewModel(
     }
 
     /**
-     * Update an existing player and save to the repository.
+     * Update a player's data and toggle the loading state during the operation.
      */
     fun updatePlayer(player: Player) {
-        _players.value?.apply {
-            val index = indexOfFirst { it.id == player.id }
-            if (index != -1) {
-                this[index] = player
-                savePlayers(getApplication())
-                _statusMessage.value = "${player.name}'s info updated."
+        _loading.value = true // Start loading
+        viewModelScope.launch {
+            try {
+                // Logic to update the player in the repository
+                val context = getApplication<Application>().applicationContext
+                repository.updatePlayer(player, context)
+                // Update LiveData after the player is updated
+                _players.value = _players.value?.map {
+                    if (it.id == player.id) player else it
+                }
+            } catch (e: Exception) {
+                // Handle the error
+            } finally {
+                _loading.value = false // Stop loading
             }
         }
+    }
+
+    // Clear the error message once it's handled
+    fun clearError() {
+        _errorMessage.value = null
     }
 
     /**
@@ -107,10 +137,25 @@ class PlayerViewModel(
     }
 
     /**
+     * Update the player's name and save to the repository.
+     */
+    fun updatePlayerName(playerId: Int, newName: String, context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updatePlayerName(playerId, newName, context)
+            withContext(Dispatchers.Main) {
+                loadPlayers() // Reload the players to reflect changes in the UI
+                _statusMessage.value = "Player name updated to $newName"
+            }
+        }
+    }
+
+    /**
      * Get player by ID.
      */
-    fun getPlayerById(id: Int): Player? {
-        return _players.value?.find { it.id == id }
+    fun getPlayerById(id: Int): LiveData<Player?> {
+        val playerLiveData = MutableLiveData<Player?>()
+        playerLiveData.value = _players.value?.find { it.id == id }
+        return playerLiveData
     }
 
     /**
@@ -157,7 +202,7 @@ class PlayerViewModel(
     /**
      * Save team to repository asynchronously.
      */
-    private fun saveTeam() {
+    fun saveTeam() {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>().applicationContext
             _teamPlayers.value?.let { teamPlayers ->

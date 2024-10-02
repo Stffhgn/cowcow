@@ -3,12 +3,10 @@ package com.example.cow_cow.activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.example.cow_cow.R
 import com.example.cow_cow.databinding.ActivityMainBinding
-import com.example.cow_cow.mainFragments.*  // Importing main fragments (adjust if required)
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,13 +29,6 @@ class MainActivity : AppCompatActivity() {
         setupButtons()
     }
 
-    // Function to load fragments dynamically into the container
-    private fun loadFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .commit()
-    }
-
     // Set up button click listeners for fragment navigation and launching activities
     private fun setupButtons() {
         binding.apply {
@@ -53,17 +44,17 @@ class MainActivity : AppCompatActivity() {
                 navController.navigate(R.id.action_startFragment_to_appSettingsFragment)
             }
 
-            // Load the Add Player Fragment (Who's Playing)
+            // Navigate to Add Player Fragment (Who's Playing)
             addPlayerButton.setOnClickListener {
                 navController.navigate(R.id.action_startFragment_to_whosPlayingFragment)
             }
 
-            // Load the Store Fragment
+            // Navigate to Store Fragment
             storeButton.setOnClickListener {
                 navController.navigate(R.id.action_startFragment_to_storeFragment)
             }
 
-            // Load the How To Play Fragment
+            // Navigate to How To Play Fragment
             howToPlayButton.setOnClickListener {
                 navController.navigate(R.id.action_startFragment_to_howToPlayFragment)
             }

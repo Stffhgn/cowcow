@@ -3,6 +3,8 @@ package com.example.cow_cow.controllers
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.cow_cow.managers.ScavengerHuntManager
+import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.ScavengerHuntItem
 import com.example.cow_cow.repositories.ScavengerHuntRepository
 import kotlinx.coroutines.CoroutineScope
@@ -20,28 +22,29 @@ class ScavengerHuntController(
     val scavengerHuntItems: LiveData<List<ScavengerHuntItem>> get() = _scavengerHuntItems
 
     /**
-     * Load scavenger hunt items from the repository asynchronously.
+     * Load scavenger hunt items from the repository asynchronously and start a new hunt.
      */
-    fun loadScavengerHuntItems(context: Context) {
+    fun loadScavengerHuntItems(context: Context, player: Player, difficulty: String? = null) {
         scope.launch {
             try {
                 val items = withContext(Dispatchers.IO) { repository.getScavengerHuntItems(context) }
-                _scavengerHuntItems.value = items
+                _scavengerHuntItems.postValue(items)
+                ScavengerHuntManager.startScavengerHunt(player, repository, difficulty)
             } catch (e: Exception) {
                 // Handle error (e.g., log the error or show a user-friendly message)
-                _scavengerHuntItems.value = emptyList() // Provide a fallback
+                _scavengerHuntItems.postValue(emptyList()) // Provide a fallback
             }
         }
     }
 
     /**
-     * Add a new scavenger hunt item asynchronously.
+     * Add a new scavenger hunt item asynchronously and persist it.
      */
     fun addScavengerHuntItem(item: ScavengerHuntItem, context: Context) {
         scope.launch {
             try {
                 withContext(Dispatchers.IO) { repository.addScavengerHuntItem(item, context) }
-                loadScavengerHuntItems(context) // Reload items after modification
+                loadScavengerHuntItems(context, Player(1, "Player")) // You should pass the actual player object here
             } catch (e: Exception) {
                 // Handle error (log, notify user, etc.)
             }
@@ -49,15 +52,18 @@ class ScavengerHuntController(
     }
 
     /**
-     * Remove an existing scavenger hunt item asynchronously.
+     * Mark a scavenger hunt item as found and persist changes.
      */
-    fun removeScavengerHuntItem(item: ScavengerHuntItem, context: Context) {
+    fun markItemAsFound(item: ScavengerHuntItem, player: Player, context: Context) {
         scope.launch {
             try {
-                withContext(Dispatchers.IO) { repository.removeScavengerHuntItem(item, context) }
-                loadScavengerHuntItems(context) // Reload items after modification
+                ScavengerHuntManager.markItemAsFound(item, player)
+                withContext(Dispatchers.IO) {
+                    repository.saveScavengerHuntItems(ScavengerHuntManager.getActiveScavengerHuntItems(), context)
+                }
+                _scavengerHuntItems.postValue(ScavengerHuntManager.getActiveScavengerHuntItems())
             } catch (e: Exception) {
-                // Handle error (log, notify user, etc.)
+                // Handle error
             }
         }
     }
@@ -68,8 +74,9 @@ class ScavengerHuntController(
     fun clearScavengerHuntItems(context: Context) {
         scope.launch {
             try {
+                ScavengerHuntManager.stopScavengerHunt()
                 withContext(Dispatchers.IO) { repository.saveScavengerHuntItems(emptyList(), context) }
-                _scavengerHuntItems.value = emptyList()
+                _scavengerHuntItems.postValue(emptyList())
             } catch (e: Exception) {
                 // Handle error
             }

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Rule Title TextView -->
+    <TextView
+        android:id="@+id/ruleTitleTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Rule Title"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <!-- Rule Description TextView -->
+    <TextView
+        android:id="@+id/ruleDescriptionTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Rule Description"
+        android:textSize="14sp" />
+
+    <!-- Optional Button to delete or interact with the rule -->
+    <Button
+        android:id="@+id/deleteRuleButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Delete" />
+
+</LinearLayout>

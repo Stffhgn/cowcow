@@ -3,6 +3,7 @@ package com.example.cow_cow.repositories
 import android.content.Context
 import android.media.MediaPlayer
 import com.example.cow_cow.enums.SoundType
+import com.example.cow_cow.managers.SoundManager
 import com.example.cow_cow.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,16 +15,32 @@ class SoundRepository(private val context: Context) {
     private val soundFiles: MutableMap<SoundType, File> = mutableMapOf()
 
     /**
-     * Loads a sound file based on the SoundType.
-     * This checks local storage for the sound file or returns a default file if none exists.
+     * Play a sound based on the SoundType.
      */
-    fun loadSound(soundType: SoundType): File? {
+    fun playSoundFromRepository(soundType: SoundType): MediaPlayer? {
+        val soundFile = loadSound(soundType)
+        return if (soundFile != null) {
+            MediaPlayer().apply {
+                setDataSource(soundFile.absolutePath)
+                prepare()
+                start()
+            }
+        } else {
+            // Fallback to default sound from SoundManager if no local file exists
+            SoundManager.playSound(context, soundType)
+            null
+        }
+    }
+
+    /**
+     * Load a sound file based on the SoundType, or return the default sound.
+     */
+    private fun loadSound(soundType: SoundType): File? {
         return soundFiles[soundType] ?: getDefaultSound(soundType)
     }
 
     /**
      * Get default sound file for a given sound type.
-     * You can define these defaults to always be available in your assets folder or resource folder.
      */
     private fun getDefaultSound(soundType: SoundType): File? {
         val resId = when (soundType) {
@@ -42,8 +59,40 @@ class SoundRepository(private val context: Context) {
     }
 
     /**
+     * Stop the currently playing sound.
+     */
+    fun stopCurrentSound() {
+        SoundManager.stopCurrentSound()
+    }
+
+    /**
+     * Set the volume for all sounds.
+     */
+    fun setVolume(volume: Float) {
+        SoundManager.setVolume(volume)
+    }
+
+    /**
+     * Mute or unmute all sounds.
+     */
+    fun mute(isMuted: Boolean) {
+        if (isMuted) {
+            SoundManager.muteSounds()
+        } else {
+            SoundManager.unmuteSounds()
+        }
+    }
+
+    /**
+     * Reset sound settings (mute status, volume).
+     */
+    fun reset() {
+        SoundManager.setVolume(1.0f) // Reset to full volume
+        SoundManager.unmuteSounds()   // Unmute all sounds
+    }
+
+    /**
      * Update sound files from an OTA (Over-The-Air) update.
-     * Downloads the sound files from a remote server, replacing old files.
      */
     suspend fun updateSoundsFromOTA(otaUrls: Map<SoundType, String>) {
         withContext(Dispatchers.IO) {
@@ -56,37 +105,5 @@ class SoundRepository(private val context: Context) {
                 }
             }
         }
-    }
-
-    /**
-     * Save sound files to local storage after OTA update.
-     */
-    fun saveUpdatedSound(soundType: SoundType, file: File) {
-        soundFiles[soundType] = file
-    }
-
-    /**
-     * Play a sound file directly from the repository.
-     */
-    fun playSoundFromRepository(soundType: SoundType): MediaPlayer? {
-        val soundFile = loadSound(soundType)
-        return if (soundFile != null) {
-            MediaPlayer().apply {
-                setDataSource(soundFile.absolutePath)
-                prepare()
-                start()
-            }
-        } else {
-            null
-        }
-    }
-
-    /**
-     * Clear outdated sound files from local storage.
-     * This can be used to free up space or reset sound assets to default.
-     */
-    fun clearOldSoundFiles() {
-        soundFiles.clear()
-        FileUtils.clearLocalCache(context)
     }
 }

@@ -2,14 +2,15 @@ package com.example.cow_cow.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cow_cow.databinding.ItemStoreBinding
 import com.example.cow_cow.models.StoreItem
 
 class StoreAdapter(
-    private var storeItems: List<StoreItem>,
     private val onItemClick: (StoreItem) -> Unit // Lambda for handling item click
-) : RecyclerView.Adapter<StoreAdapter.StoreViewHolder>() {
+) : ListAdapter<StoreItem, StoreAdapter.StoreViewHolder>(DiffCallback()) {
 
     inner class StoreViewHolder(private val binding: ItemStoreBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(storeItem: StoreItem) {
@@ -30,13 +31,17 @@ class StoreAdapter(
     }
 
     override fun onBindViewHolder(holder: StoreViewHolder, position: Int) {
-        holder.bind(storeItems[position])
+        val storeItem = getItem(position)
+        holder.bind(storeItem)
     }
 
-    override fun getItemCount(): Int = storeItems.size
+    class DiffCallback : DiffUtil.ItemCallback<StoreItem>() {
+        override fun areItemsTheSame(oldItem: StoreItem, newItem: StoreItem): Boolean {
+            return oldItem.id == newItem.id
+        }
 
-    fun updateData(newStoreItems: List<StoreItem>) {
-        storeItems = newStoreItems
-        notifyDataSetChanged()
+        override fun areContentsTheSame(oldItem: StoreItem, newItem: StoreItem): Boolean {
+            return oldItem == newItem
+        }
     }
 }

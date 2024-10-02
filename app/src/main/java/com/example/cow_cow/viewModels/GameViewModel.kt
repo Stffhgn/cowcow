@@ -44,6 +44,25 @@ class GameViewModel(application: Application, private val repository: GameReposi
         _players.value = playerList
     }
 
+    // LiveData to hold news messages for the rotating TextView
+    private val _gameNews = MutableLiveData<String>()
+    val gameNews: LiveData<String> get() = _gameNews
+
+    // Instance of the GameNewsManager
+    private val gameNewsManager = GameNewsManager()
+
+    // Add a new game news message
+    fun addGameNewsMessage(message: String) {
+        gameNewsManager.addNewsMessage(message)
+        // Optionally update the LiveData immediately after adding the news
+        _gameNews.value = message
+    }
+
+    // Rotate to the next news message and update LiveData
+    fun rotateGameNews() {
+        _gameNews.value = gameNewsManager.getNextNewsMessage()
+    }
+
     fun loadTeam() {
         val context = getApplication<Application>().applicationContext
         val teamList = PlayerRepository().getTeam(context)
@@ -51,15 +70,19 @@ class GameViewModel(application: Application, private val repository: GameReposi
     }
 
     fun addPlayerToTeam(player: Player) {
+        player.isOnTeam = true
         teamManager.addPlayerToTeam(player, _team.value?.toMutableList() ?: mutableListOf())
         _team.value = teamManager.getTeam()
         saveTeam()
+        updatePlayer(player) // Ensure the player's status is updated
     }
 
     fun removePlayerFromTeam(player: Player) {
+        player.isOnTeam = false
         teamManager.removePlayerFromTeam(player, _team.value?.toMutableList() ?: mutableListOf())
         _team.value = teamManager.getTeam()
         saveTeam()
+        updatePlayer(player) // Ensure the player's status is updated
     }
 
     fun savePlayers() {
@@ -74,6 +97,10 @@ class GameViewModel(application: Application, private val repository: GameReposi
         _team.value?.let { teamList ->
             PlayerRepository().saveTeam(teamList, context)
         }
+    }
+
+    fun calculateTeamScore(): Int {
+        return _team.value?.sumOf { it.calculateTotalPoints() } ?: 0
     }
 
     // ---- Game Logic ----
@@ -93,6 +120,13 @@ class GameViewModel(application: Application, private val repository: GameReposi
             if (it.id == player.id) player else it
         }
         savePlayers()
+    }
+
+    fun resetCalledObjects() {
+        _players.value = _players.value?.map { player ->
+            player.copy(cowCount = 0, churchCount = 0, waterTowerCount = 0)
+        }
+        savePlayers()  // Save updated players to the repository
     }
 
     // ---- Scavenger Hunt ----

@@ -16,9 +16,9 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.example.cow_cow.enums.AchievementType
 import com.example.cow_cow.enums.RewardType
 import com.example.cow_cow.models.Achievement
+import com.example.cow_cow.ui.theme.CowCowTheme
 import com.example.cow_cow.viewModels.AchievementViewModel
 
 class AchievementsFragment : Fragment() {
@@ -84,6 +84,7 @@ class AchievementsFragment : Fragment() {
             RewardType.POINTS -> "${achievement.rewardValue} Points"
             RewardType.POWER_UP -> "Power-Up: ${achievement.rewardValue} secs"
             RewardType.BADGE -> "Badge"
+            else -> "Unknown Reward"  // This ensures the 'when' expression is exhaustive
         }
 
         Card(

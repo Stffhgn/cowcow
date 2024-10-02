@@ -6,12 +6,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.example.cow_cow.R
 import com.example.cow_cow.controllers.CowCowController
+import com.example.cow_cow.managers.GameNewsManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.databinding.FragmentCowCowBinding
 import com.example.cow_cow.controllers.SoundController
 import com.example.cow_cow.utils.Animations
+import com.example.cow_cow.viewModels.GameViewModel
 
 class CowCowFragment : Fragment() {
 
@@ -26,40 +29,45 @@ class CowCowFragment : Fragment() {
     private val players = mutableListOf(
         Player(id = 1, name = "Player 1"),
         Player(id = 2, name = "Player 2"),
-        Player(id = 3, name = "Player 3")  // You can add as many players as needed
+        Player(id = 3, name = "Player 3")
     )
 
     // Sound controller for audio feedback
-    private val soundController = SoundController()
+    private lateinit var soundController: SoundController
+
+    // ViewModel for game logic
+    private lateinit var gameViewModel: GameViewModel
+
+    // GameNewsManager for updating game news
+    private val gameNewsManager = GameNewsManager()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentCowCowBinding.inflate(inflater, container, false)
-        setupButtons()
         return binding.root
     }
 
-    // Setup the button click listeners to allow any player to call objects
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Initialize ViewModel
+        gameViewModel = ViewModelProvider(requireActivity()).get(GameViewModel::class.java)
+
+        // Initialize SoundController with context
+        soundController = SoundController(requireContext())
+
+        // Setup button click listeners
+        setupButtons()
+    }
+
+    // Setup the button click listeners
     private fun setupButtons() {
         binding.apply {
-            // When Cow button is clicked
-            cowButton.setOnClickListener {
-                handleObjectCall("Cow")
-            }
-
-            // When Church button is clicked
-            churchButton.setOnClickListener {
-                handleObjectCall("Church")
-            }
-
-            // When Water Tower button is clicked
-            waterTowerButton.setOnClickListener {
-                handleObjectCall("Water Tower")
-            }
-
-            // Reset Game Button
+            cowButton.setOnClickListener { handleObjectCall("Cow") }
+            churchButton.setOnClickListener { handleObjectCall("Church") }
+            waterTowerButton.setOnClickListener { handleObjectCall("Water Tower") }
             resetButton.setOnClickListener {
                 cowCowController.resetGame(players)
                 updatePlayerScoreDisplay()
@@ -70,49 +78,50 @@ class CowCowFragment : Fragment() {
 
     // Handle the call for Cow, Church, or Water Tower
     private fun handleObjectCall(objectType: String) {
-        // Check which player called first (Simulate multiple players)
         val caller = getFirstPlayerToCall(objectType)
 
-        // Validate the call
         if (cowCowController.validateCall(caller, objectType)) {
-            // Apply points for the correct call
             val pointsAwarded = cowCowController.applyPoints(caller, objectType)
-            soundController.playSound(objectType, requireContext())  // Play sound feedback
 
-            // Show feedback on UI
-            showFeedback(caller.name, objectType, pointsAwarded)
+            // Play the sound depending on the object type
+            val soundResId = when (objectType) {
+                "Cow" -> R.raw.cow_sound
+                "Church" -> R.raw.church_sound
+                "Water Tower" -> R.raw.water_tower_sound
+                else -> R.raw.cow_sound
+            }
+            soundController.playSound(soundResId)
+
+            // Update game news using GameNewsManager
+            val newsMessage = "${caller.name} called $objectType and earned $pointsAwarded points!"
+            gameNewsManager.addNewsMessage(newsMessage)
+
+            // Rotate the news to show the latest update
+            gameViewModel.rotateGameNews()
+
+            // Update the player score display
             updatePlayerScoreDisplay()
-
         } else {
-            // Show invalid call message with shake animation
+            // Handle invalid call with an animation or message
             Animations.shakeView(binding.root)
-            Toast.makeText(requireContext(), "Invalid call!", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // Simulate the first player to call out the object
+    // Simulate which player calls first
     private fun getFirstPlayerToCall(objectType: String): Player {
-        // In a real game, this would be determined dynamically by who physically calls first
-        // For this example, we will randomly select a player (you can replace with actual logic)
-        return players.random()  // Simulate who called out first (you can replace with actual input)
+        return players.random()
     }
 
-    // Update the player score display
+    // Update player score display
     private fun updatePlayerScoreDisplay() {
-        // Show all players' scores on screen (Leaderboard style)
-        binding.playerScoreTextView.text = players.joinToString(separator = "\n") {
+        binding.playerScoreTextView.text = players.joinToString("\n") {
             "${it.name}: ${it.basePoints} points"
         }
-    }
-
-    // Show feedback when a player correctly calls an object
-    private fun showFeedback(playerName: String, objectType: String, pointsAwarded: Int) {
-        binding.feedbackTextView.text = "$playerName called $objectType! +$pointsAwarded points!"
-        Animations.bounceView(binding.feedbackTextView)  // Apply bounce animation for feedback
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        soundController.cleanup()  // Clean up sound resources when fragment is destroyed
     }
 }

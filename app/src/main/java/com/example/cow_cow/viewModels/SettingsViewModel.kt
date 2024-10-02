@@ -32,6 +32,9 @@ class SettingsViewModel(
     private val _timerDuration = MutableLiveData<Long>()  // Duration in milliseconds
     val timerDuration: MutableLiveData<Long> get() = _timerDuration
 
+    private val _volumeLevel = MutableLiveData<Float>()
+    val volumeLevel: MutableLiveData<Float> get() = _volumeLevel
+
     // --- UI Settings ---
 
     // Dark mode toggle
@@ -102,6 +105,18 @@ class SettingsViewModel(
         _isNotificationsEnabled.value = isEnabled
         saveSetting("notifications_enabled", isEnabled)
     }
+
+    // Function to set volume
+    fun setVolumeLevel(volume: Float) {
+        _volumeLevel.value = volume
+        saveSetting("volume_level", volume)
+    }
+
+    // Add saveSetting for float values
+    private fun saveSetting(key: String, value: Float) {
+        viewModelScope.launch(Dispatchers.IO) {
+            sharedPreferences.edit().putFloat(key, value).apply()
+        }
 
     // --- Save Settings Helper Functions ---
 

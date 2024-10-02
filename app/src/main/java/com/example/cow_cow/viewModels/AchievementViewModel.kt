@@ -15,9 +15,22 @@ class AchievementViewModel(
     private val _unlockedAchievements = MutableLiveData<List<Achievement>>()
     val unlockedAchievements: LiveData<List<Achievement>> get() = _unlockedAchievements
 
+    // LiveData to track loading state
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> get() = _isLoading
+
+    // LiveData to handle error messages
+    private val _errorMessage = MutableLiveData<String>()
+    val errorMessage: LiveData<String> get() = _errorMessage
+
     // LiveData to track the overall progress towards achievements
     private val _achievementProgress = MutableLiveData<Map<Achievement, Float>>()
     val achievementProgress: LiveData<Map<Achievement, Float>> get() = _achievementProgress
+
+    // LiveData to observe the player's unlocked achievements
+    private val _achievements = MutableLiveData<List<Achievement>>()
+    val achievements: LiveData<List<Achievement>> get() = _achievements
+
 
     // LiveData to notify the UI when a new achievement is unlocked
     private val _newAchievementUnlocked = MutableLiveData<Achievement>()
@@ -31,11 +44,14 @@ class AchievementViewModel(
      * Load the player's unlocked achievements from the repository.
      */
     fun loadAchievements(player: Player) {
+        _isLoading.value = true  // Set loading to true before starting the process
         try {
             val achievements = achievementRepository.getAchievementsForPlayer(player.id)
-            _unlockedAchievements.value = achievements.filter { it.isUnlocked }
+            _achievements.value = achievements
         } catch (e: Exception) {
-            _error.value = "Failed to load achievements: ${e.message}"
+            _errorMessage.value = "Failed to load achievements: ${e.message}"  // Set error message
+        } finally {
+            _isLoading.value = false  // Set loading to false after the process finishes
         }
     }
 
