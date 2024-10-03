@@ -7,6 +7,7 @@ import com.example.cow_cow.managers.PowerUpManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.PowerUp
 import com.example.cow_cow.enums.PowerUpType
+import android.util.Log
 
 class PowerUpViewModel : ViewModel() {
 
@@ -23,43 +24,83 @@ class PowerUpViewModel : ViewModel() {
     val isPowerUpActive: LiveData<Boolean> get() = _isPowerUpActive
 
     // Reference to the PowerUpManager to handle power-up logic
-    private val powerUpManager = PowerUpManager()
+    private val powerUpManager = PowerUpManager
 
-    // Function to initialize the power-ups for a player
+    // Logging tag for debugging
+    private val TAG = "PowerUpViewModel"
+
+    /**
+     * Initialize the power-ups for the specified player.
+     *
+     * @param player The player whose power-ups are being initialized.
+     */
     fun initializePowerUps(player: Player) {
+        Log.d(TAG, "Initializing power-ups for player: ${player.name}")
         val availablePowerUps = powerUpManager.getAvailablePowerUps(player)
         _availablePowerUps.value = availablePowerUps
 
         val activePowerUps = powerUpManager.getActivePowerUps(player)
         _activePowerUps.value = activePowerUps
+        Log.d(TAG, "Power-ups initialized. Available: ${availablePowerUps.size}, Active: ${activePowerUps.size}")
     }
 
-    // Function to activate a power-up for a player
+    /**
+     * Activate a power-up for a player.
+     *
+     * @param player The player activating the power-up.
+     * @param powerUpType The type of power-up being activated.
+     */
     fun activatePowerUp(player: Player, powerUpType: PowerUpType) {
-        powerUpManager.activatePowerUp(player, powerUpType)
+        Log.d(TAG, "Activating power-up ${powerUpType.name} for player: ${player.name}")
+        powerUpManager.activatePowerUp(player, powerUpType, duration = 60000L) // Example duration of 60 seconds
         updatePowerUpState(player)
     }
 
-    // Function to deactivate a power-up for a player
+    /**
+     * Deactivate a power-up for a player.
+     *
+     * @param player The player deactivating the power-up.
+     * @param powerUpType The type of power-up being deactivated.
+     */
     fun deactivatePowerUp(player: Player, powerUpType: PowerUpType) {
+        Log.d(TAG, "Deactivating power-up ${powerUpType.name} for player: ${player.name}")
         powerUpManager.deactivatePowerUp(player, powerUpType)
         updatePowerUpState(player)
     }
 
-    // Helper function to update the power-up state in the ViewModel
+    /**
+     * Update the power-up state for the specified player in the ViewModel.
+     *
+     * @param player The player whose power-up state is being updated.
+     */
     private fun updatePowerUpState(player: Player) {
         _activePowerUps.value = powerUpManager.getActivePowerUps(player)
         _availablePowerUps.value = powerUpManager.getAvailablePowerUps(player)
         _isPowerUpActive.value = powerUpManager.isPowerUpActive(player, PowerUpType.DOUBLE_POINTS)
+        Log.d(TAG, "Updated power-up state for player: ${player.name}")
     }
 
-    // Function to check if a specific power-up is active for a player
+    /**
+     * Check if a specific power-up is active for the player.
+     *
+     * @param player The player whose power-up status is being checked.
+     * @param powerUpType The type of power-up to check.
+     * @return True if the power-up is active, false otherwise.
+     */
     fun isSpecificPowerUpActive(player: Player, powerUpType: PowerUpType): Boolean {
-        return powerUpManager.isPowerUpActive(player, powerUpType)
+        val isActive = powerUpManager.isPowerUpActive(player, powerUpType)
+        Log.d(TAG, "Power-up ${powerUpType.name} active for player: ${player.name} -> $isActive")
+        return isActive
     }
 
-    // Function to handle the expiration of a power-up (optional)
+    /**
+     * Handle the expiration of a power-up for the player.
+     *
+     * @param player The player whose power-up expired.
+     * @param powerUpType The type of power-up that expired.
+     */
     fun handlePowerUpExpiration(player: Player, powerUpType: PowerUpType) {
+        Log.d(TAG, "Handling power-up expiration for ${powerUpType.name} for player: ${player.name}")
         powerUpManager.deactivatePowerUp(player, powerUpType)
         updatePowerUpState(player)
     }

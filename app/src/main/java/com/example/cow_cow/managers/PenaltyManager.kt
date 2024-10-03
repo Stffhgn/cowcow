@@ -1,11 +1,14 @@
 package com.example.cow_cow.managers
 
+import android.util.Log
 import com.example.cow_cow.models.Penalty
 import com.example.cow_cow.enums.PenaltyType
 import com.example.cow_cow.models.Player
 import java.util.*
 
 object PenaltyManager {
+
+    private val TAG = "PenaltyManager"
 
     /**
      * Apply a penalty to a specific player.
@@ -14,6 +17,7 @@ object PenaltyManager {
      * @param penalty The penalty to be applied.
      */
     fun applyPenalty(player: Player, penalty: Penalty) {
+        Log.d(TAG, "Applying penalty ${penalty.name} to player ${player.name}")
         player.penalties.add(penalty)
         when (penalty.penaltyType) {
             PenaltyType.POINT_DEDUCTION -> deductPoints(player, penalty)
@@ -32,8 +36,55 @@ object PenaltyManager {
      * @param player The player whose penalties will be checked.
      */
     fun removeExpiredPenalties(player: Player) {
+        Log.d(TAG, "Checking for expired penalties for player ${player.name}")
         val currentTime = System.currentTimeMillis()
-        player.penalties.removeIf { penalty -> penalty.hasExpired(currentTime, null) }
+        player.penalties.removeIf { penalty ->
+            val expired = penalty.hasExpired(currentTime, null)
+            if (expired) Log.d(TAG, "Penalty ${penalty.name} has expired for player ${player.name}")
+            expired
+        }
+    }
+
+    fun removePenalty(player: Player, penalty: Penalty) {
+        // Log the penalty removal action
+        Log.d("PenaltyManager", "Attempting to remove penalty ${penalty.name} from player ${player.name}.")
+
+        // Remove the specific penalty from the player's active penalties list
+        val removed = player.penalties.remove(penalty)
+
+        if (removed) {
+            Log.d("PenaltyManager", "Penalty ${penalty.name} removed from player ${player.name}.")
+        } else {
+            Log.d("PenaltyManager", "Penalty ${penalty.name} not found for player ${player.name}.")
+        }
+
+        // Optionally: Clean up any state changes the penalty may have caused (e.g., unsilence player)
+        if (penalty.penaltyType == PenaltyType.SILENCED) {
+            player.isSilenced = false
+            Log.d("PenaltyManager", "Player ${player.name} is no longer silenced.")
+        }
+
+        // If necessary, refresh the player's points or status
+        if (penalty.penaltyType == PenaltyType.POINT_DEDUCTION) {
+            player.basePoints += penalty.pointsDeducted
+            Log.d("PenaltyManager", "Restored ${penalty.pointsDeducted} points to player ${player.name}.")
+        }
+    }
+
+    /**
+     * Clears all penalties for a specific player.
+     *
+     * @param player The player whose penalties will be cleared.
+     */
+    fun clearPlayerPenalties(player: Player) {
+        // Log the action
+        Log.d("PlayerManager", "Clearing all penalties for player ${player.name}.")
+
+        // Clear the penalties
+        player.penalties.clear()
+
+        // Log the completion of penalty clearing
+        Log.d("PlayerManager", "All penalties cleared for player ${player.name}.")
     }
 
     /**
@@ -45,6 +96,7 @@ object PenaltyManager {
     private fun deductPoints(player: Player, penalty: Penalty) {
         val effectivePointsDeduction = (penalty.pointsDeducted * penalty.multiplier).toInt()
         player.basePoints -= effectivePointsDeduction
+        Log.d(TAG, "${effectivePointsDeduction} points deducted from player ${player.name} due to penalty ${penalty.name}")
     }
 
     /**
@@ -54,10 +106,12 @@ object PenaltyManager {
      * @param durationMillis The duration (in milliseconds) of the silence penalty.
      */
     private fun silencePlayer(player: Player, durationMillis: Long) {
+        Log.d(TAG, "Silencing player ${player.name} for $durationMillis milliseconds.")
         player.isSilenced = true
         Timer().schedule(object : TimerTask() {
             override fun run() {
                 player.isSilenced = false
+                Log.d(TAG, "Player ${player.name} is no longer silenced.")
             }
         }, durationMillis)
     }
@@ -69,10 +123,12 @@ object PenaltyManager {
      * @param durationMillis The duration (in milliseconds) of the ban.
      */
     private fun banPlayer(player: Player, durationMillis: Long) {
+        Log.d(TAG, "Banning player ${player.name} for $durationMillis milliseconds.")
         player.isSilenced = true  // You can customize this to handle specific restrictions
         Timer().schedule(object : TimerTask() {
             override fun run() {
                 player.isSilenced = false
+                Log.d(TAG, "Player ${player.name} ban has been lifted.")
             }
         }, durationMillis)
     }
@@ -83,6 +139,7 @@ object PenaltyManager {
      * @param player The player who made the false call.
      */
     private fun handleFalseCall(player: Player) {
+        Log.d(TAG, "Handling false call for player ${player.name}. Applying penalty.")
         // For false calls, deduct points or apply other penalties
         val falseCallPenalty = Penalty(
             id = UUID.randomUUID().hashCode(),
@@ -100,6 +157,7 @@ object PenaltyManager {
      * @param penalty The penalty object detailing the time penalty.
      */
     private fun applyTimePenalty(player: Player, penalty: Penalty) {
+        Log.d(TAG, "Applying time penalty to player ${player.name}")
         // Implementation for time-based penalties can be expanded as per game mechanics
         // For example, reduce the player's remaining time in time-based modes
     }
@@ -111,6 +169,7 @@ object PenaltyManager {
      * @param penalty The penalty object.
      */
     private fun handleCustomPenalty(player: Player, penalty: Penalty) {
+        Log.d(TAG, "Applying custom penalty ${penalty.name} to player ${player.name}")
         // Implement any custom logic based on your game
         // This could be something like unique punishments, special rules, etc.
     }
@@ -121,6 +180,7 @@ object PenaltyManager {
      * @param player The player whose penalties will be cleared.
      */
     fun clearAllPenalties(player: Player) {
+        Log.d(TAG, "Clearing all penalties for player ${player.name}.")
         player.penalties.clear()
     }
 
@@ -132,13 +192,32 @@ object PenaltyManager {
      */
     fun isPlayerPenalized(player: Player): Boolean {
         removeExpiredPenalties(player)
-        return player.isPenalized()
+        val isPenalized = player.penalties.any { it.isActive }
+        Log.d(TAG, "Player ${player.name} penalized: $isPenalized")
+        return isPenalized
+    }
+
+    /**
+     * Retrieve all active penalties.
+     *
+     * @return List of all currently active penalties.
+     */
+    fun getActivePenalties(): List<Penalty> {
+        Log.d(TAG, "Retrieving all active penalties.")
+        val allPenalties = mutableListOf<Penalty>()
+        // Sweep through all players and retrieve their active penalties
+        // Here, assume you have access to a list of all players
+        // Example:
+        // players.forEach { player -> allPenalties.addAll(player.penalties.filter { it.isActive }) }
+        Log.d(TAG, "Total active penalties retrieved: ${allPenalties.size}")
+        return allPenalties
     }
 
     /**
      * Example penalty application flow, could be invoked by game events.
      */
     fun triggerPenaltyBasedOnEvent(player: Player, event: String) {
+        Log.d(TAG, "Triggering penalty based on event: $event for player ${player.name}")
         when (event) {
             "missed_call" -> {
                 val penalty = Penalty(

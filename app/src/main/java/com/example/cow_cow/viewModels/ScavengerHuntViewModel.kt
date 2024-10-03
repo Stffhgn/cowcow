@@ -2,10 +2,12 @@ package com.example.cow_cow.viewModels
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.ScavengerHuntItem
 import com.example.cow_cow.repositories.ScavengerHuntRepository
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +16,7 @@ import kotlinx.coroutines.withContext
 
 class ScavengerHuntViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = ScavengerHuntRepository()
+    private val repository = ScavengerHuntRepository(application.applicationContext)
 
     // LiveData for scavenger hunt items
     private val _scavengerHuntItems = MutableLiveData<List<ScavengerHuntItem>>()
@@ -39,14 +41,22 @@ class ScavengerHuntViewModel(application: Application) : AndroidViewModel(applic
     fun loadScavengerHuntItems() {
         viewModelScope.launch {
             try {
+                // Get the application context
                 val context = getApplication<Application>().applicationContext
+
+                // Load items from the repository using context
                 val items = withContext(Dispatchers.IO) {
                     repository.getScavengerHuntItems(context)
                 }
+
+                // Update LiveData with the loaded items
                 _scavengerHuntItems.value = items
                 _statusMessage.value = "Items loaded successfully"
+                Log.d("ScavengerHuntViewModel", "Scavenger hunt items loaded successfully: ${items.size} items.")
             } catch (e: Exception) {
+                // Handle and log the error
                 _errorMessage.value = "Failed to load scavenger hunt items: ${e.message}"
+                Log.e("ScavengerHuntViewModel", "Error loading scavenger hunt items: ${e.message}", e)
             }
         }
     }
@@ -59,8 +69,10 @@ class ScavengerHuntViewModel(application: Application) : AndroidViewModel(applic
             try {
                 repository.saveScavengerHuntItems(items, context)
                 _statusMessage.postValue("Items saved successfully")
+                Log.d("ScavengerHuntViewModel", "Scavenger hunt items saved successfully: ${items.size} items.")
             } catch (e: Exception) {
                 _errorMessage.postValue("Failed to save scavenger hunt items: ${e.message}")
+                Log.e("ScavengerHuntViewModel", "Error saving scavenger hunt items: ${e.message}", e)
             }
         }
     }
@@ -76,8 +88,10 @@ class ScavengerHuntViewModel(application: Application) : AndroidViewModel(applic
                 }
                 loadScavengerHuntItems() // Reload the items after adding a new one
                 _statusMessage.value = "Scavenger hunt item added successfully."
+                Log.d("ScavengerHuntViewModel", "Scavenger hunt item added: ${item.name}.")
             } catch (e: Exception) {
                 _errorMessage.value = "Error adding scavenger hunt item: ${e.message}"
+                Log.e("ScavengerHuntViewModel", "Error adding scavenger hunt item: ${e.message}", e)
             }
         }
     }
@@ -100,15 +114,17 @@ class ScavengerHuntViewModel(application: Application) : AndroidViewModel(applic
                 val updatedItems = currentItems.map { if (it.name == item.name) item else it }
                 _scavengerHuntItems.postValue(updatedItems)
 
-                // Optionally show a success message
+                // Show a success message
                 _statusMessage.postValue("${item.name} was found by ${player.name}!")
 
-                // Save the updated list back to the repository (optional)
+                // Save the updated list back to the repository
                 withContext(Dispatchers.IO) {
                     repository.saveScavengerHuntItems(updatedItems, getApplication<Application>().applicationContext)
                 }
+                Log.d("ScavengerHuntViewModel", "Scavenger hunt item marked as found: ${item.name} by ${player.name}.")
             } catch (e: Exception) {
                 _errorMessage.postValue("Error marking item as found: ${e.message}")
+                Log.e("ScavengerHuntViewModel", "Error marking scavenger hunt item as found: ${e.message}", e)
             }
         }
     }
@@ -124,8 +140,10 @@ class ScavengerHuntViewModel(application: Application) : AndroidViewModel(applic
                 // Reload updated items into LiveData
                 loadScavengerHuntItems()
                 _statusMessage.postValue("Items updated from server")
+                Log.d("ScavengerHuntViewModel", "Scavenger hunt items updated from server.")
             } catch (e: Exception) {
                 _errorMessage.postValue("Failed to update items from server: ${e.message}")
+                Log.e("ScavengerHuntViewModel", "Error updating scavenger hunt items from server: ${e.message}", e)
             }
         }
     }

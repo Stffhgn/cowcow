@@ -11,8 +11,16 @@ data class TriviaQuestion(
     val correctAnswer: String,             // The correct answer
     val difficultyLevel: DifficultyLevel,  // Difficulty level of the question
     val points: Int,                       // Points awarded for a correct answer
-    val hint: String? = null               // Optional hint for the question
+    private val hint: String? = null               // Optional hint for the question
 ) : Parcelable {
+
+    /**
+     * Get the hint for the trivia question.
+     * Renamed to avoid conflict with Kotlin's generated getter for `hint` property.
+     */
+    fun fetchHint(): String? {
+        return hint ?: "No hint available."
+    }
 
     /**
      * Validates whether the provided answer is correct.

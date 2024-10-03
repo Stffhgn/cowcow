@@ -2,15 +2,11 @@ package com.example.cow_cow.repositories
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.example.cow_cow.enums.AgeGroup
-import com.example.cow_cow.enums.DifficultyLevel
-import com.example.cow_cow.enums.LocationType
-import com.example.cow_cow.enums.Season
-import com.example.cow_cow.enums.TimeOfDay
-import com.example.cow_cow.enums.WeatherCondition
-import com.example.cow_cow.models.*
+import com.example.cow_cow.enums.*
+import com.example.cow_cow.models.ScavengerHuntItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -23,19 +19,27 @@ class ScavengerHuntRepository(private val context: Context) {
     private val _scavengerHuntItems = MutableLiveData<List<ScavengerHuntItem>>()
     val scavengerHuntItems: LiveData<List<ScavengerHuntItem>> get() = _scavengerHuntItems
 
-    // Get SharedPreferences instance
+    /**
+     * Get SharedPreferences instance
+     */
     private fun getSharedPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
-    // Load scavenger hunt items from local storage and update LiveData
+    /**
+     * Load scavenger hunt items from local storage and update LiveData
+     */
     fun loadScavengerHuntItems() {
-        val items = getScavengerHuntItems()
+        Log.d("ScavengerHuntRepository", "Loading scavenger hunt items from SharedPreferences.")
+        val items = getScavengerHuntItems(context)
         _scavengerHuntItems.value = items
+        Log.d("ScavengerHuntRepository", "Loaded ${items.size} scavenger hunt items.")
     }
 
-    // Retrieve scavenger hunt items from local storage (SharedPreferences)
-    fun getScavengerHuntItems(): List<ScavengerHuntItem> {
+    /**
+     * Retrieve scavenger hunt items from local storage (SharedPreferences)
+     */
+    fun getScavengerHuntItems(context: Context): List<ScavengerHuntItem> {
         val prefs = getSharedPreferences(context)
         val json = prefs.getString(SCAVENGER_HUNT_KEY, null)
         return if (json != null) {
@@ -43,12 +47,16 @@ class ScavengerHuntRepository(private val context: Context) {
             gson.fromJson(json, type)
         } else {
             // If no data is found, return the default hardcoded items
+            Log.d("ScavengerHuntRepository", "No scavenger hunt items found in SharedPreferences, loading default items.")
             getDefaultScavengerHuntItems()
         }
     }
 
-    // Save scavenger hunt items to SharedPreferences and update LiveData
+    /**
+     * Save scavenger hunt items to SharedPreferences and update LiveData
+     */
     fun saveScavengerHuntItems(items: List<ScavengerHuntItem>, context: Context) {
+        Log.d("ScavengerHuntRepository", "Saving ${items.size} scavenger hunt items to SharedPreferences.")
         val prefs = getSharedPreferences(context)
         val editor = prefs.edit()
         val json = gson.toJson(items)
@@ -57,36 +65,54 @@ class ScavengerHuntRepository(private val context: Context) {
 
         // Update LiveData so observers are notified
         _scavengerHuntItems.value = items
+        Log.d("ScavengerHuntRepository", "Scavenger hunt items saved and LiveData updated.")
     }
 
-    // Add a new scavenger hunt item to the list and save
+    /**
+     * Add a new scavenger hunt item to the list and save
+     */
     fun addScavengerHuntItem(item: ScavengerHuntItem, context: Context) {
-        val currentItems = getScavengerHuntItems().toMutableList()
+        Log.d("ScavengerHuntRepository", "Adding new scavenger hunt item: ${item.name}.")
+        val currentItems = getScavengerHuntItems(context).toMutableList()
         currentItems.add(item)
         saveScavengerHuntItems(currentItems, context)
+        Log.d("ScavengerHuntRepository", "Scavenger hunt item added: ${item.name}.")
     }
 
-    // Remove an existing scavenger hunt item from the list and save
+    /**
+     * Remove an existing scavenger hunt item from the list and save
+     */
     fun removeScavengerHuntItem(item: ScavengerHuntItem, context: Context) {
-        val currentItems = getScavengerHuntItems().toMutableList()
+        Log.d("ScavengerHuntRepository", "Removing scavenger hunt item: ${item.name}.")
+        val currentItems = getScavengerHuntItems(context).toMutableList()
         currentItems.remove(item)
         saveScavengerHuntItems(currentItems, context)
+        Log.d("ScavengerHuntRepository", "Scavenger hunt item removed: ${item.name}.")
     }
 
-    // Clear all scavenger hunt items (for reset)
+    /**
+     * Clear all scavenger hunt items (for reset)
+     */
     fun clearScavengerHuntItems(context: Context) {
+        Log.d("ScavengerHuntRepository", "Clearing all scavenger hunt items.")
         saveScavengerHuntItems(emptyList(), context)
     }
 
-    // Filter scavenger hunt items based on tags
-    fun getFilteredScavengerHuntItems(tags: List<String>): List<ScavengerHuntItem> {
-        return getScavengerHuntItems().filter { item ->
+    /**
+     * Filter scavenger hunt items based on tags
+     */
+    fun getFilteredScavengerHuntItems(tags: List<String>, context: Context): List<ScavengerHuntItem> {
+        Log.d("ScavengerHuntRepository", "Filtering scavenger hunt items based on tags.")
+        return getScavengerHuntItems(context).filter { item ->
             tags.any { tag -> item.tags.contains(tag) }
         }
     }
 
-    // Retrieve the default scavenger hunt items (hardcoded list)
+    /**
+     * Retrieve the default scavenger hunt items (hardcoded list)
+     */
     private fun getDefaultScavengerHuntItems(): List<ScavengerHuntItem> {
+        Log.d("ScavengerHuntRepository", "Loading default scavenger hunt items.")
         return listOf(
             ScavengerHuntItem(
                 name = "Find a red car",
@@ -107,13 +133,16 @@ class ScavengerHuntRepository(private val context: Context) {
                 weather = WeatherCondition.CLEAR,
                 specialOccasion = null,
                 season = Season.ALL
-            ),
+            )
             // Add more default items as needed...
         )
     }
 
-    // Method to update scavenger hunt items from server (for OTA updates)
+    /**
+     * Method to update scavenger hunt items from server (for OTA updates)
+     */
     fun updateScavengerHuntItemsFromServer(items: List<ScavengerHuntItem>, context: Context) {
+        Log.d("ScavengerHuntRepository", "Updating scavenger hunt items from server.")
         saveScavengerHuntItems(items, context)
     }
 }

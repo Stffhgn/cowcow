@@ -1,5 +1,6 @@
 package com.example.cow_cow.managers
 
+import android.content.Context
 import android.util.Log
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.ScavengerHuntItem
@@ -20,7 +21,7 @@ object ScavengerHuntManager {
      * @param scavengerHuntRepository Repository to fetch scavenger hunt items from.
      * @param difficulty Optional difficulty filter (e.g., "Easy", "Hard").
      */
-    fun startScavengerHunt(player: Player, scavengerHuntRepository: ScavengerHuntRepository, difficulty: String? = null) {
+    fun startScavengerHunt(player: Player, scavengerHuntRepository: ScavengerHuntRepository, context: Context, difficulty: String? = null) {
         Log.d(TAG, "Starting scavenger hunt for player: ${player.name}, difficulty: $difficulty")
 
         // Clear previous hunt data and reset completion status
@@ -28,7 +29,7 @@ object ScavengerHuntManager {
         huntCompleted = false
 
         // Load scavenger hunt items based on difficulty or other conditions
-        val allItems = scavengerHuntRepository.getScavengerHuntItems()
+        val allItems = scavengerHuntRepository.getScavengerHuntItems(context)
         val filteredItems = allItems.filter { item -> difficulty == null || item.difficultyLevel.name == difficulty }
 
         activeScavengerHuntItems.addAll(filteredItems)

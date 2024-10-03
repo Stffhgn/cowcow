@@ -4,11 +4,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.adapters.StoreAdapter
 import com.example.cow_cow.databinding.FragmentStoreBinding
+import com.example.cow_cow.models.Player
+import com.example.cow_cow.viewModels.PurchaseResult
 import com.example.cow_cow.viewModels.StoreViewModel
 
 class StoreFragment : Fragment() {
@@ -38,7 +41,27 @@ class StoreFragment : Fragment() {
         storeViewModel.storeItems.observe(viewLifecycleOwner) { items ->
             (binding.storeRecyclerView.adapter as StoreAdapter).submitList(items)
         }
+
+        // Observe any error or purchase results
+        storeViewModel.error.observe(viewLifecycleOwner) { errorMessage ->
+            // Show error message if any
+            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+        }
+
+        storeViewModel.purchaseResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is PurchaseResult.Success -> {
+                    // Handle successful purchase
+                    Toast.makeText(context, "${result.item.name} purchased!", Toast.LENGTH_SHORT).show()
+                }
+                is PurchaseResult.Failure -> {
+                    // Handle failed purchase
+                    Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
+
 
     /**
      * Initialize RecyclerView for displaying store items.
@@ -51,11 +74,5 @@ class StoreFragment : Fragment() {
                 storeViewModel.purchaseItem(storeItem)
             }
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        // Nullify the binding to prevent memory leaks
-        _binding = null
     }
 }

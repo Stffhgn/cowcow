@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
-class SettingsViewModelFactory(
+class ScoreViewModelFactory(
     private val application: Application,
     private val sharedPreferences: SharedPreferences
 ) : ViewModelProvider.Factory {

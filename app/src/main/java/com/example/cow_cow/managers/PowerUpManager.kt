@@ -20,7 +20,7 @@ object PowerUpManager {
     fun activatePowerUp(player: Player, powerUpType: PowerUpType, duration: Long, effectValue: Int = 0) {
         Log.d(TAG, "Activating power-up ${powerUpType.name} for player ${player.name}")
 
-        // Create the power-up and activate it
+        // Create the power-up and add it to the player's active power-ups
         val powerUp = PowerUp(
             type = powerUpType,
             isActive = true,
@@ -28,7 +28,6 @@ object PowerUpManager {
             effectValue = effectValue
         )
 
-        // Add the power-up to the player's active power-ups
         player.activePowerUps.add(powerUp)
         applyPowerUpEffect(player, powerUp)
     }
@@ -42,7 +41,7 @@ object PowerUpManager {
     fun deactivatePowerUp(player: Player, powerUpType: PowerUpType) {
         Log.d(TAG, "Deactivating power-up ${powerUpType.name} for player ${player.name}")
 
-        // Find the power-up to deactivate
+        // Find the power-up and deactivate it
         val powerUp = player.activePowerUps.find { it.type == powerUpType && it.isActive }
         powerUp?.let {
             it.isActive = false
@@ -51,7 +50,7 @@ object PowerUpManager {
     }
 
     /**
-     * Checks for any expired power-ups and deactivates them.
+     * Checks for any expired power-ups and deactivates them for a player.
      *
      * @param player The player whose power-ups are being checked.
      */
@@ -87,16 +86,11 @@ object PowerUpManager {
                 player.isSilenced = false
                 Log.d(TAG, "Immunity applied: ${player.name} is no longer silenced.")
             }
-            // Add other PowerUpTypes as needed
-            // PowerUpType.SPEED_BOOST, PowerUpType.EXTRA_TIME, PowerUpType.SHIELD, PowerUpType.HEALTH_REGEN -> {
-            //     Add specific logic here if needed
-            // }
             else -> {
-                Log.d(TAG, "Power-up ${powerUp.type.name} has no specific effect applied.")
+                Log.d(TAG, "No specific effect applied for power-up: ${powerUp.type.name}")
             }
         }
     }
-
 
     /**
      * Removes the effect of the given power-up from the player.
@@ -116,15 +110,16 @@ object PowerUpManager {
                 player.isSilenced = true
                 Log.d(TAG, "Player ${player.name} is silenced again after immunity ends.")
             }
-            // Add logic for other power-ups if necessary
-            else -> Log.d(TAG, "Power-up ${powerUp.type.name} has no specific removal logic.")
+            else -> {
+                Log.d(TAG, "No specific removal effect for power-up: ${powerUp.type.name}")
+            }
         }
     }
 
     /**
-     * Removes all active power-ups from a player (e.g., during game reset).
+     * Clears all active power-ups from the player's list.
      *
-     * @param player The player whose power-ups will be cleared.
+     * @param player The player whose active power-ups will be cleared.
      */
     fun clearActivePowerUps(player: Player) {
         Log.d(TAG, "Clearing all active power-ups for player ${player.name}")
@@ -145,16 +140,52 @@ object PowerUpManager {
     }
 
     /**
-     * Grants a power-up to all players in the game.
+     * Grants a specific power-up to all players in the game.
      *
      * @param players The list of players receiving the power-up.
      * @param powerUpType The type of power-up to grant.
      * @param duration The duration of the power-up.
      */
     fun grantPowerUpToAll(players: List<Player>, powerUpType: PowerUpType, duration: Long) {
-        Log.d(TAG, "Granting power-up ${powerUpType.name} to all players")
+        Log.d(TAG, "Granting power-up ${powerUpType.name} to all players.")
         players.forEach { player ->
             activatePowerUp(player, powerUpType, duration)
         }
+    }
+
+    /**
+     * Retrieves the list of active power-ups for a player.
+     *
+     * @param player The player whose active power-ups are being retrieved.
+     * @return List of active power-ups.
+     */
+    fun getActivePowerUps(player: Player): List<PowerUp> {
+        return player.activePowerUps.filter { it.isActive }
+    }
+
+    /**
+     * Retrieves the list of available power-ups for a player (e.g., from a shop or power-up menu).
+     *
+     * @param player The player whose available power-ups are being retrieved.
+     * @return List of available power-ups.
+     */
+    fun getAvailablePowerUps(player: Player): List<PowerUp> {
+        // This could be based on game logic such as what power-ups are currently unlockable.
+        return listOf(
+            PowerUp(type = PowerUpType.DOUBLE_POINTS, isActive = false),
+            PowerUp(type = PowerUpType.BONUS_POINTS, isActive = false),
+            PowerUp(type = PowerUpType.IMMUNITY, isActive = false)
+        ) // Example power-ups available for this player.
+    }
+
+    /**
+     * Checks if a specific power-up is currently active for the player.
+     *
+     * @param player The player whose power-up status is being checked.
+     * @param powerUpType The type of power-up to check.
+     * @return True if the power-up is active, false otherwise.
+     */
+    fun isPowerUpActive(player: Player, powerUpType: PowerUpType): Boolean {
+        return player.activePowerUps.any { it.type == powerUpType && it.isActive }
     }
 }

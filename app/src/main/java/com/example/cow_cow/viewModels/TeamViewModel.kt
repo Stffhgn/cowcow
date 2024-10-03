@@ -7,12 +7,17 @@ import androidx.lifecycle.MutableLiveData
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Team
 import com.example.cow_cow.repositories.TeamRepository
+import com.example.cow_cow.utils.TeamUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.util.Log
+import androidx.lifecycle.viewModelScope
 
 class TeamViewModel(application: Application, private val repository: TeamRepository) :
     AndroidViewModel(application) {
+
+    private val TAG = "TeamViewModel"
 
     // LiveData for the current team
     private val _team = MutableLiveData<Team>()
@@ -40,11 +45,13 @@ class TeamViewModel(application: Application, private val repository: TeamReposi
     private fun loadTeam() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                Log.d(TAG, "Loading team from repository.")
                 val loadedTeam = repository.getTeam()
                 _team.postValue(loadedTeam)
                 updateTeamScore()
             } catch (e: Exception) {
                 _error.postValue("Error loading team: ${e.message}")
+                Log.e(TAG, "Error loading team: ${e.message}")
             }
         }
     }
@@ -55,18 +62,22 @@ class TeamViewModel(application: Application, private val repository: TeamReposi
     fun addPlayerToTeam(player: Player) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val currentTeam = _team.value ?: Team(mutableListOf())
+                Log.d(TAG, "Adding player ${player.name} to the team.")
+                val currentTeam = _team.value ?: Team(id = 1, name = "Team", members = mutableListOf())
                 if (!currentTeam.members.contains(player)) {
-                    currentTeam.members.add(player)
-                    repository.saveTeam(currentTeam)
+                    // Use TeamUtils to handle the logic
+                    TeamUtils.addPlayerToTeam(player, currentTeam)
+                    repository.saveTeam(currentTeam) // This should save a single team
                     _team.postValue(currentTeam)
                     updateTeamScore()
                     _success.postValue("${player.name} has been added to the team.")
                 } else {
                     _error.postValue("${player.name} is already in the team.")
+                    Log.w(TAG, "Player ${player.name} is already in the team.")
                 }
             } catch (e: Exception) {
                 _error.postValue("Error adding player to team: ${e.message}")
+                Log.e(TAG, "Error adding player to team: ${e.message}")
             }
         }
     }
@@ -77,18 +88,22 @@ class TeamViewModel(application: Application, private val repository: TeamReposi
     fun removePlayerFromTeam(player: Player) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                Log.d(TAG, "Removing player ${player.name} from the team.")
                 val currentTeam = _team.value
                 if (currentTeam != null && currentTeam.members.contains(player)) {
-                    currentTeam.members.remove(player)
-                    repository.saveTeam(currentTeam)
+                    // Use TeamUtils to handle the logic
+                    TeamUtils.removePlayerFromTeam(player, currentTeam)
+                    repository.saveTeam(currentTeam) // This should save a single team
                     _team.postValue(currentTeam)
                     updateTeamScore()
                     _success.postValue("${player.name} has been removed from the team.")
                 } else {
                     _error.postValue("${player.name} is not in the team.")
+                    Log.w(TAG, "Player ${player.name} is not in the team.")
                 }
             } catch (e: Exception) {
                 _error.postValue("Error removing player from team: ${e.message}")
+                Log.e(TAG, "Error removing player from team: ${e.message}")
             }
         }
     }
@@ -100,6 +115,7 @@ class TeamViewModel(application: Application, private val repository: TeamReposi
         _team.value?.let { team ->
             val score = team.members.sumOf { it.calculateTotalPoints() }
             _teamScore.postValue(score)
+            Log.d(TAG, "Updated team score: $score")
         }
     }
 
@@ -108,6 +124,7 @@ class TeamViewModel(application: Application, private val repository: TeamReposi
      */
     fun clearError() {
         _error.value = null
+        Log.d(TAG, "Cleared error messages.")
     }
 
     /**
@@ -115,6 +132,7 @@ class TeamViewModel(application: Application, private val repository: TeamReposi
      */
     fun clearSuccessMessage() {
         _success.value = null
+        Log.d(TAG, "Cleared success messages.")
     }
 
     /**
@@ -123,13 +141,15 @@ class TeamViewModel(application: Application, private val repository: TeamReposi
     fun resetTeam() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val newTeam = Team(mutableListOf())
-                repository.saveTeam(newTeam)
+                Log.d(TAG, "Resetting the team.")
+                val newTeam = Team(id = 1, name = "Team", members = mutableListOf())
+                repository.saveTeam(newTeam) // This should save a single team
                 _team.postValue(newTeam)
                 updateTeamScore()
                 _success.postValue("The team has been reset.")
             } catch (e: Exception) {
                 _error.postValue("Error resetting team: ${e.message}")
+                Log.e(TAG, "Error resetting team: ${e.message}")
             }
         }
     }

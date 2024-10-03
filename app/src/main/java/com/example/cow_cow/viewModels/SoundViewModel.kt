@@ -4,9 +4,11 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.cow_cow.enums.SoundSettings
 import com.example.cow_cow.enums.SoundType
 import com.example.cow_cow.repositories.SoundRepository
+import kotlinx.coroutines.launch
 
 class SoundViewModel(application: Application, private val soundRepository: SoundRepository) : AndroidViewModel(application) {
 

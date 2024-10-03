@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.cow_cow.models.DifficultyLevel
+import com.example.cow_cow.enums.DifficultyLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -32,6 +32,7 @@ class SettingsViewModel(
     private val _timerDuration = MutableLiveData<Long>()  // Duration in milliseconds
     val timerDuration: MutableLiveData<Long> get() = _timerDuration
 
+    // Volume level settings (range: 0.0 - 1.0)
     private val _volumeLevel = MutableLiveData<Float>()
     val volumeLevel: MutableLiveData<Float> get() = _volumeLevel
 
@@ -62,6 +63,7 @@ class SettingsViewModel(
                 _timerDuration.postValue(sharedPreferences.getLong("timer_duration", 300000L)) // Default to 5 minutes
                 _isDarkModeEnabled.postValue(sharedPreferences.getBoolean("dark_mode", false))
                 _isNotificationsEnabled.postValue(sharedPreferences.getBoolean("notifications_enabled", true))
+                _volumeLevel.postValue(sharedPreferences.getFloat("volume_level", 1.0f)) // Default volume is 1.0
             }
         }
     }
@@ -106,17 +108,13 @@ class SettingsViewModel(
         saveSetting("notifications_enabled", isEnabled)
     }
 
-    // Function to set volume
+    /**
+     * Save volume level settings.
+     */
     fun setVolumeLevel(volume: Float) {
         _volumeLevel.value = volume
         saveSetting("volume_level", volume)
     }
-
-    // Add saveSetting for float values
-    private fun saveSetting(key: String, value: Float) {
-        viewModelScope.launch(Dispatchers.IO) {
-            sharedPreferences.edit().putFloat(key, value).apply()
-        }
 
     // --- Save Settings Helper Functions ---
 
@@ -147,6 +145,15 @@ class SettingsViewModel(
         }
     }
 
+    /**
+     * Generic save setting function for float values.
+     */
+    private fun saveSetting(key: String, value: Float) {
+        viewModelScope.launch(Dispatchers.IO) {
+            sharedPreferences.edit().putFloat(key, value).apply()
+        }
+    }
+
     // --- Reset Settings ---
 
     /**
@@ -158,5 +165,6 @@ class SettingsViewModel(
         setTimerDuration(300000L) // 5 minutes default
         setDarkModeEnabled(false)
         setNotificationsEnabled(true)
+        setVolumeLevel(1.0f) // Default volume level
     }
 }

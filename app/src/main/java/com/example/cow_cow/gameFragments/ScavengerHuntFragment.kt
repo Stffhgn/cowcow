@@ -62,7 +62,7 @@ class ScavengerHuntFragment : Fragment() {
 
                 if (player != null) {
                     // Initialize scavenger hunt with the player and the scavenger hunt repository
-                    gameViewModel.initializeScavengerHunt(player, scavengerHuntRepository, "Easy")  // Pass the player properly
+                    gameViewModel.initializeScavengerHunt(player, scavengerHuntRepository, requireContext(), "Easy")
                     Log.d(TAG, "Initialized scavenger hunt for player: ${player.name}")
                 } else {
                     Log.e(TAG, "Current player not found.")

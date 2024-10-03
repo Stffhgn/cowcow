@@ -1,9 +1,12 @@
 package com.example.cow_cow.viewModels
 
 import android.app.Application
+import android.content.ContentValues.TAG
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.*
 import com.example.cow_cow.models.Player
+import com.example.cow_cow.models.PlayerSettings
 import com.example.cow_cow.repositories.PlayerRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -67,9 +70,9 @@ class PlayerViewModel(
                 val playerList = withContext(Dispatchers.IO) {
                     repository.getPlayers(context)
                 }
-                _players.value = playerList
+                _players.value = playerList.toMutableList() // Convert to MutableList<Player>
             } catch (e: Exception) {
-                // Handle the error
+                Log.e(TAG, "Error loading players: ${e.message}", e)
             } finally {
                 _loading.value = false // Stop loading
             }
@@ -108,12 +111,15 @@ class PlayerViewModel(
                 // Logic to update the player in the repository
                 val context = getApplication<Application>().applicationContext
                 repository.updatePlayer(player, context)
-                // Update LiveData after the player is updated
+
+                // Update LiveData after the player is updated, converting the result to a MutableList
                 _players.value = _players.value?.map {
                     if (it.id == player.id) player else it
-                }
+                }?.toMutableList()  // Convert to MutableList<Player>
+
+                Log.d(TAG, "Player updated successfully: ${player.name}")
             } catch (e: Exception) {
-                // Handle the error
+                Log.e(TAG, "Error updating player: ${e.message}", e)
             } finally {
                 _loading.value = false // Stop loading
             }
@@ -164,11 +170,15 @@ class PlayerViewModel(
     private fun loadPlayerSettings() {
         viewModelScope.launch(Dispatchers.IO) {
             val settingsMap = mutableMapOf<Player, PlayerSettings>()
+            val context = getApplication<Application>().applicationContext // Get the context
+
             _players.value?.forEach { player ->
-                val playerSettings = repository.getPlayerSettings(player.id)
+                val playerSettings = repository.getPlayerSettings(context, player.id) // Pass context and player ID
                 settingsMap[player] = playerSettings
             }
+
             _playerSettings.postValue(settingsMap)
+            Log.d(TAG, "Player settings loaded successfully.")
         }
     }
 

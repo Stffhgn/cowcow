@@ -62,10 +62,24 @@ data class Game(
 
     // Function to apply a power-up to a player
     fun applyPowerUp(player: Player, powerUp: PowerUp) {
-        if (players.contains(player) && !activePowerUps.contains(powerUp)) {
-            activePowerUps.add(powerUp)
-            PowerUpManager.applyPowerUpEffect(player, powerUp)
-            Log.d("Game", "Power-up ${powerUp.type} applied to player ${player.name}.")
+        if (players.contains(player)) {
+            // Check if the power-up is already active for the player
+            if (!player.activePowerUps.contains(powerUp)) {
+                // Add the power-up to the player's active power-ups
+                player.activePowerUps.add(powerUp)
+
+                // Apply the power-up effect using the PowerUpManager
+                PowerUpManager.applyPowerUpEffect(player, powerUp)
+
+                // Log the successful application of the power-up
+                Log.d("Game", "Power-up ${powerUp.type.name} applied to player ${player.name}.")
+            } else {
+                // Log that the power-up is already active for the player
+                Log.d("Game", "Power-up ${powerUp.type.name} is already active for player ${player.name}.")
+            }
+        } else {
+            // Log if the player is not part of the current game
+            Log.e("Game", "Player ${player.name} is not part of this game.")
         }
     }
 

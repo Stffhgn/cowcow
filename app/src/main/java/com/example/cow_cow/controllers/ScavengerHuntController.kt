@@ -22,19 +22,21 @@ class ScavengerHuntController(
     val scavengerHuntItems: LiveData<List<ScavengerHuntItem>> get() = _scavengerHuntItems
 
     /**
-     * Load scavenger hunt items from the repository asynchronously and start a new hunt.
+     * Load scavenger hunt items from repository with context
      */
-    fun loadScavengerHuntItems(context: Context, player: Player, difficulty: String? = null) {
+    fun loadScavengerHuntItems(context: Context) {
         scope.launch {
             try {
-                Log.d("ScavengerHuntController", "Loading scavenger hunt items for player: ${player.name}")
-                val items = withContext(Dispatchers.IO) { repository.getScavengerHuntItems() }
-                _scavengerHuntItems.postValue(items)
-                Log.d("ScavengerHuntController", "Starting scavenger hunt with ${items.size} items.")
-                ScavengerHuntManager.startScavengerHunt(player, repository, difficulty)
+                // Load items from the repository using context
+                val items = withContext(Dispatchers.IO) {
+                    repository.getScavengerHuntItems(context)  // Pass context here
+                }
+
+                // Update LiveData with the loaded items
+                _scavengerHuntItems.value = items
+                Log.d("ScavengerHuntController", "Scavenger hunt items loaded successfully: ${items.size} items.")
             } catch (e: Exception) {
-                Log.e("ScavengerHuntController", "Error loading scavenger hunt items: ${e.message}")
-                _scavengerHuntItems.postValue(emptyList()) // Provide a fallback
+                Log.e("ScavengerHuntController", "Error loading scavenger hunt items: ${e.message}", e)
             }
         }
     }
@@ -46,8 +48,12 @@ class ScavengerHuntController(
         scope.launch {
             try {
                 Log.d("ScavengerHuntController", "Adding new scavenger hunt item: ${item.name}")
-                withContext(Dispatchers.IO) { repository.addScavengerHuntItem(item, context) }
-                loadScavengerHuntItems(context, Player(1, "Player")) // Replace with actual player object
+                withContext(Dispatchers.IO) {
+                    repository.addScavengerHuntItem(item, context)
+                }
+
+                // Reload scavenger hunt items after adding
+                loadScavengerHuntItems(context)
             } catch (e: Exception) {
                 Log.e("ScavengerHuntController", "Error adding scavenger hunt item: ${e.message}")
             }
@@ -62,9 +68,13 @@ class ScavengerHuntController(
             try {
                 Log.d("ScavengerHuntController", "Marking item as found: ${item.name} by player: ${player.name}")
                 ScavengerHuntManager.markItemAsFound(item, player)
+
+                // Save updated scavenger hunt items
                 withContext(Dispatchers.IO) {
                     repository.saveScavengerHuntItems(ScavengerHuntManager.getActiveScavengerHuntItems(), context)
                 }
+
+                // Update LiveData with the new state of scavenger hunt items
                 _scavengerHuntItems.postValue(ScavengerHuntManager.getActiveScavengerHuntItems())
             } catch (e: Exception) {
                 Log.e("ScavengerHuntController", "Error marking scavenger hunt item as found: ${e.message}")
@@ -80,7 +90,13 @@ class ScavengerHuntController(
             try {
                 Log.d("ScavengerHuntController", "Clearing all scavenger hunt items.")
                 ScavengerHuntManager.stopScavengerHunt()
-                withContext(Dispatchers.IO) { repository.saveScavengerHuntItems(emptyList(), context) }
+
+                // Save the empty list to clear items
+                withContext(Dispatchers.IO) {
+                    repository.saveScavengerHuntItems(emptyList(), context)
+                }
+
+                // Clear the LiveData list
                 _scavengerHuntItems.postValue(emptyList())
             } catch (e: Exception) {
                 Log.e("ScavengerHuntController", "Error clearing scavenger hunt items: ${e.message}")

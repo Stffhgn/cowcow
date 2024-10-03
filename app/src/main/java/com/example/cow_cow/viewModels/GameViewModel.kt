@@ -1,6 +1,7 @@
 package com.example.cow_cow.viewModels
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -75,33 +76,57 @@ class GameViewModel(application: Application, private val repository: GameReposi
 
 
     fun addPlayerToTeam(player: Player) {
-        Log.d(TAG, "Adding player ${player.name} to team.")
+        Log.d(TAG, "Adding player ${player.name} to the team.")
+
+        // Set the player's team status to true
         player.isOnTeam = true
 
-        // Ensure you're getting the current team or creating a new one if it doesn't exist
+        // Get the current team or create a new one if none exists
         val currentTeam = _team.value ?: Team(id = 1, name = "Team", members = mutableListOf())
 
         // Use TeamUtils to add the player to the team and update the team score
         TeamUtils.addPlayerToTeam(player, currentTeam)
 
-        _team.value = currentTeam  // Update the LiveData value with the updated team
-        saveTeam()                 // Save the updated team state
-        updatePlayer(player)       // Ensure the player's status is updated in the system
+        // Update LiveData with the updated team
+        _team.value = currentTeam
+
+        // Save the updated team state to persist the changes
+        saveTeam()
+
+        // Ensure the player's status is updated in the system
+        updatePlayer(player)
+
+        // Log the successful addition
+        Log.d(TAG, "Player ${player.name} has been added to the team.")
     }
 
     fun removePlayerFromTeam(player: Player) {
-        Log.d(TAG, "Removing player ${player.name} from team.")
+        Log.d(TAG, "Removing player ${player.name} from the team.")
+
+        // Set the player's team status to false
         player.isOnTeam = false
 
+        // Retrieve the current team
         val currentTeam = _team.value
-        currentTeam?.let {
-            TeamUtils.removePlayerFromTeam(player, it)
-            _team.value = it
-            saveTeam()
-            updatePlayer(player)
-        } ?: Log.e(TAG, "No team found to remove player from.")
-    }
 
+        // If the team exists, remove the player and update the team
+        currentTeam?.let {
+            // Use TeamUtils to remove the player from the team and update the team score
+            TeamUtils.removePlayerFromTeam(player, it)
+
+            // Update LiveData with the updated team
+            _team.value = it
+
+            // Save the updated team state to persist the changes
+            saveTeam()
+
+            // Ensure the player's status is updated in the system
+            updatePlayer(player)
+
+            // Log the successful removal
+            Log.d(TAG, "Player ${player.name} has been removed from the team.")
+        } ?: Log.e(TAG, "No team found to remove player from.")  // If no team is found, log an error
+    }
     fun savePlayers() {
         Log.d(TAG, "Saving players to repository.")
         val context = getApplication<Application>().applicationContext
@@ -118,6 +143,12 @@ class GameViewModel(application: Application, private val repository: GameReposi
         }
     }
 
+    /**
+     * Calculate the total score of the team.
+     * Logs the calculated score and returns it.
+     *
+     * @return The total score of the team.
+     */
     fun calculateTeamScore(): Int {
         val score = _team.value?.teamScore ?: 0
         Log.d(TAG, "Calculated team score: $score")
@@ -165,11 +196,11 @@ class GameViewModel(application: Application, private val repository: GameReposi
 
     // ---- Scavenger Hunt ----
 
-    fun initializeScavengerHunt(player: Player, scavengerHuntRepository: ScavengerHuntRepository, difficulty: String? = null) {
+    fun initializeScavengerHunt(player: Player, scavengerHuntRepository: ScavengerHuntRepository, context: Context, difficulty: String? = null) {
         Log.d(TAG, "Initializing scavenger hunt for player: ${player.name} with difficulty: ${difficulty ?: "Default"}")
 
-        // Start the scavenger hunt, passing in the player, repository, and optional difficulty
-        scavengerHuntManager.startScavengerHunt(player, scavengerHuntRepository, difficulty)
+        // Start the scavenger hunt, passing in the player, repository, context, and optional difficulty
+        scavengerHuntManager.startScavengerHunt(player, scavengerHuntRepository, context, difficulty)
 
         // Add any additional logic if needed after starting the scavenger hunt
     }
