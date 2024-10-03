@@ -13,6 +13,8 @@ class PlayerAdapter(
     private val onPlayerClick: (Player) -> Unit // Lambda to handle player click events
 ) : ListAdapter<Player, PlayerAdapter.PlayerViewHolder>(PlayerDiffCallback()) {
 
+    private var players: List<Player> = listOf()
+
     // ViewHolder to bind player data to the UI
     inner class PlayerViewHolder(private val binding: ItemPlayerBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(player: Player) {
@@ -35,14 +37,15 @@ class PlayerAdapter(
 
     // Bind player data to the ViewHolder
     override fun onBindViewHolder(holder: PlayerViewHolder, position: Int) {
-        val player = getItem(position)
-        holder.bind(player)
+        holder.bind(getItem(position))
     }
 
+    override fun getItemCount(): Int = players.size
+
     // Optional: A method to update data using submitList with DiffUtil
-    fun updatePlayers(newPlayers: List<Player>) {
-        submitList(newPlayers)
-    }
+    //fun updatePlayers(newPlayers: List<Player>) {
+    //    submitList(newPlayers)
+    //}
 }
 
 // DiffUtil Callback to handle efficient updates

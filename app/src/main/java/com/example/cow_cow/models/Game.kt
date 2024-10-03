@@ -1,10 +1,13 @@
 package com.example.cow_cow.models
 
+import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import com.example.cow_cow.enums.GameMode
 import com.example.cow_cow.enums.GameStatus
-import com.example.cow_cow.enums.RuleEffectType
+import com.example.cow_cow.managers.GameManager
+import com.example.cow_cow.managers.PowerUpManager
 
 data class Game(
     var players: MutableList<Player> = mutableListOf(),  // List of players participating in the game
@@ -24,18 +27,22 @@ data class Game(
     fun addPlayer(player: Player) {
         if (!players.contains(player)) {
             players.add(player)
+            Log.d("Game", "Player ${player.name} added to the game.")
         }
     }
 
     // Function to remove a player from the game
     fun removePlayer(player: Player) {
-        players.remove(player)
+        if (players.remove(player)) {
+            Log.d("Game", "Player ${player.name} removed from the game.")
+        }
     }
 
     // Function to start the game
     fun startGame() {
         if (players.isNotEmpty() && status == GameStatus.NOT_STARTED) {
             status = GameStatus.IN_PROGRESS
+            Log.d("Game", "Game started with mode: $gameMode")
         }
     }
 
@@ -43,19 +50,22 @@ data class Game(
     fun pauseGame() {
         if (status == GameStatus.IN_PROGRESS) {
             status = GameStatus.PAUSED
+            Log.d("Game", "Game paused.")
         }
     }
 
     // Function to end the game
     fun endGame() {
         status = GameStatus.COMPLETED
+        Log.d("Game", "Game ended.")
     }
 
     // Function to apply a power-up to a player
     fun applyPowerUp(player: Player, powerUp: PowerUp) {
         if (players.contains(player) && !activePowerUps.contains(powerUp)) {
             activePowerUps.add(powerUp)
-            player.applyPowerUpEffect(powerUp)
+            PowerUpManager.applyPowerUpEffect(player, powerUp)
+            Log.d("Game", "Power-up ${powerUp.type} applied to player ${player.name}.")
         }
     }
 
@@ -63,6 +73,7 @@ data class Game(
     fun applyCustomRule(rule: CustomRule) {
         if (!customRules.contains(rule)) {
             customRules.add(rule)
+            Log.d("Game", "Custom rule ${rule.ruleName} applied.")
         }
     }
 
@@ -70,7 +81,14 @@ data class Game(
     fun checkTimeLimit() {
         if (elapsedTime >= maxTimeLimit) {
             status = GameStatus.COMPLETED
+            Log.d("Game", "Game completed due to time limit.")
         }
+    }
+
+    // Function to assign custom rules to players
+    fun assignCustomRulesToPlayers(context: Context) {
+        Log.d("Game", "Assigning custom rules to players for game mode: $gameMode")
+        GameManager.applyCustomRulesForGame(context, gameMode)
     }
 
     // Parcelable implementation
@@ -91,7 +109,7 @@ data class Game(
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeTypedList(players)
         parcel.writeByte(if (isTeamMode) 1 else 0)
-        parcel.writeParcelable(team, flags)
+        parcel.writeParcelable(team, flags)  // Handling nullable Team, will write null if not set
         parcel.writeString(gameMode.name)
         parcel.writeString(status.name)
         parcel.writeTypedList(activePowerUps)

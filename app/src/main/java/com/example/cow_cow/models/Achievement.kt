@@ -2,59 +2,59 @@ package com.example.cow_cow.models
 
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import com.example.cow_cow.enums.AchievementType
 import com.example.cow_cow.enums.RewardType
 
 data class Achievement(
-    val id: Int,                          // Unique ID for the achievement
-    val name: String,                     // Achievement name
-    val description: String,              // Description of the achievement
-    val type: AchievementType,            // Type of achievement (Scoring, Teamwork, etc.)
-    var isUnlocked: Boolean = false,      // Whether the achievement has been unlocked
-    var currentProgress: Int = 0,         // Current progress towards the achievement (for progressive types)
-    val goal: Int = 1,                    // The goal or target to achieve (default 1 for single achievements)
-    val rewardType: RewardType,           // Type of reward (Points, Power-Up, Badge, etc.)
-    val rewardValue: Int,                 // Reward value (e.g., amount of points or duration for power-ups)
-    val timestampUnlocked: Long? = null,  // Timestamp for when the achievement was unlocked
-    val conditions: List<Condition> = emptyList(), // New: Complex conditions to meet for achievement
-    val isSecret: Boolean = false         // New: Hidden achievements revealed only after unlocking
+    val id: Int,                       // Unique ID for the achievement
+    val name: String,                  // Achievement name
+    val description: String,           // Description of what the achievement is for
+    val type: AchievementType,         // Type of achievement (e.g., SCORING, SPECIAL_EVENT)
+    val rewardType: RewardType,        // Type of reward (e.g., points, badges, etc.)
+    val rewardValue: Int,              // Value of the reward (e.g., 100 points)
+    var isUnlocked: Boolean = false,   // Whether the achievement has been unlocked
+    var currentProgress: Int = 0,      // Current progress towards unlocking the achievement
+    val goal: Int = 100,               // Goal progress required to unlock the achievement
+    val playerId: Int,                 // The player to whom the achievement belongs
+    val isSecret: Boolean = false      // Whether the achievement is hidden from the player until unlocked
 ) : Parcelable {
 
-    // Function to check if the achievement is completed based on progress and conditions
-    fun checkProgress(): Boolean {
-        return conditions.all { it.isMet() } && currentProgress >= goal
+    private val TAG = "Achievement"
+
+    // Function to increment progress
+    fun incrementProgress(amount: Int) {
+        currentProgress += amount
+        if (currentProgress >= goal) {
+            unlockAchievement()
+        }
     }
 
-    // Function to unlock the achievement when progress goal is met
+    // Function to check if the achievement is completed based on progress
+    fun checkProgress(): Boolean {
+        return currentProgress >= goal
+    }
+
+    // Function to unlock the achievement
     fun unlockAchievement() {
         if (!isUnlocked && checkProgress()) {
             isUnlocked = true
         }
     }
 
-    // Increment progress for progressive achievements
-    fun incrementProgress(amount: Int = 1) {
-        if (!isUnlocked && type == AchievementType.COLLECTION) {
-            currentProgress += amount
-            if (currentProgress >= goal) {
-                unlockAchievement()
-            }
-        }
-    }
-
-    // Parcelable implementation to make it transferable between activities/fragments
+    // Parcelable implementation for passing Achievement objects between activities/fragments
     constructor(parcel: Parcel) : this(
-        parcel.readInt(),                           // ID
-        parcel.readString() ?: "",                  // Name
-        parcel.readString() ?: "",                  // Description
-        AchievementType.valueOf(parcel.readString() ?: AchievementType.SCORING.name),  // Type
-        parcel.readByte() != 0.toByte(),            // isUnlocked
-        parcel.readInt(),                           // Current progress
-        parcel.readInt(),                           // Goal
-        RewardType.valueOf(parcel.readString() ?: RewardType.POINTS.name),  // Reward type
-        parcel.readInt(),                           // Reward value
-        parcel.readValue(Long::class.java.classLoader) as? Long,  // Timestamp unlocked
-        listOf()  // Add default conditions list (if none provided)
+        id = parcel.readInt(),
+        name = parcel.readString() ?: "",
+        description = parcel.readString() ?: "",
+        type = AchievementType.valueOf(parcel.readString() ?: AchievementType.SCORING.name),
+        rewardType = RewardType.valueOf(parcel.readString() ?: RewardType.POINTS.name),
+        rewardValue = parcel.readInt(),
+        isUnlocked = parcel.readByte() != 0.toByte(),
+        currentProgress = parcel.readInt(),
+        goal = parcel.readInt(),
+        playerId = parcel.readInt(),
+        isSecret = parcel.readByte() != 0.toByte()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -62,12 +62,13 @@ data class Achievement(
         parcel.writeString(name)
         parcel.writeString(description)
         parcel.writeString(type.name)
+        parcel.writeString(rewardType.name)
+        parcel.writeInt(rewardValue)
         parcel.writeByte(if (isUnlocked) 1 else 0)
         parcel.writeInt(currentProgress)
         parcel.writeInt(goal)
-        parcel.writeString(rewardType.name)
-        parcel.writeInt(rewardValue)
-        parcel.writeValue(timestampUnlocked)
+        parcel.writeInt(playerId)
+        parcel.writeByte(if (isSecret) 1 else 0)
     }
 
     override fun describeContents(): Int = 0

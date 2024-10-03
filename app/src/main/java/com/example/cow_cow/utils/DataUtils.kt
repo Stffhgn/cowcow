@@ -1,6 +1,8 @@
 package com.example.cow_cow.utils
 
 import android.content.Context
+import com.example.cow_cow.models.Achievement
+import com.example.cow_cow.models.CustomRule
 import com.example.cow_cow.models.Player
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -11,6 +13,9 @@ object DataUtils {
     private const val PLAYERS_PREFS = "players_prefs"
     private const val PLAYERS_KEY = "players_key"
     private const val TEAM_KEY = "team_key"
+    private const val ACHIEVEMENTS_KEY = "achievements_key"
+    private const val CUSTOM_RULES_PREFS = "custom_rules_prefs"
+    private const val CUSTOM_RULES_KEY = "custom_rules_key"
 
     private val gson = Gson()
 
@@ -75,6 +80,80 @@ object DataUtils {
         val sharedPreferences = context.getSharedPreferences(PLAYERS_PREFS, Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
         editor.remove(TEAM_KEY)
+        editor.apply()
+    }
+
+    // ----- Achievements Data Management -----
+
+    /**
+     * Saves the list of achievements to SharedPreferences.
+     */
+    fun saveAchievements(context: Context, achievements: List<Achievement>) {
+        val sharedPreferences = context.getSharedPreferences(PLAYERS_PREFS, Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        val achievementsJson = gson.toJson(achievements)
+        editor.putString(ACHIEVEMENTS_KEY, achievementsJson)
+        editor.apply()
+    }
+
+    /**
+     * Loads the list of achievements from SharedPreferences.
+     */
+    fun loadAchievements(context: Context): List<Achievement> {
+        val sharedPreferences = context.getSharedPreferences(PLAYERS_PREFS, Context.MODE_PRIVATE)
+        val achievementsJson = sharedPreferences.getString(ACHIEVEMENTS_KEY, null)
+        return if (achievementsJson != null) {
+            val type = object : TypeToken<List<Achievement>>() {}.type
+            gson.fromJson(achievementsJson, type)
+        } else {
+            emptyList()
+        }
+    }
+
+    /**
+     * Clears the achievements data from SharedPreferences.
+     */
+    fun clearAchievements(context: Context) {
+        val sharedPreferences = context.getSharedPreferences(PLAYERS_PREFS, Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.remove(ACHIEVEMENTS_KEY)
+        editor.apply()
+    }
+
+    // ----- Custom Rules Data Management -----
+
+    /**
+     * Saves the list of custom rules to SharedPreferences.
+     */
+    fun saveCustomRules(context: Context, customRules: List<CustomRule>) {
+        val sharedPreferences = context.getSharedPreferences(CUSTOM_RULES_PREFS, Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        val customRulesJson = gson.toJson(customRules)
+        editor.putString(CUSTOM_RULES_KEY, customRulesJson)
+        editor.apply()
+    }
+
+    /**
+     * Loads the list of custom rules from SharedPreferences.
+     */
+    fun loadCustomRules(context: Context): List<CustomRule> {
+        val sharedPreferences = context.getSharedPreferences(CUSTOM_RULES_PREFS, Context.MODE_PRIVATE)
+        val customRulesJson = sharedPreferences.getString(CUSTOM_RULES_KEY, null)
+        return if (customRulesJson != null) {
+            val type = object : TypeToken<List<CustomRule>>() {}.type
+            gson.fromJson(customRulesJson, type)
+        } else {
+            emptyList()
+        }
+    }
+
+    /**
+     * Clears the custom rules from SharedPreferences.
+     */
+    fun clearCustomRules(context: Context) {
+        val sharedPreferences = context.getSharedPreferences(CUSTOM_RULES_PREFS, Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.remove(CUSTOM_RULES_KEY)
         editor.apply()
     }
 }

@@ -1,7 +1,7 @@
 package com.example.cow_cow.managers
 
 import com.example.cow_cow.models.Penalty
-import com.example.cow_cow.models.PenaltyType
+import com.example.cow_cow.enums.PenaltyType
 import com.example.cow_cow.models.Player
 import java.util.*
 

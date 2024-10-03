@@ -2,12 +2,14 @@ package com.example.cow_cow.controllers
 
 import android.content.Context
 import android.media.MediaPlayer
+import android.util.Log
 import java.lang.IllegalStateException
 
 class SoundController(private val context: Context) {
 
     // MediaPlayer to handle sound playback
     private var mediaPlayer: MediaPlayer? = null
+    private val TAG = "SoundController"
 
     /**
      * Plays a sound based on the resource ID.
@@ -15,17 +17,23 @@ class SoundController(private val context: Context) {
      * @param soundResId The resource ID of the sound to be played.
      */
     fun playSound(soundResId: Int) {
+        Log.d(TAG, "playSound: Playing sound with resource ID: $soundResId")
         stopAndRelease() // Release any currently playing sound
-        mediaPlayer = MediaPlayer.create(context, soundResId)
 
-        mediaPlayer?.apply {
-            setOnCompletionListener {
-                stopAndRelease()
+        try {
+            mediaPlayer = MediaPlayer.create(context, soundResId)
+            mediaPlayer?.apply {
+                setOnCompletionListener {
+                    stopAndRelease()
+                    Log.d(TAG, "playSound: Sound playback completed.")
+                }
+                start()
+                Log.d(TAG, "playSound: Sound playback started.")
+            } ?: run {
+                Log.e(TAG, "playSound: Failed to create MediaPlayer. Resource ID: $soundResId")
             }
-            start()
-        } ?: run {
-            // Log or handle the case where MediaPlayer creation fails
-            // E.g., show an error or fallback behavior
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "playSound: Error occurred while starting sound playback. ${e.message}")
         }
     }
 
@@ -34,10 +42,16 @@ class SoundController(private val context: Context) {
      */
     fun stopAndRelease() {
         mediaPlayer?.apply {
-            if (isPlaying) {
-                stop()
+            try {
+                if (isPlaying) {
+                    stop()
+                    Log.d(TAG, "stopAndRelease: Stopping currently playing sound.")
+                }
+                release() // Free up MediaPlayer resources
+                Log.d(TAG, "stopAndRelease: MediaPlayer resources released.")
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "stopAndRelease: Error while stopping or releasing MediaPlayer. ${e.message}")
             }
-            release() // Free up MediaPlayer resources
         }
         mediaPlayer = null
     }
@@ -46,6 +60,7 @@ class SoundController(private val context: Context) {
      * Clean up resources when no longer needed.
      */
     fun cleanup() {
+        Log.d(TAG, "cleanup: Cleaning up MediaPlayer resources.")
         stopAndRelease()
     }
 }

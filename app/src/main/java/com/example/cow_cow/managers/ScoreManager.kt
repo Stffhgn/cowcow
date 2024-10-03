@@ -1,5 +1,6 @@
 package com.example.cow_cow.managers
 
+import android.util.Log
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Team
 import com.example.cow_cow.models.PowerUp
@@ -8,6 +9,8 @@ import com.example.cow_cow.enums.PowerUpType
 import com.example.cow_cow.enums.PenaltyType
 
 object ScoreManager {
+
+    private const val TAG = "ScoreManager"
 
     /**
      * Calculate total score for a single player, factoring in base points, bonuses, penalties,
@@ -18,13 +21,16 @@ object ScoreManager {
      */
     fun calculatePlayerScore(player: Player): Int {
         var totalPoints = player.basePoints + player.bonusPoints
+        Log.d(TAG, "Calculating score for ${player.name}: Base points = ${player.basePoints}, Bonus points = ${player.bonusPoints}")
 
         // Subtract penalties
         totalPoints -= player.penaltyPoints
+        Log.d(TAG, "Penalty points for ${player.name}: ${player.penaltyPoints}. Total after penalty = $totalPoints")
 
         // Apply power-up effects
         player.activePowerUps.filter { it.isActive }.forEach { powerUp ->
             totalPoints = applyPowerUpToScore(totalPoints, powerUp)
+            Log.d(TAG, "Power-up ${powerUp.type} applied for ${player.name}. Total points = $totalPoints")
         }
 
         return totalPoints
@@ -39,10 +45,18 @@ object ScoreManager {
      */
     private fun applyPowerUpToScore(currentScore: Int, powerUp: PowerUp): Int {
         return when (powerUp.type) {
-            PowerUpType.DOUBLE_POINTS -> currentScore * 2
-            PowerUpType.BONUS_POINTS -> currentScore + powerUp.effectValue
-            PowerUpType.EXTRA_POINTS -> currentScore + powerUp.effectValue
-            else -> currentScore
+            PowerUpType.DOUBLE_POINTS -> {
+                Log.d(TAG, "Applying DOUBLE_POINTS power-up.")
+                currentScore * 2
+            }
+            PowerUpType.BONUS_POINTS -> {
+                Log.d(TAG, "Applying BONUS_POINTS power-up with value: ${powerUp.effectValue}.")
+                currentScore + powerUp.effectValue
+            }
+            else -> {
+                Log.d(TAG, "No applicable power-up effect.")
+                currentScore
+            }
         }
     }
 
@@ -53,12 +67,39 @@ object ScoreManager {
      * @param penalty The penalty to apply.
      */
     fun applyPenalty(player: Player, penalty: Penalty) {
+        Log.d(TAG, "Applying ${penalty.penaltyType} penalty to ${player.name}")
         when (penalty.penaltyType) {
-            PenaltyType.POINT_DEDUCTION -> player.penaltyPoints += penalty.pointsDeducted
-            PenaltyType.SILENCED -> player.isSilenced = true  // Example of non-point penalty
-            // Add more penalty handling logic as needed
+            PenaltyType.POINT_DEDUCTION -> {
+                Log.d(TAG, "Deducting ${penalty.pointsDeducted} points from ${player.name}")
+                player.penaltyPoints += penalty.pointsDeducted
+            }
+            PenaltyType.SILENCED -> {
+                Log.d(TAG, "${player.name} has been silenced.")
+                player.isSilenced = true
+            }
+            PenaltyType.TEMPORARY_BAN -> {
+                Log.d(TAG, "${player.name} has been temporarily banned.")
+                player.isSilenced = true  // Custom ban logic
+            }
+            PenaltyType.FALSE_CALL -> {
+                Log.d(TAG, "${player.name} made a false call.")
+                handleFalseCallPenalty(player)
+            }
+            PenaltyType.TIME_PENALTY -> {
+                Log.d(TAG, "Applying time penalty to ${player.name}")
+                applyTimePenalty(player, penalty)
+            }
+            PenaltyType.OTHER -> {
+                Log.d(TAG, "Applying custom penalty to ${player.name}")
+                handleCustomPenalty(player, penalty)
+            }
+            else -> {
+                Log.d(TAG, "Unknown penalty type for ${player.name}")
+            }
         }
     }
+
+
 
     /**
      * Calculate the total score for a team by summing up all player scores.
@@ -67,6 +108,7 @@ object ScoreManager {
      * @return The team's total score.
      */
     fun calculateTeamScore(team: Team): Int {
+        Log.d(TAG, "Calculating score for team: ${team.name}")
         return team.members.sumOf { calculatePlayerScore(it) }
     }
 
@@ -78,8 +120,10 @@ object ScoreManager {
      */
     fun distributePointsToTeam(team: Team, pointsToDistribute: Int) {
         val pointsPerPlayer = pointsToDistribute / team.members.size
+        Log.d(TAG, "Distributing $pointsToDistribute points across ${team.members.size} players.")
         team.members.forEach { player ->
             player.addBasePoints(pointsPerPlayer)
+            Log.d(TAG, "${pointsPerPlayer} points added to ${player.name}.")
         }
     }
 
@@ -90,7 +134,9 @@ object ScoreManager {
      * @return The player with the highest score.
      */
     fun getPlayerWithHighestScore(players: List<Player>): Player? {
-        return players.maxByOrNull { calculatePlayerScore(it) }
+        val player = players.maxByOrNull { calculatePlayerScore(it) }
+        Log.d(TAG, "Player with highest score: ${player?.name} with score ${player?.let { calculatePlayerScore(it) }}")
+        return player
     }
 
     /**
@@ -100,6 +146,7 @@ object ScoreManager {
      * @return The list of players sorted by their scores in descending order.
      */
     fun getLeaderboard(players: List<Player>): List<Player> {
+        Log.d(TAG, "Generating leaderboard for players.")
         return players.sortedByDescending { calculatePlayerScore(it) }
     }
 
@@ -109,12 +156,14 @@ object ScoreManager {
      * @param players The list of players to reset.
      */
     fun resetPlayerScores(players: List<Player>) {
+        Log.d(TAG, "Resetting scores for all players.")
         players.forEach { player ->
             player.basePoints = 0
             player.bonusPoints = 0
             player.penaltyPoints = 0
             player.activePowerUps.clear()
             player.penalties.clear()
+            Log.d(TAG, "Player ${player.name}'s score and status have been reset.")
         }
     }
 
@@ -124,7 +173,24 @@ object ScoreManager {
      * @param team The team whose scores should be reset.
      */
     fun resetTeamScores(team: Team) {
+        Log.d(TAG, "Resetting scores for team: ${team.name}.")
         resetPlayerScores(team.members)
         team.teamScore = 0
+    }
+
+    // Helper methods to handle specific penalties
+    private fun handleFalseCallPenalty(player: Player) {
+        Log.d(TAG, "${player.name} made a false call. Applying false call penalty.")
+        player.penaltyPoints += 5 // Example penalty for a false call
+    }
+
+    private fun applyTimePenalty(player: Player, penalty: Penalty) {
+        Log.d(TAG, "Applying time penalty to ${player.name}.")
+        // Custom logic for applying time penalties (if applicable to your game)
+    }
+
+    private fun handleCustomPenalty(player: Player, penalty: Penalty) {
+        Log.d(TAG, "Applying custom penalty to ${player.name}.")
+        // Custom logic for handling other types of penalties
     }
 }

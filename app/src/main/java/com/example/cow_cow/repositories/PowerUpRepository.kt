@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.cow_cow.models.PowerUp
-import com.example.cow_cow.models.PowerUpType
+import com.example.cow_cow.enums.PowerUpType
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -87,7 +87,7 @@ class PowerUpRepository {
         val defaultPowerUps = listOf(
             PowerUp(type = PowerUpType.DOUBLE_POINTS, isActive = false, effectValue = 2),
             PowerUp(type = PowerUpType.IMMUNITY, isActive = false),
-            PowerUp(type = PowerUpType.SPEED_BOOST, isActive = false, effectValue = 10),
+            //PowerUp(type = PowerUpType.SPEED_BOOST, isActive = false, effectValue = 10),
             PowerUp(type = PowerUpType.EXTRA_TIME, isActive = false, effectValue = 30)
         )
         savePowerUps(defaultPowerUps, context)

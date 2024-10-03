@@ -80,6 +80,38 @@
             app:argType="integer" />
     </fragment>
 
+    <!-- WhosPlayingFragment to PlayerStatsFragment -->
+    <fragment
+        android:id="@+id/whosPlayingFragment"
+        android:name="com.example.cow_cow.mainFragments.WhosPlayingFragment"
+        android:label="Who's Playing"
+        tools:layout="@layout/fragment_whos_playing">
+
+        <action
+            android:id="@+id/action_whosPlayingFragment_to_playerStatsFragment"
+            app:destination="@id/playerStatsFragment">
+            <argument
+                android:name="playerID"
+                app:argType="integer" />
+            <argument
+                android:name="playerName"
+                app:argType="string" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/playerStatsFragment"
+        android:name="com.example.cow_cow.PlayerFragment.PlayerStatsFragment"
+        android:label="Player Stats"
+        tools:layout="@layout/fragment_player_stats">
+        <argument
+            android:name="playerID"
+            app:argType="integer" />
+        <argument
+            android:name="playerName"
+            app:argType="string" />
+    </fragment>
+
     <!-- Onboarding Fragment -->
     <fragment
         android:id="@+id/onboardingFragment"

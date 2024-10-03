@@ -2,6 +2,7 @@ package com.example.cow_cow.models
 
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import com.example.cow_cow.enums.PowerUpType
 
 // Data class representing a power-up's state
@@ -16,27 +17,41 @@ data class PowerUp(
 
     // Function to check if the power-up has expired (based on the duration)
     fun hasExpired(currentTime: Long): Boolean {
+        Log.d("PowerUp", "Checking if power-up $type has expired.")
         return currentTime >= startTime + duration
     }
 
     // Function to apply the power-up effect to a player
     fun applyPowerUp(player: Player) {
-        if (!isActive) return
+        if (!isActive) {
+            Log.d("PowerUp", "Power-up $type is not active.")
+            return
+        }
 
+        Log.d("PowerUp", "Applying power-up $type to player ${player.name}.")
         when (type) {
-            PowerUpType.DOUBLE_POINTS -> player.basePoints *= 2
-            PowerUpType.SCORE_MULTIPLIER -> player.basePoints *= 5
-            PowerUpType.BONUS_POINTS -> player.addBonusPoints(effectValue)
-            PowerUpType.EXTRA_TIME -> player.timePlayed += effectValue.toLong()
-            PowerUpType.IMMUNITY -> player.isSilenced = false // Removes silencing penalties
-            PowerUpType.SPEED_BOOST -> player.speed += effectValue
-            PowerUpType.EXTRA_LIFE -> player.lives += 1
-            PowerUpType.INVISIBILITY -> player.isInvisible = true
-            PowerUpType.SCORE_MULTIPLIER -> player.basePoints *= effectValue
-            PowerUpType.FREEZE_ENEMIES -> player.freezeEnemies(duration)
-            PowerUpType.HEALTH_REGEN -> player.restoreHealth(effectValue)
-            // Add more cases as needed based on the PowerUpType enum
+            PowerUpType.DOUBLE_POINTS -> {
+                player.basePoints *= 2
+                Log.d("PowerUp", "Double Points applied to ${player.name}.")
+            }
+            PowerUpType.SCORE_MULTIPLIER -> {
+                player.basePoints *= 5
+                Log.d("PowerUp", "Score Multiplier applied: 5x points for ${player.name}.")
+            }
+            PowerUpType.BONUS_POINTS -> {
+                player.addBonusPoints(effectValue)
+                Log.d("PowerUp", "Bonus Points applied: ${effectValue} bonus points added for ${player.name}.")
+            }
+            PowerUpType.EXTRA_TIME -> {
+                player.timePlayed += effectValue.toLong()
+                Log.d("PowerUp", "Extra Time applied: ${effectValue}ms added for ${player.name}.")
+            }
+            PowerUpType.IMMUNITY -> {
+                player.isSilenced = false
+                Log.d("PowerUp", "Immunity applied: ${player.name} is no longer silenced.")
+            }
             else -> {
+                Log.w("PowerUp", "Unknown or unimplemented power-up type: $type")
                 // Handle custom or unimplemented power-ups
             }
         }
@@ -45,10 +60,12 @@ data class PowerUp(
     // Function to deactivate the power-up
     fun deactivatePowerUp(player: Player) {
         isActive = false
+        Log.d("PowerUp", "Deactivating power-up $type for player ${player.name}.")
         when (type) {
-            PowerUpType.INVISIBILITY -> player.isInvisible = false
-            PowerUpType.SPEED_BOOST -> player.speed -= effectValue
-            // Handle deactivation for other power-ups as necessary
+            // Add cases if you need to handle specific deactivation logic for power-ups
+            else -> {
+                Log.d("PowerUp", "No deactivation logic needed for $type.")
+            }
         }
     }
 

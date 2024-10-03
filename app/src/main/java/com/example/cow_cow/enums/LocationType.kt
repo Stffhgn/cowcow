@@ -1,4 +1,4 @@
-package com.example.cow_cow.models
+package com.example.cow_cow.enums
 
 enum class LocationType {
     PARK,               // Public parks, suitable for outdoor activities

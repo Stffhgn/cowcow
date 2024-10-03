@@ -4,13 +4,17 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.cow_cow.enums.AgeGroup
 import com.example.cow_cow.enums.DifficultyLevel
+import com.example.cow_cow.enums.LocationType
+import com.example.cow_cow.enums.Season
+import com.example.cow_cow.enums.TimeOfDay
+import com.example.cow_cow.enums.WeatherCondition
 import com.example.cow_cow.models.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
-class ScavengerHuntRepository {
-
+class ScavengerHuntRepository(private val context: Context) {
     private val PREFS_NAME = "com.example.cow_cow.PREFERENCES"
     private val SCAVENGER_HUNT_KEY = "SCAVENGER_HUNT_KEY"
     private val gson = Gson()
@@ -25,13 +29,13 @@ class ScavengerHuntRepository {
     }
 
     // Load scavenger hunt items from local storage and update LiveData
-    fun loadScavengerHuntItems(context: Context) {
-        val items = getScavengerHuntItems(context)
+    fun loadScavengerHuntItems() {
+        val items = getScavengerHuntItems()
         _scavengerHuntItems.value = items
     }
 
     // Retrieve scavenger hunt items from local storage (SharedPreferences)
-    fun getScavengerHuntItems(context: Context): List<ScavengerHuntItem> {
+    fun getScavengerHuntItems(): List<ScavengerHuntItem> {
         val prefs = getSharedPreferences(context)
         val json = prefs.getString(SCAVENGER_HUNT_KEY, null)
         return if (json != null) {
@@ -57,14 +61,14 @@ class ScavengerHuntRepository {
 
     // Add a new scavenger hunt item to the list and save
     fun addScavengerHuntItem(item: ScavengerHuntItem, context: Context) {
-        val currentItems = getScavengerHuntItems(context).toMutableList()
+        val currentItems = getScavengerHuntItems().toMutableList()
         currentItems.add(item)
         saveScavengerHuntItems(currentItems, context)
     }
 
     // Remove an existing scavenger hunt item from the list and save
     fun removeScavengerHuntItem(item: ScavengerHuntItem, context: Context) {
-        val currentItems = getScavengerHuntItems(context).toMutableList()
+        val currentItems = getScavengerHuntItems().toMutableList()
         currentItems.remove(item)
         saveScavengerHuntItems(currentItems, context)
     }
@@ -75,8 +79,8 @@ class ScavengerHuntRepository {
     }
 
     // Filter scavenger hunt items based on tags
-    fun getFilteredScavengerHuntItems(tags: List<String>, context: Context): List<ScavengerHuntItem> {
-        return getScavengerHuntItems(context).filter { item ->
+    fun getFilteredScavengerHuntItems(tags: List<String>): List<ScavengerHuntItem> {
+        return getScavengerHuntItems().filter { item ->
             tags.any { tag -> item.tags.contains(tag) }
         }
     }

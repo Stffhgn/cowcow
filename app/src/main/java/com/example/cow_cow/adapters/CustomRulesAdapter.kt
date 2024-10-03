@@ -13,8 +13,8 @@ class CustomRulesAdapter(
 
     inner class CustomRuleViewHolder(private val binding: ItemCustomRuleBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(customRule: CustomRule) {
-            binding.ruleTitleTextView.text = customRule.name
-            binding.ruleDescriptionTextView.text = customRule.description
+            binding.ruleTitleTextView.text = customRule.ruleName
+            binding.ruleDescriptionTextView.text = customRule.ruleDescription
 
             // Handle click for editing the rule
             binding.root.setOnClickListener {

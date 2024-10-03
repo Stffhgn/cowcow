@@ -2,15 +2,22 @@ package com.example.cow_cow.models
 
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
+import com.example.cow_cow.enums.PenaltyType
 
-// Penalty types to specify the different penalty actions
-enum class PenaltyType {
-    SILENCED,           // Player is silenced for a certain duration
-    POINT_DEDUCTION,    // Deduct points as a penalty
-    TEMPORARY_BAN,      // Temporarily restricts the player from making calls
-    FALSE_CALL,         // Penalty for making a false call
-    TIME_PENALTY,       // Add a time penalty (e.g., player loses 30 seconds)
-    OTHER               // Any other custom penalty
+// Global function to calculate points to deduct based on penalty type
+fun calculatePenaltyPoints(penaltyType: PenaltyType): Int {
+    return when (penaltyType) {
+        PenaltyType.FALSE_CALL -> 10    // Deduct 10 points for false call
+        PenaltyType.SILENCED -> 5       // Deduct 5 points for being silenced
+        PenaltyType.POINT_DEDUCTION -> 15 // General point deduction penalty
+        PenaltyType.TIME_PENALTY -> 20  // Deduct 20 points for time penalties
+        else -> {
+            // Default case for any unexpected penalty types
+            Log.w("Penalty", "Unknown penalty type: ${penaltyType.name}. No points deducted.")
+            0  // No deduction for unhandled penalty types
+        }
+    }
 }
 
 data class Penalty(
@@ -27,7 +34,12 @@ data class Penalty(
     val metadata: Map<String, Any>? = null      // Optional: Additional data or context related to the penalty (for future flexibility)
 ) : Parcelable {
 
-    // Function to check if a penalty has expired (based on duration or rounds)
+    /**
+     * Checks if a penalty has expired based on duration or remaining rounds.
+     * @param currentTime The current time to check against.
+     * @param currentRound The current round, if applicable.
+     * @return Boolean indicating whether the penalty has expired.
+     */
     fun hasExpired(currentTime: Long, currentRound: Int?): Boolean {
         return if (duration > 0) {
             // Check if the time-based penalty has expired
@@ -41,20 +53,27 @@ data class Penalty(
         }
     }
 
-    // Function to reduce the number of rounds remaining for round-based penalties
+    /**
+     * Reduces the number of rounds remaining for round-based penalties.
+     */
     fun reduceRounds() {
         roundsRemaining?.let {
             if (it > 0) roundsRemaining = it - 1
+            Log.d("Penalty", "Reduced rounds remaining for penalty $name: $roundsRemaining")
         }
     }
 
-    // Function to apply the penalty (with the multiplier)
+    /**
+     * Applies the penalty to a player's points (with the multiplier if applicable).
+     * @param player The player to whom the penalty is applied.
+     */
     fun applyPenalty(player: Player) {
         if (penaltyType == PenaltyType.POINT_DEDUCTION) {
             val effectiveDeduction = (pointsDeducted * multiplier).toInt()
             player.basePoints -= effectiveDeduction
+            Log.d("Penalty", "Applied penalty $name to player ${player.name}. Deducted $effectiveDeduction points.")
         }
-        // Other penalty logic can be added here (e.g., silencing the player)
+        // Add more logic for other penalty types, such as silencing the player
     }
 
     // Parcelable implementation for passing Penalty between activities/fragments
@@ -91,5 +110,15 @@ data class Penalty(
     companion object CREATOR : Parcelable.Creator<Penalty> {
         override fun createFromParcel(parcel: Parcel): Penalty = Penalty(parcel)
         override fun newArray(size: Int): Array<Penalty?> = arrayOfNulls(size)
+
+        /**
+         * Generates a unique penalty ID by combining playerId and penalty type ordinal.
+         * @param playerId The ID of the player receiving the penalty.
+         * @param penaltyType The type of penalty being applied.
+         * @return A unique penalty ID.
+         */
+        fun generatePenaltyId(playerId: Int, penaltyType: PenaltyType): Int {
+            return playerId * 100 + penaltyType.ordinal
+        }
     }
 }

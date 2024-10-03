@@ -1,4 +1,4 @@
-package com.example.cow_cow.models
+package com.example.cow_cow.enums
 
 enum class TimeOfDay {
     EARLY_MORNING,  // Before sunrise, typically 4 AM - 6 AM

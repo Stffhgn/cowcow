@@ -6,32 +6,26 @@
     android:layout_height="wrap_content"
     android:padding="8dp">
 
-    <!-- Player name TextView -->
+    <!-- Player name -->
     <TextView
         android:id="@+id/playerNameTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Player Name"
         android:textSize="18sp"
-        android:textColor="@android:color/black"
-        android:layout_marginEnd="8dp"
+        android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/playerScoreTextView"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Player score TextView -->
+    <!-- Player score -->
     <TextView
         android:id="@+id/playerScoreTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Score: 0"
         android:textSize="16sp"
-        android:textColor="@android:color/black"
-        app:layout_constraintStart_toEndOf="@+id/playerNameTextView"
-        app:layout_constraintEnd_toStartOf="@+id/isPlayingCheckbox"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/playerNameTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
     <!-- Avatar Image View -->
     <ImageView
         android:id="@+id/avatarImageView"

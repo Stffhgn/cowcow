@@ -1,26 +1,30 @@
 package com.example.cow_cow.repositories
 
 import android.content.Context
+import android.util.Log
 import com.example.cow_cow.models.StoreItem
-import com.example.cow_cow.models.CurrencyType
+import com.example.cow_cow.enums.CurrencyType
+import com.example.cow_cow.enums.ItemRarity
 import com.example.cow_cow.models.Player
 
 class StoreRepository(private val context: Context) {
 
+    private val TAG = "StoreRepository"
+
     // --- Currency Management ---
-    private val playerCoins: Int = 1000   // Default coins
-    private val playerGems: Int = 50      // Default gems
-    private val eventTokens: Int = 10     // Event-specific tokens
+    private var playerCoins: Int = 1000   // Default coins
+    private var playerGems: Int = 50      // Default gems
+    private var eventTokens: Int = 10     // Event-specific tokens
 
     // --- Store Items with Different Rarities ---
     private val storeItems = mutableListOf(
-        StoreItem("Power-Up", 100, CurrencyType.COINS, "Common"),
-        StoreItem("Rare Power-Up", 300, CurrencyType.GEMS, "Rare"),
-        StoreItem("Legendary Cow Skin", 500, CurrencyType.GEMS, "Legendary"),
-        StoreItem("Seasonal Event Token", 50, CurrencyType.EVENT_TOKENS, "Event"),
-        StoreItem("Mystery Loot Box", 250, CurrencyType.COINS, "Mystery"),
-        StoreItem("Extra Lives", 150, CurrencyType.COINS, "Common"),
-        StoreItem("Upgrade: Fast Speed", 200, CurrencyType.COINS, "Upgradable")
+        StoreItem(1, "Power-Up", "Grants extra power", 100, CurrencyType.COINS, "Power-Up", ItemRarity.COMMON),
+        StoreItem(2, "Rare Power-Up", "Special power boost", 300, CurrencyType.GEMS, "Power-Up", ItemRarity.RARE),
+        StoreItem(3, "Legendary Cow Skin", "Legendary skin for your cow", 500, CurrencyType.GEMS, "Skin", ItemRarity.LEGENDARY),
+        StoreItem(4, "Seasonal Event Token", "Token for event usage", 50, CurrencyType.EVENT_TOKENS, "Event", ItemRarity.COMMON),
+        StoreItem(5, "Mystery Loot Box", "Contains a random item", 250, CurrencyType.COINS, "Mystery", ItemRarity.RARE),
+        StoreItem(6, "Extra Lives", "Gives additional lives", 150, CurrencyType.COINS, "Utility", ItemRarity.COMMON),
+        StoreItem(7, "Upgrade: Fast Speed", "Increases speed", 200, CurrencyType.COINS, "Utility", ItemRarity.LEGENDARY)
     )
 
     /**
@@ -28,15 +32,18 @@ class StoreRepository(private val context: Context) {
      * You can filter based on rarity, events, etc.
      */
     fun getStoreItems(player: Player): List<StoreItem> {
+        Log.d(TAG, "Fetching store items for player: ${player.name}")
+
         // Example: If the player has completed certain achievements, unlock special items
         val unlockedItems = mutableListOf<StoreItem>().apply {
             addAll(storeItems)
             if (player.hasSpecialAchievement()) {
-                add(StoreItem("Special Edition Cow Skin", 800, CurrencyType.GEMS, "Legendary"))
+                Log.d(TAG, "Player ${player.name} has a special achievement, unlocking special item.")
+                add(StoreItem(8, "Special Edition Cow Skin", "Exclusive skin", 800, CurrencyType.GEMS, "Skin", ItemRarity.LEGENDARY))
             }
         }
 
-        // Apply discounts based on events, player level, etc.
+        // Apply dynamic pricing based on events or player status
         return applyDynamicPricing(unlockedItems, player)
     }
 
@@ -44,25 +51,40 @@ class StoreRepository(private val context: Context) {
      * Purchase an item from the store.
      */
     fun purchaseItem(item: StoreItem, player: Player): Boolean {
+        Log.d(TAG, "Attempting to purchase item: ${item.name} for player: ${player.name}")
+
         return when (item.currencyType) {
             CurrencyType.COINS -> {
-                if (playerCoins >= item.price) {
-                    deductCurrency(item.currencyType, item.price)
+                if (playerCoins >= item.getFinalPrice()) {
+                    deductCurrency(item.currencyType, item.getFinalPrice())
+                    Log.d(TAG, "Purchased ${item.name} using COINS. Remaining coins: $playerCoins")
                     true
-                } else false
+                } else {
+                    Log.d(TAG, "Insufficient COINS for player: ${player.name}")
+                    false
+                }
             }
             CurrencyType.GEMS -> {
-                if (playerGems >= item.price) {
-                    deductCurrency(item.currencyType, item.price)
+                if (playerGems >= item.getFinalPrice()) {
+                    deductCurrency(item.currencyType, item.getFinalPrice())
+                    Log.d(TAG, "Purchased ${item.name} using GEMS. Remaining gems: $playerGems")
                     true
-                } else false
+                } else {
+                    Log.d(TAG, "Insufficient GEMS for player: ${player.name}")
+                    false
+                }
             }
             CurrencyType.EVENT_TOKENS -> {
-                if (eventTokens >= item.price) {
-                    deductCurrency(item.currencyType, item.price)
+                if (eventTokens >= item.getFinalPrice()) {
+                    deductCurrency(item.currencyType, item.getFinalPrice())
+                    Log.d(TAG, "Purchased ${item.name} using EVENT TOKENS. Remaining tokens: $eventTokens")
                     true
-                } else false
+                } else {
+                    Log.d(TAG, "Insufficient EVENT TOKENS for player: ${player.name}")
+                    false
+                }
             }
+            else -> false
         }
     }
 
@@ -71,20 +93,49 @@ class StoreRepository(private val context: Context) {
      */
     private fun deductCurrency(currencyType: CurrencyType, amount: Int) {
         when (currencyType) {
-            CurrencyType.COINS -> updateCoins(-amount)
-            CurrencyType.GEMS -> updateGems(-amount)
-            CurrencyType.EVENT_TOKENS -> updateEventTokens(-amount)
+            CurrencyType.COINS -> {
+                updateCoins(-amount)
+                Log.d(TAG, "Deducted $amount COINS. New balance: $playerCoins")
+            }
+            CurrencyType.GEMS -> {
+                updateGems(-amount)
+                Log.d(TAG, "Deducted $amount GEMS. New balance: $playerGems")
+            }
+            CurrencyType.EVENT_TOKENS -> {
+                updateEventTokens(-amount)
+                Log.d(TAG, "Deducted $amount EVENT TOKENS. New balance: $eventTokens")
+            }
+            CurrencyType.TICKETS -> {
+                // Handle logic for tickets if necessary (e.g., reduce ticket count)
+                Log.d(TAG, "Deducted $amount TICKETS. Ticket system to be implemented.")
+            }
+            CurrencyType.REAL_MONEY -> {
+                // Handle real money transactions (e.g., log the purchase or redirect to the payment gateway)
+                Log.d(TAG, "Real money purchase of $amount made. Further implementation required for processing payments.")
+            }
+            else -> {
+                Log.e(TAG, "Unknown currency type: $currencyType. Unable to deduct $amount.")
+            }
         }
     }
+
 
     /**
      * Apply dynamic pricing for seasonal events, player level, or other factors.
      */
     private fun applyDynamicPricing(items: List<StoreItem>, player: Player): List<StoreItem> {
+        Log.d(TAG, "Applying dynamic pricing for player: ${player.name}")
+
         return items.map { item ->
             val priceAdjustment = when {
-                isHolidaySeason() -> 0.9 // 10% discount during holidays
-                player.isVIP() -> 0.85   // 15% discount for VIP players
+                isHolidaySeason() -> {
+                    Log.d(TAG, "Holiday season discount applied.")
+                    0.9 // 10% discount during holidays
+                }
+                player.isVIP() -> {
+                    Log.d(TAG, "VIP player discount applied.")
+                    0.85   // 15% discount for VIP players
+                }
                 else -> 1.0
             }
             item.copy(price = (item.price * priceAdjustment).toInt())
@@ -94,30 +145,35 @@ class StoreRepository(private val context: Context) {
     // --- Helper Methods for Player Currency and Store Updates ---
 
     private fun updateCoins(amount: Int) {
-        // Logic to update player coins
+        playerCoins += amount
+        Log.d(TAG, "Updated player coins: $playerCoins")
     }
 
     private fun updateGems(amount: Int) {
-        // Logic to update player gems
+        playerGems += amount
+        Log.d(TAG, "Updated player gems: $playerGems")
     }
 
     private fun updateEventTokens(amount: Int) {
-        // Logic to update player event tokens
+        eventTokens += amount
+        Log.d(TAG, "Updated event tokens: $eventTokens")
     }
 
     private fun isHolidaySeason(): Boolean {
-        // Logic to check if it's a special event or holiday (e.g., Christmas, Halloween)
-        return false
+        val isHoliday = false // Placeholder logic
+        Log.d(TAG, "Holiday season check: $isHoliday")
+        return isHoliday
     }
 
-    // This is just a placeholder to demonstrate
     private fun Player.hasSpecialAchievement(): Boolean {
-        // Check player achievements for unlocking special items
-        return false
+        val hasAchievement = false // Placeholder logic
+        Log.d(TAG, "Player ${this.name} has special achievement: $hasAchievement")
+        return hasAchievement
     }
 
     private fun Player.isVIP(): Boolean {
-        // Check if player is a VIP, maybe from a premium subscription or level
-        return false
+        val isVIP = false // Placeholder logic
+        Log.d(TAG, "Player ${this.name} is VIP: $isVIP")
+        return isVIP
     }
 }

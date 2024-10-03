@@ -1,4 +1,4 @@
-package com.example.cow_cow.models
+package com.example.cow_cow.enums
 
 enum class AgeGroup {
     TODDLERS,           // Typically ages 1-3, simple activities and easier challenges
@@ -8,5 +8,6 @@ enum class AgeGroup {
     ADULTS,             // Suitable for adults or parents
     SENIORS,            // Activities suitable for older adults
     ALL_AGES,           // Activities designed to be accessible and enjoyable for everyone
-    FAMILY              // Designed for multi-generational activities, suitable for family play
+    FAMILY,              // Designed for multi-generational activities, suitable for family play
+    BOTH
 }

@@ -1,4 +1,4 @@
-package com.example.cow_cow.models
+package com.example.cow_cow.enums
 
 enum class SpecialOccasion {
     HALLOWEEN,           // October 31st, celebration with costumes, trick-or-treat, etc.

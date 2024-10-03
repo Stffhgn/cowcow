@@ -1,5 +1,6 @@
 package com.example.cow_cow.viewModels
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -30,6 +31,11 @@ class OnboardingViewModel : ViewModel() {
             OnboardingStep.SELECT_PROFILE -> _currentStep.value = OnboardingStep.GAME_SETUP
             OnboardingStep.GAME_SETUP -> _currentStep.value = OnboardingStep.TUTORIAL
             OnboardingStep.TUTORIAL -> completeOnboarding()
+            else -> {
+                // Handle any unexpected or undefined onboarding step
+                Log.e("Onboarding", "Unexpected step: ${_currentStep.value}. Resetting to INTRODUCTION.")
+                _currentStep.value = OnboardingStep.INTRODUCTION
+            }
         }
     }
 

@@ -2,6 +2,7 @@ package com.example.cow_cow.models
 
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import com.example.cow_cow.enums.PowerUpType
 import com.example.cow_cow.enums.RankType
 
@@ -12,23 +13,31 @@ data class Player(
     var churchCount: Int = 0,
     var waterTowerCount: Int = 0,
     var isOnTeam: Boolean = false,
+    var isCurrentPlayer: Boolean = false,
     var basePoints: Int = 0,
     var penaltyPoints: Int = 0,
     var bonusPoints: Int = 0, // Track bonus points separately for flexibility
     var penalties: MutableList<Penalty> = mutableListOf(),
     var achievements: MutableList<Achievement> = mutableListOf(),
-    var customRules: MutableList<CustomRule> = mutableListOf(),
+    var customRules: MutableList<CustomRule> = mutableListOf(), // Holds multiple custom rules
     var activePowerUps: MutableList<PowerUp> = mutableListOf(),
     var timePlayed: Long = 0L,
     var distanceTraveled: Float = 0f,
     var teamId: Int? = null,
 
+    var customRule: CustomRule? = null,
+
     // Game states (flags)
     var isSilenced: Boolean = false,
-    var isPowerUpActive: Boolean = false
+    var isPowerUpActive: Boolean = false,
+
+    // Condition checking
+    var timeSpent: Long = 0L, // Track total time spent in the game (milliseconds)
+    var winStreak: Int = 0, // Track the number of consecutive wins
+    var objectivesCompleted: Int = 0, // Track the number of objectives completed
 
     //Notifications
-    var notificationsEnabled: Boolean = true
+    var notificationsEnabled: Boolean = true,
 
     // New fields for games played and rank
     var gamesPlayed: Int = 0,    // Tracks the number of games played by the player
@@ -75,14 +84,25 @@ data class Player(
         // Apply power-up effects
         activePowerUps.filter { it.isActive }.forEach { powerUp ->
             when (powerUp.type) {
-                PowerUpType.DOUBLE_POINTS -> totalPoints *= 2
-                PowerUpType.SCORE_MULTIPLIER -> totalPoints += powerUp.effectValue
-                PowerUpType.BONUS_POINTS -> totalPoints += powerUp.effectValue
+                PowerUpType.DOUBLE_POINTS -> {
+                    totalPoints *= 2
+                    Log.d("PowerUpManager", "Double Points applied: Total points doubled.")
+                }
+                PowerUpType.SCORE_MULTIPLIER -> {
+                    totalPoints += powerUp.effectValue
+                    Log.d("PowerUpManager", "Score Multiplier applied: ${powerUp.effectValue} points added.")
+                }
+                PowerUpType.BONUS_POINTS -> {
+                    totalPoints += powerUp.effectValue
+                    Log.d("PowerUpManager", "Bonus Points applied: ${powerUp.effectValue} points added.")
+                }
                 PowerUpType.EXTRA_TIME -> {
+                    Log.d("PowerUpManager", "Extra Time applied: No direct impact on points.")
                     // No direct impact on points, handled elsewhere (like in GameViewModel)
                 }
-                PowerUpType.FREEZE_PLAYER -> {
-                    // No effect on points, but could apply a silencing effect elsewhere
+                else -> {
+                    Log.w("PowerUpManager", "Unknown PowerUpType: ${powerUp.type}. No effect on points.")
+                    // Handle any unexpected power-up types or default cases here.
                 }
             }
         }
@@ -135,6 +155,7 @@ data class Player(
         churchCount = parcel.readInt(),
         waterTowerCount = parcel.readInt(),
         isOnTeam = parcel.readByte() != 0.toByte(),
+        isCurrentPlayer = parcel.readByte() != 0.toByte(), // Read Boolean (true if 1, false if 0)
         basePoints = parcel.readInt(),
         penaltyPoints = parcel.readInt(),
         bonusPoints = parcel.readInt(), // Added for future-proofing
@@ -164,6 +185,7 @@ data class Player(
         parcel.writeInt(churchCount)
         parcel.writeInt(waterTowerCount)
         parcel.writeByte(if (isOnTeam) 1 else 0)
+        parcel.writeByte(if (isCurrentPlayer) 1 else 0) // Write Boolean (1 for true, 0 for false)
         parcel.writeInt(basePoints)
         parcel.writeInt(penaltyPoints)
         parcel.writeInt(bonusPoints) // Added for future-proofing

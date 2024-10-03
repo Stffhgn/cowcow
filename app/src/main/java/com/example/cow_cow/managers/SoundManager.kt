@@ -26,9 +26,13 @@ object SoundManager {
             SoundType.COW_SOUND -> MediaPlayer.create(context, R.raw.cow_sound)
             SoundType.CHURCH_SOUND -> MediaPlayer.create(context, R.raw.church_sound)
             SoundType.WATER_TOWER_SOUND -> MediaPlayer.create(context, R.raw.water_tower_sound)
-            //SoundType.BACKGROUND_MUSIC -> MediaPlayer.create(context, R.raw.background_music)
-            //SoundType.ALERT -> MediaPlayer.create(context, R.raw.alert_sound)
-            // Add other sounds here as needed
+            // Uncomment and use these lines when the corresponding sounds are ready
+            // SoundType.BACKGROUND_MUSIC -> MediaPlayer.create(context, R.raw.background_music)
+            // SoundType.ALERT -> MediaPlayer.create(context, R.raw.alert_sound)
+            else -> {
+                // Handle any unhandled or future SoundType cases, for now, return null or some default behavior
+                null
+            }
         }
 
         mediaPlayer?.setVolume(volumeLevel, volumeLevel)

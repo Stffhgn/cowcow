@@ -3,14 +3,14 @@ package com.example.cow_cow.enums
 enum class PowerUpType {
     DOUBLE_POINTS,         // Doubles the points earned for a limited time
     IMMUNITY,              // Grants immunity from penalties or negative effects
-    SPEED_BOOST,           // Temporarily increases movement speed or action rate
+    //SPEED_BOOST,           // Temporarily increases movement speed or action rate
     EXTRA_TIME,            // Adds additional time to complete an objective
-    INVISIBILITY,          // Makes the player invisible to enemies or other players
+    //INVISIBILITY,          // Makes the player invisible to enemies or other players
     SHIELD,                // Blocks incoming damage or penalties for a certain duration
-    EXTRA_LIFE,            // Gives the player an additional life or chance
+    //EXTRA_LIFE,            // Gives the player an additional life or chance
     SCORE_MULTIPLIER,      // Multiplies the player's score by a factor (e.g., 3x or 4x)
-    FREEZE_ENEMIES,        // Freezes enemies in place for a short time
-    HEALTH_REGEN,          // Gradually restores player's health over time
+    //FREEZE_ENEMIES,        // Freezes enemies in place for a short time
+    //HEALTH_REGEN,          // Gradually restores player's health over time
     TELEPORTATION,         // Allows the player to instantly move to another location
     BONUS_POINTS,          // Awards extra points immediately
     INVULNERABILITY,       // Grants the player complete invulnerability for a short period

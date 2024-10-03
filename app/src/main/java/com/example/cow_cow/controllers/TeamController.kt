@@ -40,7 +40,7 @@ class TeamController(private val gameViewModel: GameViewModel) {
      * Get the list of players who are currently on the team.
      */
     fun getTeamPlayers(): List<Player> {
-        return gameViewModel.team.value ?: emptyList()
+        return gameViewModel.team.value?.members ?: emptyList()  // Access the members of the Team object
     }
 
     /**

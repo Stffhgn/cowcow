@@ -2,6 +2,7 @@ package com.example.cow_cow.repositories
 
 import android.content.Context
 import android.media.MediaPlayer
+import com.example.cow_cow.R
 import com.example.cow_cow.enums.SoundType
 import com.example.cow_cow.managers.SoundManager
 import com.example.cow_cow.utils.FileUtils
@@ -47,8 +48,8 @@ class SoundRepository(private val context: Context) {
             SoundType.COW_SOUND -> R.raw.cow_sound
             SoundType.CHURCH_SOUND -> R.raw.church_sound
             SoundType.WATER_TOWER_SOUND -> R.raw.water_tower_sound
-            SoundType.BACKGROUND_MUSIC -> R.raw.background_music
-            SoundType.ALERT -> R.raw.alert_sound
+            //SoundType.BACKGROUND_MUSIC -> R.raw.background_music
+            //SoundType.ALERT -> R.raw.alert_sound
         }
         return try {
             FileUtils.getFileFromResource(context, resId)

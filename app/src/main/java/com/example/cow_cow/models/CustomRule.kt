@@ -7,9 +7,9 @@ import com.example.cow_cow.enums.RuleEffectType
 
 data class CustomRule(
     val ruleId: Int,                      // Unique ID for the custom rule
-    val name: String,                     // Rule name (e.g., "Double Points for Low Score")
-    val description: String,              // Description of the rule effect and condition
-    val effect: RuleEffectType,           // The effect the rule has (e.g., add points, deduct points, etc.)
+    val ruleName: String,                     // Rule name (e.g., "Double Points for Low Score")
+    val ruleDescription: String,              // Description of the rule effect and condition
+    val ruleEffect: RuleEffectType,           // The effect the rule has (e.g., add points, deduct points, etc.)
     val value: Int = 0,                   // Value associated with the effect (e.g., points to add/deduct)
     val duration: Long = 0L,              // Duration of the effect, in milliseconds (for time-based effects)
     val conditionType: RuleConditionType, // The condition that triggers the rule (e.g., player has less than X points)
@@ -30,7 +30,7 @@ data class CustomRule(
 
     // Apply the effect of the rule to the player's points or state
     fun applyEffect(playerPoints: Int): Int {
-        return when (effect) {
+        return when (ruleEffect) {
             RuleEffectType.ADD_POINTS -> playerPoints + value
             RuleEffectType.DEDUCT_POINTS -> playerPoints - value
             else -> playerPoints  // Other effects might not change points directly
@@ -40,9 +40,9 @@ data class CustomRule(
     // Parcelable implementation
     constructor(parcel: Parcel) : this(
         ruleId = parcel.readInt(),
-        name = parcel.readString() ?: "",
-        description = parcel.readString() ?: "",
-        effect = RuleEffectType.valueOf(parcel.readString() ?: RuleEffectType.ADD_POINTS.name),
+        ruleName = parcel.readString() ?: "",
+        ruleDescription = parcel.readString() ?: "",
+        ruleEffect = RuleEffectType.valueOf(parcel.readString() ?: RuleEffectType.ADD_POINTS.name),
         value = parcel.readInt(),
         duration = parcel.readLong(),
         conditionType = RuleConditionType.valueOf(parcel.readString() ?: RuleConditionType.ALWAYS.name),
@@ -54,9 +54,9 @@ data class CustomRule(
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(ruleId)
-        parcel.writeString(name)
-        parcel.writeString(description)
-        parcel.writeString(effect.name)
+        parcel.writeString(ruleName)
+        parcel.writeString(ruleDescription)
+        parcel.writeString(ruleEffect.name)
         parcel.writeInt(value)
         parcel.writeLong(duration)
         parcel.writeString(conditionType.name)

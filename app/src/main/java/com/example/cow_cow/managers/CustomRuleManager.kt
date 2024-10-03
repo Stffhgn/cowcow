@@ -1,10 +1,12 @@
 package com.example.cow_cow.managers
 
 import android.content.Context
-import com.example.cow_cow.models.CustomRule
-import com.example.cow_cow.models.Player
+import android.util.Log
+import com.example.cow_cow.enums.GameMode
 import com.example.cow_cow.enums.RuleConditionType
 import com.example.cow_cow.enums.RuleEffectType
+import com.example.cow_cow.models.CustomRule
+import com.example.cow_cow.models.Player
 import com.example.cow_cow.utils.DataUtils
 
 class CustomRuleManager(private val context: Context) {
@@ -12,15 +14,15 @@ class CustomRuleManager(private val context: Context) {
     private val activeCustomRules = mutableListOf<CustomRule>()  // Stores active custom rules
 
     init {
-        loadCustomRules()  // Load any saved custom rules when initialized
+        loadCustomRules()  // Load saved custom rules when initialized
     }
 
     // Creates and adds a new custom rule
     fun createCustomRule(
         ruleId: Int,
-        name: String,
-        description: String,
-        effect: RuleEffectType,
+        ruleName: String,
+        ruleDescription: String,
+        ruleEffect: RuleEffectType,
         value: Int,
         duration: Long,
         conditionType: RuleConditionType,
@@ -28,40 +30,62 @@ class CustomRuleManager(private val context: Context) {
     ) {
         val customRule = CustomRule(
             ruleId = ruleId,
-            name = name,
-            description = description,
-            effect = effect,
+            ruleName = ruleName,
+            ruleDescription = ruleDescription,
+            ruleEffect = ruleEffect,
             value = value,
             duration = duration,
             conditionType = conditionType,
             conditionValue = conditionValue
         )
         activeCustomRules.add(customRule)
+        Log.d("CustomRuleManager", "Created new rule: $ruleName with effect $ruleEffect.")
         saveCustomRules()  // Save rules after creation
     }
 
-    // Applies a custom rule to a specific player
-    fun applyCustomRule(player: Player, rule: CustomRule) {
-        if (checkRuleCondition(player, rule)) {
-            when (rule.effect) {
-                RuleEffectType.ADD_POINTS -> player.addBasePoints(rule.value)
-                RuleEffectType.DEDUCT_POINTS -> player.basePoints -= rule.value
-                RuleEffectType.SILENCE_PLAYER -> player.isSilenced = true
-                RuleEffectType.CUSTOM_PENALTY -> applyCustomPenalty(player, rule)
-            }
-
-            // Notify the player about the applied rule (could use a notification system)
-            notifyRuleApplied(player, rule)
+    // Apply custom rules for all players in the current game
+    fun applyCustomRulesForGame(players: List<Player>, gameMode: GameMode) {
+        Log.d("CustomRuleManager", "Applying custom rules for game mode: $gameMode")
+        players.forEach { player ->
+            player.customRule?.let { rule ->
+                applyCustomRule(player, rule)
+            } ?: Log.w("CustomRuleManager", "No custom rule found for player ${player.name}")
         }
     }
 
-    // Check if the rule's condition is satisfied before applying the rule
+    // Function to apply a custom rule to a specific player
+    fun applyCustomRule(player: Player, rule: CustomRule) {
+        if (!checkRuleCondition(player, rule)) {
+            Log.d("CustomRuleManager", "Rule ${rule.ruleName} condition not met for player ${player.name}")
+            return
+        }
+        // Apply the rule effect
+        when (rule.ruleEffect) {
+            RuleEffectType.ADD_POINTS -> player.addBasePoints(rule.value)
+            RuleEffectType.DEDUCT_POINTS -> player.basePoints -= rule.value
+            RuleEffectType.SILENCE_PLAYER -> player.isSilenced = true
+            RuleEffectType.CUSTOM_PENALTY -> applyCustomPenalty(player, rule)
+            RuleEffectType.DOUBLE_POINTS -> player.addBasePoints(rule.value * 2)
+        }
+        Log.d("CustomRuleManager", "Applied rule '${rule.ruleName}' to player ${player.name}")
+        PlayerManager.updatePlayer(player) // Optionally update player state
+    }
+
+    // Check if the rule's condition is satisfied before applying it
     private fun checkRuleCondition(player: Player, rule: CustomRule): Boolean {
         return when (rule.conditionType) {
             RuleConditionType.ALWAYS -> true
             RuleConditionType.PLAYER_HAS_LESS_THAN_X_POINTS -> player.basePoints < rule.conditionValue
             RuleConditionType.PLAYER_HAS_MORE_THAN_X_POINTS -> player.basePoints > rule.conditionValue
+        }.also { result ->
+            Log.d("CustomRuleManager", "Rule ${rule.ruleName} condition check result: $result for player ${player.name}")
         }
+    }
+
+    // Custom logic for specific penalties
+    private fun applyCustomPenalty(player: Player, rule: CustomRule) {
+        player.penaltyPoints += rule.value
+        Log.d("CustomRuleManager", "Applied custom penalty of ${rule.value} points to player ${player.name}")
     }
 
     // Check active rules and remove expired ones
@@ -70,35 +94,34 @@ class CustomRuleManager(private val context: Context) {
         activeCustomRules.removeAll { rule ->
             rule.duration > 0 && (currentTime - rule.duration) >= rule.duration
         }
-        saveCustomRules()  // Save the updated list after checking for expired rules
+        saveCustomRules()  // Save updated rules after removing expired ones
+        Log.d("CustomRuleManager", "Checked and removed expired rules.")
     }
 
     // Remove a custom rule manually
     fun removeCustomRule(rule: CustomRule) {
         activeCustomRules.remove(rule)
         saveCustomRules()  // Save after removal
-    }
-
-    // Notify the player when a rule is applied
-    private fun notifyRuleApplied(player: Player, rule: CustomRule) {
-        // Example: Show a notification or alert dialog
-        // "Custom rule '${rule.name}' applied to ${player.name}"
-    }
-
-    // Custom logic for specific penalties
-    private fun applyCustomPenalty(player: Player, rule: CustomRule) {
-        // Handle any custom penalties specific to the rule
-        // Example: Reducing player's speed, freezing player, etc.
+        Log.d("CustomRuleManager", "Removed custom rule ${rule.ruleName}")
     }
 
     // Save the current list of custom rules
     private fun saveCustomRules() {
         DataUtils.saveCustomRules(context, activeCustomRules)
+        Log.d("CustomRuleManager", "Saved custom rules.")
     }
 
     // Load the saved custom rules
     private fun loadCustomRules() {
         activeCustomRules.clear()
         activeCustomRules.addAll(DataUtils.loadCustomRules(context))
+        Log.d("CustomRuleManager", "Loaded custom rules from storage.")
+    }
+
+    companion object {
+        // Static method for applying custom rules (optional if needed elsewhere)
+        fun applyCustomRule(player: Player, customRule: CustomRule) {
+            // Implementation if needed statically
+        }
     }
 }

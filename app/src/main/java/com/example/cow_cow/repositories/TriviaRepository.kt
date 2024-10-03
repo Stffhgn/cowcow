@@ -1,7 +1,5 @@
 package com.example.cow_cow.repositories
 
-package com.example.cow_cow.repositories
-
 import com.example.cow_cow.models.TriviaQuestion
 import com.example.cow_cow.enums.DifficultyLevel
 

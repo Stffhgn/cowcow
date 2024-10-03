@@ -29,8 +29,9 @@ class PlayerStatsFragment : Fragment(R.layout.fragment_player_stats) {
         _binding = FragmentPlayerStatsBinding.bind(view)
 
         // Retrieve arguments using Safe Args
-        playerId = args.playerID
-        playerName = args.playerName
+        // Get the player ID and name from Safe Args
+        val playerId = args.playerID // This should be an Int
+        val playerName = args.playerName // This should be a String
 
         // Initialize PlayerViewModel
         playerViewModel = ViewModelProvider(this).get(PlayerViewModel::class.java)

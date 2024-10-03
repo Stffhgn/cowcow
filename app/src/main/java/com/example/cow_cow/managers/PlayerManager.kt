@@ -1,5 +1,6 @@
 package com.example.cow_cow.managers
 
+import android.util.Log
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Team
 import java.util.*
@@ -21,6 +22,20 @@ object PlayerManager {
     }
 
     /**
+     * Calculate the total points for the player based on their current counts and active modifiers.
+     * @param player The player whose points are being calculated.
+     */
+    fun calculatePlayerPoints(player: Player) {
+        // Use the calculateTotalPoints function from Player class
+        val totalPoints = player.calculateTotalPoints()
+
+        // Update the player's total points with the calculated value
+        player.basePoints = totalPoints
+
+        Log.d("PlayerManager", "Calculated total points for player ${player.name}: $totalPoints")
+    }
+
+    /**
      * Remove a player from the game.
      *
      * @param playerId The ID of the player to be removed.
@@ -35,7 +50,7 @@ object PlayerManager {
      * @param playerId The ID of the player to retrieve.
      * @return The player object, or null if not found.
      */
-    fun getPlayerById(playerId: String): Player? {
+    fun getPlayerById(playerId: Int): Player? {
         return players.find { it.id == playerId }
     }
 
@@ -184,7 +199,7 @@ object PlayerManager {
     fun randomizeTeams(teamCount: Int) {
         clearTeams()
         val shuffledPlayers = players.shuffled()
-        val teamsToCreate = (1..teamCount).map { Team(id = it, members = mutableListOf()) }
+        val teamsToCreate = (1..teamCount).map { Team(id = it, name = "Team $it", members = mutableListOf()) }
 
         shuffledPlayers.forEachIndexed { index, player ->
             val team = teamsToCreate[index % teamCount]

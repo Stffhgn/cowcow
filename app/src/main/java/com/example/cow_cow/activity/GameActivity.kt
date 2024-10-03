@@ -7,8 +7,12 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.cow_cow.R
+import com.example.cow_cow.controllers.MainGameController
 import com.example.cow_cow.databinding.ActivityGameScreenBinding
+import com.example.cow_cow.enums.GameMode
 import com.example.cow_cow.gameFragments.CowCowFragment
+import com.example.cow_cow.managers.GameManager
+import com.example.cow_cow.managers.PlayerManager
 import com.example.cow_cow.viewModels.GameViewModel
 
 class GameActivity : AppCompatActivity() {
@@ -22,6 +26,11 @@ class GameActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val players = PlayerManager.getAllPlayers()
+        GameManager.applyCustomRulesForGame(this, GameMode.CLASSIC)
+        val mainGameController = MainGameController(gameViewModel) // 'this' refers to the Activity context
+
 
         // Inflate the layout using View Binding
         binding = ActivityGameScreenBinding.inflate(layoutInflater)

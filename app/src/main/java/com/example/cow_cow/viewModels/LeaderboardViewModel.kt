@@ -1,5 +1,6 @@
 package com.example.cow_cow.viewModels
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -7,7 +8,8 @@ import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 
 class LeaderboardViewModel(
-    private val playerRepository: PlayerRepository
+    private val playerRepository: PlayerRepository,
+    private val context: Context
 ) : ViewModel() {
 
     // LiveData to store the list of players in the leaderboard
@@ -18,7 +20,7 @@ class LeaderboardViewModel(
      * Load the leaderboard data by fetching all players and sorting by their scores.
      */
     fun loadLeaderboard() {
-        val players = playerRepository.getAllPlayers()
+        val players = playerRepository.getPlayers(context)
         _leaderboard.value = players.sortedByDescending { it.calculateTotalPoints() }
     }
 }

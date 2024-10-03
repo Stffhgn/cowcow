@@ -1,10 +1,13 @@
 package com.example.cow_cow.managers
 
+import android.util.Log
 import com.example.cow_cow.enums.PowerUpType
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.PowerUp
 
 object PowerUpManager {
+
+    private const val TAG = "PowerUpManager"
 
     /**
      * Activates a power-up for a given player.
@@ -15,6 +18,8 @@ object PowerUpManager {
      * @param effectValue Optional: The value associated with the power-up effect (e.g., extra points).
      */
     fun activatePowerUp(player: Player, powerUpType: PowerUpType, duration: Long, effectValue: Int = 0) {
+        Log.d(TAG, "Activating power-up ${powerUpType.name} for player ${player.name}")
+
         // Create the power-up and activate it
         val powerUp = PowerUp(
             type = powerUpType,
@@ -35,6 +40,8 @@ object PowerUpManager {
      * @param powerUpType The type of power-up being deactivated.
      */
     fun deactivatePowerUp(player: Player, powerUpType: PowerUpType) {
+        Log.d(TAG, "Deactivating power-up ${powerUpType.name} for player ${player.name}")
+
         // Find the power-up to deactivate
         val powerUp = player.activePowerUps.find { it.type == powerUpType && it.isActive }
         powerUp?.let {
@@ -53,6 +60,7 @@ object PowerUpManager {
         val expiredPowerUps = player.activePowerUps.filter { it.isActive && it.duration <= currentTime }
 
         expiredPowerUps.forEach { powerUp ->
+            Log.d(TAG, "Power-up ${powerUp.type.name} has expired for player ${player.name}")
             deactivatePowerUp(player, powerUp.type)
         }
     }
@@ -63,38 +71,32 @@ object PowerUpManager {
      * @param player The player to apply the power-up effect to.
      * @param powerUp The power-up being applied.
      */
-    private fun applyPowerUpEffect(player: Player, powerUp: PowerUp) {
+    fun applyPowerUpEffect(player: Player, powerUp: PowerUp) {
+        Log.d(TAG, "Applying power-up effect: ${powerUp.type.name} to player ${player.name}")
+
         when (powerUp.type) {
             PowerUpType.DOUBLE_POINTS -> {
-                // Double the player's points for the duration of the power-up
                 player.basePoints *= 2
+                Log.d(TAG, "Double Points applied: ${player.basePoints} points for ${player.name}.")
             }
-            PowerUpType.EXTRA_POINTS -> {
-                // Add extra points immediately
+            PowerUpType.BONUS_POINTS -> {
                 player.addBonusPoints(powerUp.effectValue)
+                Log.d(TAG, "Bonus Points applied: ${powerUp.effectValue} bonus points for ${player.name}.")
             }
             PowerUpType.IMMUNITY -> {
-                // Provide immunity from penalties for the duration
-                player.isSilenced = false  // Example of cancelling a penalty effect
+                player.isSilenced = false
+                Log.d(TAG, "Immunity applied: ${player.name} is no longer silenced.")
             }
-            PowerUpType.SPEED_BOOST -> {
-                // Any logic for increasing player's speed (could be used in other game modes)
-            }
-            PowerUpType.EXTRA_TIME -> {
-                // Increase time-related gameplay (handled externally by time management systems)
-            }
-            PowerUpType.SHIELD -> {
-                // Add shield logic for protecting against penalties or damage
-            }
-            PowerUpType.HEALTH_REGEN -> {
-                // Gradually restore the player's health over time
-            }
-            // Additional power-up effects can be added here
+            // Add other PowerUpTypes as needed
+            // PowerUpType.SPEED_BOOST, PowerUpType.EXTRA_TIME, PowerUpType.SHIELD, PowerUpType.HEALTH_REGEN -> {
+            //     Add specific logic here if needed
+            // }
             else -> {
-                // Handle other power-ups (e.g., teleportation, invisibility, etc.)
+                Log.d(TAG, "Power-up ${powerUp.type.name} has no specific effect applied.")
             }
         }
     }
+
 
     /**
      * Removes the effect of the given power-up from the player.
@@ -103,17 +105,19 @@ object PowerUpManager {
      * @param powerUp The power-up being deactivated.
      */
     private fun removePowerUpEffect(player: Player, powerUp: PowerUp) {
+        Log.d(TAG, "Removing power-up effect: ${powerUp.type.name} from player ${player.name}")
+
         when (powerUp.type) {
             PowerUpType.DOUBLE_POINTS -> {
-                // Restore the player's points to normal (if needed, depending on implementation)
+                player.basePoints /= 2
+                Log.d(TAG, "Double points removed from player ${player.name}.")
             }
             PowerUpType.IMMUNITY -> {
-                // Remove immunity and allow penalties to apply again
+                player.isSilenced = true
+                Log.d(TAG, "Player ${player.name} is silenced again after immunity ends.")
             }
-            PowerUpType.SHIELD -> {
-                // Remove shield effect
-            }
-            // Additional power-up removal logic as needed
+            // Add logic for other power-ups if necessary
+            else -> Log.d(TAG, "Power-up ${powerUp.type.name} has no specific removal logic.")
         }
     }
 
@@ -123,6 +127,7 @@ object PowerUpManager {
      * @param player The player whose power-ups will be cleared.
      */
     fun clearActivePowerUps(player: Player) {
+        Log.d(TAG, "Clearing all active power-ups for player ${player.name}")
         player.activePowerUps.clear()
     }
 
@@ -135,6 +140,7 @@ object PowerUpManager {
     fun grantRandomPowerUp(player: Player, duration: Long) {
         val allPowerUps = PowerUpType.values().toList()
         val randomPowerUpType = allPowerUps.random()
+        Log.d(TAG, "Granting random power-up ${randomPowerUpType.name} to player ${player.name}")
         activatePowerUp(player, randomPowerUpType, duration)
     }
 
@@ -146,6 +152,7 @@ object PowerUpManager {
      * @param duration The duration of the power-up.
      */
     fun grantPowerUpToAll(players: List<Player>, powerUpType: PowerUpType, duration: Long) {
+        Log.d(TAG, "Granting power-up ${powerUpType.name} to all players")
         players.forEach { player ->
             activatePowerUp(player, powerUpType, duration)
         }

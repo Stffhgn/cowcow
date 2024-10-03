@@ -5,14 +5,25 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.cow_cow.R
+import com.example.cow_cow.controllers.MainGameController
 import com.example.cow_cow.databinding.FragmentGameBinding
+import com.example.cow_cow.repositories.GameRepository
+import com.example.cow_cow.viewModels.GameViewModel
+import com.example.cow_cow.viewModels.GameViewModelFactory
 
 class GameFragment : Fragment() {
 
     private var _binding: FragmentGameBinding? = null
     private val binding get() = _binding!!
+
+    // Declare MainGameController
+    private lateinit var mainGameController: MainGameController
+    // Declare GameViewModel
+    private lateinit var gameViewModel: GameViewModel
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -25,6 +36,16 @@ class GameFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Initialize your repository
+        val gameRepository = GameRepository(requireContext())
+
+        // Use the GameViewModelFactory to create the ViewModel with the repository
+        val factory = GameViewModelFactory(requireActivity().application, gameRepository)
+        gameViewModel = ViewModelProvider(this, factory).get(GameViewModel::class.java)
+
+        // Initialize MainGameController with the ViewModel and context
+        mainGameController = MainGameController(gameViewModel)
 
         // Set up button click listeners
         setupButtons()
