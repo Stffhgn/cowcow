@@ -7,13 +7,13 @@ import com.example.cow_cow.repositories.GameRepository
 
 class GameViewModelFactory(
     private val application: Application,
-    private val repository: GameRepository
+    private val gameRepository: GameRepository
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(GameViewModel::class.java)) {
-            return GameViewModel(application, repository) as T
+            return GameViewModel(application, gameRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

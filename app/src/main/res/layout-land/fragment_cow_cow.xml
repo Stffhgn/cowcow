@@ -16,7 +16,7 @@
         app:srcCompat="@drawable/ic_cow_cow_cow"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_marginEnd="16dp" />
 
     <!-- Church Button -->
     <ImageButton
@@ -26,10 +26,9 @@
         android:contentDescription="@string/church_button"
         android:background="?attr/selectableItemBackground"
         app:srcCompat="@drawable/ic_cow_cow_church"
-        app:layout_constraintTop_toBottomOf="@id/cowButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@id/cowButton"
+        android:layout_marginEnd="16dp" />
 
     <!-- Water Tower Button -->
     <ImageButton
@@ -39,10 +38,8 @@
         android:contentDescription="@string/water_tower_button"
         android:background="?attr/selectableItemBackground"
         app:srcCompat="@drawable/ic_cow_cow_water_tower"
-        app:layout_constraintTop_toBottomOf="@id/churchButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@id/churchButton" />
 
     <!-- White Fence Button -->
     <ImageButton
@@ -52,9 +49,10 @@
         android:contentDescription="@string/white_fence_button"
         android:background="?attr/selectableItemBackground"
         app:srcCompat="@drawable/ic_cow_cow_white_fence"
-        app:layout_constraintTop_toBottomOf="@id/waterTowerButton"
+        app:layout_constraintTop_toBottomOf="@id/cowButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="24dp" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

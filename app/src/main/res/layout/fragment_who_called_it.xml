@@ -7,75 +7,42 @@
     android:layout_height="match_parent"
     tools:context=".gameFragments.WhoCalledItFragment">
 
-    <!-- Player Name TextView -->
+    <!-- Title displaying what was called (Cow, Church, Water Tower, White Fence) -->
     <TextView
-        android:id="@+id/playerName"
+        android:id="@+id/headerTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Player Name"
-        android:textSize="18sp"
+        android:text="Who called the Cow?"
+        android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="16dp"
+        android:gravity="center" />
 
-    <!-- Player Total Score -->
-    <TextView
-        android:id="@+id/playerTotalScore"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Total Score: 0"
-        android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@id/playerName"
+    <!-- RecyclerView to display players list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/playerRecyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/headerTextView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"/>
-
-    <!-- Cow Stats -->
-    <TextView
-        android:id="@+id/cowStat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Cows: 0"
-        android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@id/playerTotalScore"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="16dp"/>
-
-    <!-- Church Stats -->
-    <TextView
-        android:id="@+id/churchStat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Churches: 0"
-        android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@id/playerTotalScore"
-        app:layout_constraintStart_toEndOf="@id/cowStat"
-        android:layout_marginStart="32dp"/>
-
-    <!-- Water Tower Stats -->
-    <TextView
-        android:id="@+id/waterTowerStat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Water Towers: 0"
-        android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@id/playerTotalScore"
-        app:layout_constraintStart_toEndOf="@id/churchStat"
-        android:layout_marginStart="32dp"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:padding="16dp" />
 
     <!-- Error message -->
+    <!-- No players found message -->
     <TextView
-        android:id="@+id/errorTextView"
+        android:id="@+id/noPlayersMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Error"
-        android:textColor="@android:color/holo_red_dark"
         android:visibility="gone"
+        android:text="No players found"
         android:textSize="18sp"
-        app:layout_constraintTop_toBottomOf="@id/waterTowerStat"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"/>
+        android:textColor="@android:color/darker_gray"
+        android:gravity="center"
+        android:layout_gravity="center" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

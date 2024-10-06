@@ -8,8 +8,10 @@ import androidx.lifecycle.MutableLiveData
 import com.example.cow_cow.models.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class PlayerRepository {
+class PlayerRepository(private val context: Context) {
 
     private val PREFS_NAME = "com.example.cow_cow.PREFERENCES"
     private val PLAYERS_KEY = "PLAYERS_KEY"
@@ -23,7 +25,6 @@ class PlayerRepository {
     val teamLiveData: LiveData<List<Player>> get() = _teamLiveData
 
     private var currentPlayer: Player? = null
-
 
     /**
      * Retrieves SharedPreferences for storing player data.
@@ -40,9 +41,11 @@ class PlayerRepository {
         val prefs = getSharedPreferences(context)
         val json = prefs.getString(PLAYERS_KEY, null)
         return if (json != null) {
+            Log.d("PlayerRepository", "Players found in SharedPreferences.")
             val type = object : TypeToken<List<Player>>() {}.type
             gson.fromJson(json, type)
         } else {
+            Log.d("PlayerRepository", "No players found in SharedPreferences.")
             emptyList()
         }
     }
@@ -57,8 +60,10 @@ class PlayerRepository {
         val json = gson.toJson(players)
         editor.putString(PLAYERS_KEY, json)
         editor.apply()
+        Log.d("PlayerRepository", "Players saved to SharedPreferences: ${players.size} players")
 
-        _playersLiveData.value = players
+        // Using postValue for background thread updates
+        _playersLiveData.postValue(players)
     }
 
     /**
@@ -121,10 +126,6 @@ class PlayerRepository {
 
     /**
      * Saves player-specific settings to SharedPreferences.
-     *
-     * @param playerId The ID of the player whose settings are being saved.
-     * @param settings The settings to save for the player.
-     * @param context The context to access SharedPreferences.
      */
     fun savePlayerSettings(playerId: Int, settings: PlayerSettings, context: Context) {
         Log.d("PlayerRepository", "Saving settings for player ID: $playerId.")
@@ -185,7 +186,8 @@ class PlayerRepository {
         editor.putString(TEAM_KEY, json)
         editor.apply()
 
-        _teamLiveData.value = team
+        // Use postValue to update LiveData from background thread
+        _teamLiveData.postValue(team)
     }
 
     /**
@@ -268,6 +270,18 @@ class PlayerRepository {
             savePlayers(players, context)
         } else {
             Log.e("PlayerRepository", "Player with ID: $playerId not found.")
+        }
+    }
+
+    suspend fun fetchPlayers(): List<Player> = withContext(Dispatchers.IO) {
+        try {
+            Log.d("PlayerRepository", "Fetching players from SharedPreferences")
+            // Mocking fetch from SharedPreferences
+            // Add actual implementation for fetching players
+            return@withContext listOf<Player>()  // Replace with actual fetched players
+        } catch (e: Exception) {
+            Log.e("PlayerRepository", "Error fetching players: ${e.message}")
+            throw e  // Re-throw exception
         }
     }
 }

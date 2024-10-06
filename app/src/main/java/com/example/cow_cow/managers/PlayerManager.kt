@@ -1,14 +1,16 @@
 package com.example.cow_cow.managers
 
+import android.content.ContentValues.TAG
 import android.util.Log
+import com.example.cow_cow.models.CustomRule
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Team
-import java.util.*
 
 object PlayerManager {
 
     private val players: MutableList<Player> = mutableListOf()
     private val teams: MutableList<Team> = mutableListOf()
+    private const val TAG = "PlayerManager"
 
     /**
      * Add a new player to the game.
@@ -18,21 +20,36 @@ object PlayerManager {
     fun addPlayer(player: Player) {
         if (!players.contains(player)) {
             players.add(player)
+            Log.d(TAG, "Player added: \${player.name}")
         }
     }
 
     /**
-     * Calculate the total points for the player based on their current counts and active modifiers.
+     * Apply a custom rule to the player.
+     *
+     * @param player The player to whom the rule is being applied.
+     * @param rule The rule to apply.
+     */
+    fun applyCustomRuleToPlayer(player: Player, rule: CustomRule) {
+        Log.d(TAG, "Applying custom rule to player: \${player.name}, Rule: \${rule.name}")
+
+        if (!player.customRules.contains(rule)) {
+            player.customRules.add(rule)
+            Log.d(TAG, "Rule '\${rule.name}' successfully applied to \${player.name}")
+        } else {
+            Log.d(TAG, "Rule '\${rule.name}' is already applied to \${player.name}")
+        }
+    }
+
+    /**
+     * Calculate the total points for the player.
+     *
      * @param player The player whose points are being calculated.
      */
     fun calculatePlayerPoints(player: Player) {
-        // Use the calculateTotalPoints function from Player class
         val totalPoints = player.calculateTotalPoints()
-
-        // Update the player's total points with the calculated value
         player.basePoints = totalPoints
-
-        Log.d("PlayerManager", "Calculated total points for player ${player.name}: $totalPoints")
+        Log.d(TAG, "Calculated total points for player \${player.name}: \$totalPoints")
     }
 
     /**
@@ -41,7 +58,10 @@ object PlayerManager {
      * @param playerId The ID of the player to be removed.
      */
     fun removePlayer(playerId: Int) {
-        players.removeIf { it.id == playerId }
+        players.find { it.id == playerId }?.let {
+            players.remove(it)
+            Log.d(TAG, "Player removed: \${it.name}")
+        }
     }
 
     /**
@@ -69,29 +89,31 @@ object PlayerManager {
      * @param updatedPlayer The player object with updated information.
      */
     fun updatePlayer(updatedPlayer: Player) {
-        val index = players.indexOfFirst { it.id == updatedPlayer.id }
-        if (index != -1) {
-            players[index] = updatedPlayer
+        players.indexOfFirst { it.id == updatedPlayer.id }.takeIf { it != -1 }?.let {
+            players[it] = updatedPlayer
+            Log.d(TAG, "Player updated: \${updatedPlayer.name}")
         }
     }
 
     /**
-     * Clear all players from the game (useful for resetting).
+     * Clear all players from the game.
      */
     fun clearPlayers() {
         players.clear()
+        Log.d(TAG, "All players have been cleared from the game.")
     }
 
     // --- Team Management Functions ---
 
     /**
-     * Create a new team.
+     * Add a new team.
      *
      * @param team The team object to be added.
      */
     fun addTeam(team: Team) {
         if (!teams.contains(team)) {
             teams.add(team)
+            Log.d(TAG, "Team added: \${team.name}")
         }
     }
 
@@ -108,6 +130,7 @@ object PlayerManager {
         if (player != null && team != null && !team.members.contains(player)) {
             team.members.add(player)
             player.isOnTeam = true
+            Log.d(TAG, "Player \${player.name} added to team \${team.name}")
         }
     }
 
@@ -124,6 +147,7 @@ object PlayerManager {
         if (player != null && team != null && team.members.contains(player)) {
             team.members.remove(player)
             player.isOnTeam = false
+            Log.d(TAG, "Player \${player.name} removed from team \${team.name}")
         }
     }
 
@@ -137,26 +161,17 @@ object PlayerManager {
     }
 
     /**
-     * Get a list of all players on a specific team.
-     *
-     * @param teamId The ID of the team.
-     * @return A list of all players on the specified team.
-     */
-    fun getPlayersOnTeam(teamId: Int): List<Player>? {
-        return teams.find { it.id == teamId }?.members
-    }
-
-    /**
-     * Clear all teams (useful for resetting).
+     * Clear all teams.
      */
     fun clearTeams() {
         teams.clear()
+        Log.d(TAG, "All teams have been cleared from the game.")
     }
 
     // --- Player Stats Management ---
 
     /**
-     * Reset all player stats (useful for game resets).
+     * Reset all player stats.
      */
     fun resetAllPlayerStats() {
         players.forEach { player ->
@@ -169,30 +184,12 @@ object PlayerManager {
             player.penalties.clear()
             player.achievements.clear()
             player.customRules.clear()
+            Log.d(TAG, "Stats reset for player: \${player.name}")
         }
     }
 
     /**
-     * Get the player with the most points.
-     *
-     * @return The player with the highest total points.
-     */
-    fun getPlayerWithMostPoints(): Player? {
-        return players.maxByOrNull { it.calculateTotalPoints() }
-    }
-
-    /**
-     * Get the player with the most cows called.
-     *
-     * @return The player with the most cows called.
-     */
-    fun getPlayerWithMostCows(): Player? {
-        return players.maxByOrNull { it.cowCount }
-    }
-
-    /**
      * Randomly assign players to teams.
-     * This could be used to shuffle teams during team-based modes.
      *
      * @param teamCount The number of teams to divide players into.
      */
@@ -207,6 +204,7 @@ object PlayerManager {
             player.isOnTeam = true
         }
         teams.addAll(teamsToCreate)
+        Log.d(TAG, "Players have been randomly assigned to $teamCount teams.")
     }
 
     /**
@@ -216,21 +214,9 @@ object PlayerManager {
      * @param points The number of points to add.
      */
     fun assignPointsToPlayer(playerId: Int, points: Int) {
-        val player = getPlayerById(playerId)
-        player?.let {
+        getPlayerById(playerId)?.let {
             it.basePoints += points
-        }
-    }
-
-    /**
-     * Example of triggering an event based on player stats.
-     */
-    fun triggerPlayerEvent(player: Player, event: String) {
-        when (event) {
-            "cow_called" -> player.cowCount += 1
-            "church_called" -> player.churchCount += 1
-            "water_tower_called" -> player.waterTowerCount += 1
-            // More events as needed
+            Log.d(TAG, "Assigned $points points to player: \${it.name}")
         }
     }
 }

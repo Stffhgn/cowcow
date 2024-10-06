@@ -47,7 +47,7 @@ class OnboardingFragment : Fragment() {
 
         // Optionally, add a 'Skip' button to go directly to the main game screen
         binding.skipButton.setOnClickListener {
-            findNavController().navigate(R.id.action_onboardingFragment_to_mainGameFragment)
+            findNavController().navigate(R.id.action_onboardingFragment_to_startFragment)
         }
     }
 

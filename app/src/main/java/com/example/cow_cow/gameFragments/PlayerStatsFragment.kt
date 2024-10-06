@@ -46,7 +46,7 @@ class PlayerStatsFragment : Fragment() {
         }
 
         // Initialize PlayerRepository and PlayerViewModelFactory
-        val playerRepository = PlayerRepository()
+        val playerRepository = PlayerRepository(requireContext())
         val factory = PlayerViewModelFactory(requireActivity().application, playerRepository)
 
         // Initialize PlayerViewModel using ViewModelProvider and factory

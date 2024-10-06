@@ -36,7 +36,7 @@ class TeamManagementFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Initialize the ViewModel
-        val playerRepository = PlayerRepository()
+        val playerRepository = PlayerRepository(requireContext())
         val factory = PlayerViewModelFactory(requireActivity().application, playerRepository)
         playerViewModel = ViewModelProvider(this, factory).get(PlayerViewModel::class.java)
 

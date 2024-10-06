@@ -1,6 +1,7 @@
 package com.example.cow_cow.mainFragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +13,9 @@ import com.example.cow_cow.R
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentWhosPlayingBinding
 import com.example.cow_cow.models.Player
+import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.viewModels.PlayerViewModel
+import com.example.cow_cow.viewModels.PlayerViewModelFactory
 
 class WhosPlayingFragment : Fragment() {
 
@@ -24,7 +27,7 @@ class WhosPlayingFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentWhosPlayingBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -32,8 +35,12 @@ class WhosPlayingFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize the ViewModel
-        viewModel = ViewModelProvider(requireActivity()).get(PlayerViewModel::class.java)
+        // Initialize the repository
+        val repository = PlayerRepository(requireContext())
+
+        // Initialize ViewModel with PlayerViewModelFactory
+        val factory = PlayerViewModelFactory(requireActivity().application, repository)
+        viewModel = ViewModelProvider(this, factory).get(PlayerViewModel::class.java)
 
         // Set up RecyclerView and Adapter
         adapter = PlayerAdapter { player -> onPlayerClick(player) } // Pass the onPlayerClick lambda
@@ -42,7 +49,11 @@ class WhosPlayingFragment : Fragment() {
 
         // Observe changes to the player list
         viewModel.players.observe(viewLifecycleOwner) { players ->
-            adapter.submitList(players.toList()) // Update the adapter with the player list
+            if (players.isNotEmpty()) {
+                adapter.submitList(players.toList()) // Update the adapter with the new player list
+            } else {
+                Log.d("WhosPlayingFragment", "No players found to display.")
+            }
         }
 
         // Add Player Button Click Listener (Optional)

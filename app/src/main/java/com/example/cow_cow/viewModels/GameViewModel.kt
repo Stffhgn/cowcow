@@ -57,7 +57,7 @@ class GameViewModel(application: Application, private val repository: GameReposi
     fun loadPlayers() {
         Log.d(TAG, "Loading players from repository.")
         val context = getApplication<Application>().applicationContext
-        val playerList = PlayerRepository().getPlayers(context)
+        val playerList = PlayerRepository(context).getPlayers(context)
         _players.value = playerList
         Log.d(TAG, "Players loaded: ${playerList.size} players.")
     }
@@ -65,7 +65,7 @@ class GameViewModel(application: Application, private val repository: GameReposi
     fun loadTeam() {
         Log.d(TAG, "Loading team from repository.")
         val context = getApplication<Application>().applicationContext
-        val players = PlayerRepository().getTeam(context)  // This returns List<Player>
+        val players = PlayerRepository(context).getTeam(context)  // This returns List<Player>
 
         // Create a Team object from the list of players
         val team = Team(id = 1, name = "Default Team", members = players.toMutableList())  // Pass the list as 'members'
@@ -131,7 +131,7 @@ class GameViewModel(application: Application, private val repository: GameReposi
         Log.d(TAG, "Saving players to repository.")
         val context = getApplication<Application>().applicationContext
         _players.value?.let { playerList ->
-            PlayerRepository().savePlayers(playerList, context)
+            PlayerRepository(context).savePlayers(playerList, context)
         }
     }
 
@@ -139,7 +139,7 @@ class GameViewModel(application: Application, private val repository: GameReposi
         Log.d(TAG, "Saving team to repository.")
         val context = getApplication<Application>().applicationContext
         _team.value?.let { team ->
-            PlayerRepository().saveTeam(team.members, context)
+            PlayerRepository(context).saveTeam(team.members, context)
         }
     }
 

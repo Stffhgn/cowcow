@@ -4,9 +4,16 @@ import com.example.cow_cow.managers.CustomRuleManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.viewModels.GameViewModel
 import android.util.Log
+import com.example.cow_cow.managers.PlayerManager
+import com.example.cow_cow.managers.ScoreManager
+import com.example.cow_cow.managers.TeamManager
 
-class MainGameController(private val gameViewModel: GameViewModel) {
-
+class MainGameController(
+    private val gameViewModel: GameViewModel,
+    private val playerManager: PlayerManager,
+    private val teamManager: TeamManager,
+    private val scoreManager: ScoreManager
+) {
     // Handle when "Cow" is called by a player
     fun handleCowCalled(player: Player): Int {
         return applyActionWithRules(player, "Cow", points = 1)

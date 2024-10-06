@@ -1,124 +1,264 @@
+// GameActivity.kt
+
 package com.example.cow_cow.activity
 
 import android.os.Bundle
-import android.widget.Toast
+import android.os.Handler
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
+import com.example.cow_cow.PlayerFragment.PlayerListFragment
 import com.example.cow_cow.R
-import com.example.cow_cow.controllers.MainGameController
 import com.example.cow_cow.databinding.ActivityGameScreenBinding
-import com.example.cow_cow.enums.GameMode
 import com.example.cow_cow.gameFragments.CowCowFragment
-import com.example.cow_cow.managers.GameManager
-import com.example.cow_cow.managers.PlayerManager
+import com.example.cow_cow.gameFragments.GameSettingsFragment
+import com.example.cow_cow.gameFragments.WhoCalledItFragment
+import com.example.cow_cow.managers.*
+import com.example.cow_cow.models.Player
+import com.example.cow_cow.models.Penalty
+import com.example.cow_cow.enums.PenaltyType
+import com.example.cow_cow.enums.PowerUpType
+import com.example.cow_cow.enums.GameMode
+import com.example.cow_cow.models.ScavengerHuntItem
+import com.example.cow_cow.repositories.*
 import com.example.cow_cow.viewModels.GameViewModel
+import com.example.cow_cow.handlers.GameEventHandler
+import com.example.cow_cow.viewModels.GameViewModelFactory
 
 class GameActivity : AppCompatActivity() {
 
-    // View binding for UI elements
+    // View Binding
     private lateinit var binding: ActivityGameScreenBinding
+
+    // Navigation
+    private lateinit var navController: NavController
+
+    // ViewModel
     private lateinit var gameViewModel: GameViewModel
 
-    // DrawerLayout for left and right drawers
-    private lateinit var drawerLayout: DrawerLayout
+    // Repositories
+    private lateinit var playerRepository: PlayerRepository
+    private lateinit var teamRepository: TeamRepository
+    private lateinit var scavengerHuntRepository: ScavengerHuntRepository
+
+    // Managers
+    private lateinit var gameEventHandler: GameEventHandler
+    private lateinit var playerManager: PlayerManager
+    private lateinit var teamManager: TeamManager
+    private lateinit var scoreManager: ScoreManager
+    private lateinit var scavengerHuntManager: ScavengerHuntManager
+    private lateinit var soundManager: SoundManager
+    private lateinit var gameNewsManager: GameNewsManager
+    private lateinit var powerUpManager: PowerUpManager
+    private lateinit var penaltyManager: PenaltyManager
+
+    // Hold game data
+    private lateinit var players: List<Player>
+    private var calledObjectType: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("GameActivity", "GameActivity started")
 
-        val players = PlayerManager.getAllPlayers()
-        GameManager.applyCustomRulesForGame(this, GameMode.CLASSIC)
-        val mainGameController = MainGameController(gameViewModel) // 'this' refers to the Activity context
-
-
-        // Inflate the layout using View Binding
+        // Set up view binding
         binding = ActivityGameScreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        // Initialize ViewModel
-        gameViewModel = ViewModelProvider(this).get(GameViewModel::class.java)
 
-        // Observe game news updates
-        gameViewModel.gameNews.observe(this) { message ->
-            binding.rotatingTextView.text = message
-        }
+        // Initialize components
+        initializeComponents()
 
-        // Setup the TextView to rotate messages when clicked
-        binding.rotatingTextView.setOnClickListener {
-            gameViewModel.rotateGameNews()
-        }
+        // Set up NavController
+        setupNavController()
 
-        // Example of adding new game updates dynamically
-        gameViewModel.addGameNewsMessage("Player 1 scored 10 points!")
-        gameViewModel.addGameNewsMessage("Player 2 called Cow!")
-        gameViewModel.addGameNewsMessage("Timer: 5 minutes remaining")
+        // Add initial game news
+        initializeGameNews()
 
-        // Initialize drawer layout
-        drawerLayout = binding.drawerLayout
+        // Fetch all players and set up data needed for the game
+        initializeGameData()
 
-        // Load CowCowFragment into the gameFragmentContainer when the activity is created
+        // Start rotating news
+        startRotatingNews()
+
+        // Setup drawer buttons
+        setupDrawerButtons()
+
+        // Load the initial fragment
         if (savedInstanceState == null) {
             loadFragment(CowCowFragment())
         }
-
-        // Setup the buttons for the left and right drawers
-        setupDrawerButtons()
-
-        // Setup the rotating TextView for updates
-        setupRotatingTextView()
     }
 
-    // Function to load the CowCowFragment into the container
+    // Function to initialize components
+    private fun initializeComponents() {
+        // Initialize GameRepository
+        val gameRepository = GameRepository(this) // Replace with your actual repository initialization
+
+        // Initialize GameViewModel with custom factory
+        val factory = GameViewModelFactory(application, gameRepository)
+        gameViewModel = ViewModelProvider(this, factory).get(GameViewModel::class.java)
+
+        // Repositories
+        playerRepository = PlayerRepository(this)
+        teamRepository = TeamRepository(this)
+        scavengerHuntRepository = ScavengerHuntRepository(this)
+
+        // Managers
+        playerManager = PlayerManager
+        teamManager = TeamManager
+        scoreManager = ScoreManager
+        scavengerHuntManager = ScavengerHuntManager
+        soundManager = SoundManager
+        gameNewsManager = GameNewsManager()
+        powerUpManager = PowerUpManager
+        penaltyManager = PenaltyManager
+
+        // Initialize GameEventHandler
+        gameEventHandler = GameEventHandler(
+            context = this,
+            playerManager = playerManager,
+            teamManager = teamManager,
+            scoreManager = scoreManager,
+            scavengerHuntManager = scavengerHuntManager,
+            soundManager = soundManager,
+            conditionManager = ConditionManager,
+            achievementManager = AchievementManager(this),
+            customRuleManager = CustomRuleManager(this),
+            gameManager = GameManager,
+            gameNewsManager = gameNewsManager,
+            penaltyManager = penaltyManager,
+            powerUpManager = powerUpManager,
+            triviaManager = TriviaManager(TriviaRepository()),
+        )
+    }
+
+    // Set up NavController
+    private fun setupNavController() {
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navController = navHostFragment.navController
+    }
+
+    // Initialize game news
+    private fun initializeGameNews() {
+        gameNewsManager.addNewsMessage("Dad is Awesome")
+        gameNewsManager.addNewsMessage("Tanner is Amazing!")
+        gameNewsManager.addNewsMessage("Solo thinks you stink")
+        gameNewsManager.addNewsMessage("Zoey is a RockStar")
+    }
+
+    // Fetch all initial game data
+    private fun initializeGameData() {
+        players = playerRepository.getPlayers(this)
+        Log.d("GameActivity", "Number of players initialized: \${players.size}")
+    }
+
+    // Function to handle rotating game news
+    private fun startRotatingNews() {
+        val handler = Handler(mainLooper)
+        val runnable = object : Runnable {
+            override fun run() {
+                updateGameNews()
+                handler.postDelayed(this, 5000) // Update news every 5 seconds
+            }
+        }
+        handler.post(runnable)
+    }
+
+    // Updates the game news on the screen
+    private fun updateGameNews() {
+        val nextNews = gameNewsManager.getNextNewsMessage()
+        Log.d("GameActivity", "Displaying news: \$nextNews")
+        binding.rotatingTextView.text = nextNews
+    }
+
+    // Replace the current fragment
     private fun loadFragment(fragment: Fragment) {
-        val fragmentTransaction = supportFragmentManager.beginTransaction()
-        fragmentTransaction.replace(R.id.gameFragmentContainer, fragment)
-        fragmentTransaction.commit()
+        Log.d("GameActivity", "Loading fragment: \${fragment::class.simpleName}")
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.nav_host_fragment, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
-    // Setup the left and right drawer buttons to open/close the respective drawers
+    // Handle receiving an object from CowCowFragment
+    fun receiveObject(objectType: String) {
+        Log.d("GameActivity", "Received object: \$objectType")
+        calledObjectType = objectType
+
+        // Handle unclaimed object event using GameEventHandler
+        gameEventHandler.handleUnclaimedObjectEvent(objectType)
+
+        if (players.isNotEmpty()) {
+            // Open WhoCalledItFragment for player selection
+            openWhoCalledItFragment(players, objectType)
+        } else {
+            Log.d("GameActivity", "No players found, cannot open WhoCalledItFragment")
+        }
+    }
+
+    // Open WhoCalledItFragment with the list of players and the object type
+    private fun openWhoCalledItFragment(players: List<Player>, objectType: String) {
+        val fragment = WhoCalledItFragment.newInstance(players, objectType)
+
+        // Load the WhoCalledItFragment
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.nav_host_fragment, fragment)
+            .addToBackStack("WhoCalledItFragment")
+            .commit()
+        Log.d("GameActivity", "WhoCalledItFragment opened with player list and object type")
+    }
+
+    // Set up drawer buttons
     private fun setupDrawerButtons() {
         binding.leftDrawerButton.setOnClickListener {
-            if (drawerLayout.isDrawerOpen(binding.leftDrawer)) {
-                drawerLayout.closeDrawer(binding.leftDrawer)
+            if (binding.drawerLayout.isDrawerOpen(binding.leftDrawer)) {
+                binding.drawerLayout.closeDrawer(binding.leftDrawer)
             } else {
-                drawerLayout.openDrawer(binding.leftDrawer)
+                binding.drawerLayout.openDrawer(binding.leftDrawer)
+                loadGameSettingsFragment()
             }
         }
 
         binding.rightDrawerButton.setOnClickListener {
-            if (drawerLayout.isDrawerOpen(binding.rightDrawer)) {
-                drawerLayout.closeDrawer(binding.rightDrawer)
+            if (binding.drawerLayout.isDrawerOpen(binding.rightDrawer)) {
+                binding.drawerLayout.closeDrawer(binding.rightDrawer)
             } else {
-                drawerLayout.openDrawer(binding.rightDrawer)
+                binding.drawerLayout.openDrawer(binding.rightDrawer)
+                loadPlayerListFragment()
             }
         }
     }
 
-    // Setup rotating TextView to display updates or game-related news
-    private fun setupRotatingTextView() {
-        val messages = arrayOf("Latest News: Welcome to Cow Cow!", "Tip: Tap 'Menu' for player stats", "Timer: 10:00 remaining")
-
-        var currentIndex = 0
-        binding.rotatingTextView.text = messages[currentIndex]
-
-        // Handle click events on the rotating TextView to show different messages
-        binding.rotatingTextView.setOnClickListener {
-            currentIndex = (currentIndex + 1) % messages.size
-            binding.rotatingTextView.text = messages[currentIndex]
-
-            // Show a toast for example purposes
-            Toast.makeText(this, "Clicked: ${messages[currentIndex]}", Toast.LENGTH_SHORT).show()
-        }
+    private fun loadPlayerListFragment() {
+        val playerListFragment = PlayerListFragment()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.rightDrawer, playerListFragment)
+            .commit()
     }
 
-    override fun onBackPressed() {
-        // Close the drawers when the back button is pressed if they're open
-        if (drawerLayout.isDrawerOpen(binding.leftDrawer)) {
-            drawerLayout.closeDrawer(binding.leftDrawer)
-        } else if (drawerLayout.isDrawerOpen(binding.rightDrawer)) {
-            drawerLayout.closeDrawer(binding.rightDrawer)
-        } else {
-            super.onBackPressed()
+    private fun loadGameSettingsFragment() {
+        val gameSettingsFragment = GameSettingsFragment()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.leftDrawer, gameSettingsFragment)
+            .commit()
+    }
+
+    // Receive selected player from WhoCalledItFragment
+    fun receiveSelectedPlayer(player: Player) {
+        Log.d("GameActivity", "Player \${player.name} selected for object: \$calledObjectType")
+        calledObjectType?.let {
+            gameEventHandler.handlePlayerSelected(player, it)
         }
+        calledObjectType = null
+        loadFragment(CowCowFragment())
+    }
+
+    // Optional: Handle game over, reset, etc.
+    fun resetGame() {
+        gameEventHandler.handleGameReset(players)
+        updateGameNews()
+        loadFragment(CowCowFragment())
     }
 }

@@ -15,6 +15,7 @@ enum class AchievementType {
     CHALLENGE,            // Achievements for completing specific challenges or quests
     CREATIVITY,           // Achievements for creating or designing custom content (if applicable)
     PERFECT_SCORE,        // Achievements for getting a perfect score or flawless performance
+    SCAVENGER_HUNT,       // Achievements for rocking out the scavenger hunt
     SPEEDRUN,             // Achievements for completing levels or games quickly (time attack)
     STRATEGY,             // Achievements for using strategy or tactics effectively in the game
     DEDICATION,           // Achievements for coming back regularly (e.g., daily login rewards)

@@ -32,7 +32,9 @@ data class Player(
     var objectivesCompleted: Int = 0,    // Number of objectives completed
     var notificationsEnabled: Boolean = true,  // Are notifications enabled for the player?
     var gamesPlayed: Int = 0,            // Number of games the player has played
-    var rank: RankType = RankType.BEGINNER // Player's rank (default is "Beginner")
+    var rank: RankType = RankType.BEGINNER, // Player's rank (default is "Beginner")
+    var objectsCalled: MutableList<String> = mutableListOf()  // List to track called objects
+
 ) : Parcelable {
 
     // --- Point Management ---
@@ -63,6 +65,20 @@ data class Player(
         penalties.add(penalty)
         penaltyPoints += penalty.pointsDeducted
         Log.d("Player", "Applied penalty '${penalty.name}' to player $name. Penalty points: $penaltyPoints.")
+    }
+    /**
+     * Adds an object (e.g., Cow, Church, Water Tower) to the player's list of called objects.
+     * @param objectType The object that the player has called.
+     */
+    fun addObjectCalled(objectType: String) {
+        objectsCalled.add(objectType)
+        // Optionally, you can update player points or other logic here
+        when (objectType) {
+            "Cow" -> basePoints += 1
+            "Church" -> basePoints += 2
+            "Water Tower" -> basePoints += 3
+            // Handle other object types if necessary
+        }
     }
 
     /**
@@ -172,6 +188,8 @@ data class Player(
         Log.d("Player", "Added achievement '${achievement.name}' to player $name.")
     }
 
+
+
     /**
      * Apply a custom rule to the player.
      * This could affect gameplay or scoring based on the rule type.
@@ -211,7 +229,9 @@ data class Player(
         teamId = parcel.readValue(Int::class.java.classLoader) as? Int,
         isSilenced = parcel.readByte() != 0.toByte(),
         isPowerUpActive = parcel.readByte() != 0.toByte(),
-        gamesPlayed = parcel.readInt()
+        gamesPlayed = parcel.readInt(),
+        objectsCalled = parcel.createStringArrayList() ?: mutableListOf()  // Reading the list of objects called
+
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -235,6 +255,7 @@ data class Player(
         parcel.writeByte(if (isSilenced) 1 else 0)
         parcel.writeByte(if (isPowerUpActive) 1 else 0)
         parcel.writeInt(gamesPlayed)
+        parcel.writeStringList(objectsCalled)  // Writing the list of objects called
     }
 
     override fun describeContents(): Int = 0

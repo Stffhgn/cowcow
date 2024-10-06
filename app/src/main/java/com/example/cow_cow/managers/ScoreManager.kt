@@ -13,6 +13,35 @@ object ScoreManager {
     private const val TAG = "ScoreManager"
 
     /**
+     * Handle score calculation when a player makes a game event call (like Cow, Church, etc.)
+     * This function will calculate the new score and return it.
+     *
+     * @param player The player making the call.
+     * @param objectType The type of object being called (e.g., "Cow", "Church").
+     * @return The updated total score for the player.
+     */
+    fun calculatePlayerScoreAfterEvent(player: Player, objectType: String): Int {
+        // Base points based on object type
+        var basePoints = when (objectType) {
+            "Cow" -> 1
+            "Church" -> 2
+            "Water Tower" -> 3
+            else -> 0
+        }
+
+        Log.d(TAG, "Base points for $objectType: $basePoints")
+
+        // Update player's base points
+        player.addBasePoints(basePoints)
+
+        // Calculate the player's total score
+        val totalScore = calculatePlayerScore(player)
+        Log.d(TAG, "Total score for ${player.name} after calling $objectType: $totalScore")
+
+        return totalScore
+    }
+
+    /**
      * Calculate total score for a single player, factoring in base points, bonuses, penalties,
      * and active power-ups.
      *
