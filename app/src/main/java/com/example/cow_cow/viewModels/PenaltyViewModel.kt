@@ -46,7 +46,7 @@ class PenaltyViewModel : ViewModel() {
         Log.d(TAG, "Applying penalty $type to player ${player.name} with duration $duration.")
 
         val penalty = Penalty(
-            id = Penalty.generatePenaltyId(player.id, type),  // Generate a unique penalty ID
+            id = Penalty.generatePenaltyId(player.id, type).toString(),  // Convert the ID to String
             name = type.name,                                 // Use the name of the PenaltyType
             pointsDeducted = calculatePenaltyPoints(type),    // Calculate points based on the actual penalty type
             penaltyType = type,                               // Assign the penalty type

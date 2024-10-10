@@ -107,7 +107,7 @@ class ScavengerHuntViewModel(application: Application) : AndroidViewModel(applic
             try {
                 // Mark the item as found and award points
                 item.isFound = true
-                player.addBasePoints(item.getPoints())  // Assuming getPoints() is part of ScavengerHuntItem
+                player.addBasePoints(item.getPoints())
 
                 // Update the list in the repository
                 val currentItems = _scavengerHuntItems.value?.toMutableList() ?: mutableListOf()

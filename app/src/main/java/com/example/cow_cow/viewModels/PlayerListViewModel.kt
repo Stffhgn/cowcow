@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
@@ -14,7 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class PlayerListViewModel(
-    application: Application,  // Add Application parameter
+    application: Application,
     private val playerRepository: PlayerRepository
 ) : AndroidViewModel(application) {
 
@@ -30,14 +29,13 @@ class PlayerListViewModel(
         loadPlayers()
     }
 
-
     /**
      * Load players from the repository.
      */
-    private fun loadPlayers() {
+    fun loadPlayers() {
         Log.d(TAG, "Loading players from repository")
-        val context = getApplication<Application>().applicationContext  // Get the context from application
-        val playerList = playerRepository.getPlayers(context)  // Pass context to getPlayers function
+        val context = getApplication<Application>().applicationContext
+        val playerList = playerRepository.getPlayers(context)
         _players.value = playerList
         Log.d(TAG, "Loaded ${playerList.size} players.")
     }
@@ -48,7 +46,7 @@ class PlayerListViewModel(
      * @param playerId The ID of the player to retrieve.
      * @return The player with the given ID, or null if not found.
      */
-    private fun getPlayerById(playerId: Int): Player? {
+    private fun getPlayerById(playerId: String): Player? {
         return _players.value?.find { it.id == playerId }
     }
 
@@ -65,27 +63,37 @@ class PlayerListViewModel(
      * Add a new player to the list and notify the repository.
      */
     fun addPlayer(player: Player) {
-        val updatedPlayers = _players.value?.toMutableList() ?: mutableListOf()
-        updatedPlayers.add(player)
-        _players.value = updatedPlayers
+        viewModelScope.launch(Dispatchers.IO) {
+            Log.d(TAG, "Adding player to repository: ${player.name}")
 
-        // Pass the context when saving the players
-        val context = getApplication<Application>().applicationContext
-        playerRepository.savePlayers(updatedPlayers, context)  // Ensure context is passed here
+            val updatedPlayers = _players.value?.toMutableList() ?: mutableListOf()
+            updatedPlayers.add(player)
+
+            // Save the updated list in the repository
+            val context = getApplication<Application>().applicationContext
+            playerRepository.savePlayers(updatedPlayers, context)
+
+            withContext(Dispatchers.Main) {
+                // Update LiveData to force UI update
+                _players.value = updatedPlayers
+                Log.d(TAG, "Player added: ${player.name} - LiveData updated")
+            }
+        }
     }
+
     /**
      * Increment the number of games played by a player and update the repository.
      *
      * @param playerId The ID of the player whose games played count will be incremented.
      */
-    fun incrementPlayerGamesPlayed(playerId: Int) {
+    fun incrementPlayerGamesPlayed(playerId: String) {
         Log.d(TAG, "Incrementing games played for player ID: $playerId")
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>().applicationContext
             val player = getPlayerById(playerId)
             player?.let {
                 it.incrementGamesPlayed()
-                playerRepository.updatePlayer(it, context)  // Pass the context here
+                playerRepository.updatePlayer(it, context)
                 withContext(Dispatchers.Main) {
                     loadPlayers()  // Reload players to reflect changes
                     Log.d(TAG, "Games played updated for player ID: $playerId")
@@ -100,14 +108,14 @@ class PlayerListViewModel(
      * @param playerId The ID of the player to update.
      * @param newRank The new rank for the player.
      */
-    fun updatePlayerRank(playerId: Int, newRank: String) {
+    fun updatePlayerRank(playerId: String, newRank: String) {
         Log.d(TAG, "Updating rank for player ID: $playerId to rank: $newRank")
         viewModelScope.launch(Dispatchers.IO) {
-            val context = getApplication<Application>().applicationContext  // Get context
+            val context = getApplication<Application>().applicationContext
             val player = getPlayerById(playerId)
             player?.let {
-                it.updateRank(newRank)  // Update rank for the player
-                playerRepository.updatePlayer(it, context)  // Pass context to updatePlayer
+                it.updateRank(newRank)
+                playerRepository.updatePlayer(it, context)
                 withContext(Dispatchers.Main) {
                     loadPlayers()  // Reload players to reflect changes
                     Log.d(TAG, "Player rank updated for player ID: $playerId")
@@ -123,24 +131,29 @@ class PlayerListViewModel(
      *
      * @param playerId The ID of the player to remove.
      */
-    fun removePlayerById(playerId: Int) {
+    fun removePlayerById(playerId: String) {
         Log.d(TAG, "Attempting to remove player with ID: $playerId")
 
-        // Retrieve the current list of players, and filter out the player with the given ID
-        val currentPlayers = _players.value?.toMutableList() ?: mutableListOf()
-        val updatedPlayers = currentPlayers.filter { it.id != playerId }
+        viewModelScope.launch(Dispatchers.IO) {
+            // Retrieve the current list of players, and filter out the player with the given ID
+            val currentPlayers = _players.value?.toMutableList() ?: mutableListOf()
+            val updatedPlayers = currentPlayers.filter { it.id != playerId }
 
-        // Check if the player to be removed existed
-        if (currentPlayers.size == updatedPlayers.size) {
-            Log.w(TAG, "Player with ID: $playerId not found. No removal performed.")
-            return
+            // Check if the player to be removed existed
+            if (currentPlayers.size == updatedPlayers.size) {
+                Log.w(TAG, "Player with ID: $playerId not found. No removal performed.")
+                return@launch
+            }
+
+            // Save updated players to repository
+            val context = getApplication<Application>().applicationContext
+            playerRepository.savePlayers(updatedPlayers, context)
+
+            // Update LiveData on the main thread
+            withContext(Dispatchers.Main) {
+                _players.value = updatedPlayers
+                Log.d(TAG, "Player removed successfully. Total players remaining: ${updatedPlayers.size}")
+            }
         }
-
-        // Update the LiveData and repository with the remaining players
-        _players.value = updatedPlayers
-        val context = getApplication<Application>().applicationContext  // Pass context to repository
-        playerRepository.savePlayers(updatedPlayers, context)
-
-        Log.d(TAG, "Player removed successfully. Total players remaining: ${updatedPlayers.size}")
     }
 }

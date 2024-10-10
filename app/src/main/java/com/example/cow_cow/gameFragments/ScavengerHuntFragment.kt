@@ -11,28 +11,26 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.adapters.ScavengerHuntAdapter
 import com.example.cow_cow.databinding.FragmentScavengerHuntBinding
-import com.example.cow_cow.enums.AgeGroup
-import com.example.cow_cow.enums.DifficultyLevel
-import com.example.cow_cow.enums.LocationType
-import com.example.cow_cow.enums.Season
-import com.example.cow_cow.enums.TimeOfDay
-import com.example.cow_cow.enums.WeatherCondition
+import com.example.cow_cow.enums.*
 import com.example.cow_cow.models.*
+import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.repositories.ScavengerHuntRepository
 import com.example.cow_cow.viewModels.GameViewModel
+import com.example.cow_cow.viewModels.PlayerViewModel
+import com.example.cow_cow.viewModels.PlayerViewModelFactory
 import com.example.cow_cow.viewModels.ScavengerHuntViewModel
+import com.example.cow_cow.managers.ScavengerHuntManager
 
 class ScavengerHuntFragment : Fragment() {
 
     private var _binding: FragmentScavengerHuntBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var scavengerHuntViewModel: ScavengerHuntViewModel
     private lateinit var gameViewModel: GameViewModel
+    private lateinit var playerViewModel: PlayerViewModel
+    private lateinit var scavengerHuntViewModel: ScavengerHuntViewModel
     private lateinit var scavengerHuntAdapter: ScavengerHuntAdapter
-    // Add this line to instantiate the repository
     private lateinit var scavengerHuntRepository: ScavengerHuntRepository
-    // Logging tag for debugging
     private val TAG = "ScavengerHuntFragment"
 
     override fun onCreateView(
@@ -45,25 +43,29 @@ class ScavengerHuntFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         Log.d(TAG, "Fragment created and view initialized.")
 
         // Initialize ViewModels
-        scavengerHuntViewModel = ViewModelProvider(this).get(ScavengerHuntViewModel::class.java)
         gameViewModel = ViewModelProvider(requireActivity()).get(GameViewModel::class.java)
+        scavengerHuntViewModel = ViewModelProvider(requireActivity()).get(ScavengerHuntViewModel::class.java)
 
-        // Observe players LiveData from the GameViewModel
-        gameViewModel.players.observe(viewLifecycleOwner) { playerList ->
+        // Initialize PlayerRepository and PlayerViewModelFactory
+        val playerRepository = PlayerRepository(requireContext())
+        val factory = PlayerViewModelFactory(requireActivity().application, playerRepository)
+        playerViewModel = ViewModelProvider(this, factory).get(PlayerViewModel::class.java)
+
+        // Observe players LiveData from the PlayerViewModel
+        playerViewModel.players.observe(viewLifecycleOwner) { playerList ->
             if (playerList.isNotEmpty()) {
-                Log.d(TAG, "Players loaded: ${playerList.size}")
+                Log.d(TAG, "Players loaded: \${playerList.size}")
 
                 // Find the current player
                 val player = playerList.find { it.isCurrentPlayer }
 
                 if (player != null) {
                     // Initialize scavenger hunt with the player and the scavenger hunt repository
-                    gameViewModel.initializeScavengerHunt(player, scavengerHuntRepository, requireContext(), "Easy")
-                    Log.d(TAG, "Initialized scavenger hunt for player: ${player.name}")
+                    ScavengerHuntManager.startScavengerHunt(player, scavengerHuntRepository, requireContext(), "Easy")
+                    Log.d(TAG, "Initialized scavenger hunt for player: \${player.name}")
                 } else {
                     Log.e(TAG, "Current player not found.")
                 }
@@ -75,13 +77,13 @@ class ScavengerHuntFragment : Fragment() {
 
         // Initialize the adapter with an empty list and the click handler
         scavengerHuntAdapter = ScavengerHuntAdapter(emptyList()) { item ->
-            Log.d(TAG, "Scavenger hunt item clicked: ${item.name}")
+            Log.d(TAG, "Scavenger hunt item clicked: \${item.name}")
             val currentPlayer = getCurrentPlayer()
-            gameViewModel.markScavengerItemAsFound(item.name, currentPlayer)
-            Toast.makeText(requireContext(), "${item.name} found!", Toast.LENGTH_SHORT).show()
+            ScavengerHuntManager.markItemAsFound(item, currentPlayer)
+            Toast.makeText(requireContext(), "\${item.name} found!", Toast.LENGTH_SHORT).show()
 
-            // Check if the scavenger hunt is complete
-            if (gameViewModel.isScavengerHuntComplete()) {
+            // Check if the scavenger hunt is complete using ScavengerHuntManager
+            if (ScavengerHuntManager.isHuntCompleted()) {
                 Log.d(TAG, "Scavenger hunt completed.")
                 Toast.makeText(requireContext(), "Scavenger Hunt Complete!", Toast.LENGTH_LONG).show()
             }
@@ -95,14 +97,14 @@ class ScavengerHuntFragment : Fragment() {
 
         // Observe the scavenger hunt items and update the RecyclerView when they change
         scavengerHuntViewModel.scavengerHuntItems.observe(viewLifecycleOwner) { items ->
-            Log.d(TAG, "Scavenger hunt items updated: ${items.size} items loaded.")
+            Log.d(TAG, "Scavenger hunt items updated: \${items.size} items loaded.")
             scavengerHuntAdapter.updateData(items)
         }
 
         // Show status messages from the ViewModel
         scavengerHuntViewModel.statusMessage.observe(viewLifecycleOwner) { message ->
             message?.let {
-                Log.d(TAG, "Status message: $it")
+                Log.d(TAG, "Status message: \$it")
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
             }
         }
@@ -123,19 +125,24 @@ class ScavengerHuntFragment : Fragment() {
                 specialOccasion = null,
                 season = Season.FALL
             )
-            Log.d(TAG, "Adding new scavenger hunt item: ${newItem.name}")
+            Log.d(TAG, "Adding new scavenger hunt item: \${newItem.name}")
             scavengerHuntViewModel.addScavengerHuntItem(newItem, requireContext())
             Toast.makeText(requireContext(), "Scavenger hunt item added!", Toast.LENGTH_SHORT).show()
         }
     }
 
     /**
-     * This method returns the current player. Replace this logic with the actual way
-     * you retrieve the active player in your app.
+     * This method retrieves the current player using the PlayerViewModel.
      */
     private fun getCurrentPlayer(): Player {
-        Log.d(TAG, "Retrieving current player.")
-        return Player(1, "Player 1") // Replace this with the real player retrieval logic
+        val currentPlayer = playerViewModel.players.value?.find { it.isCurrentPlayer }
+        if (currentPlayer != null) {
+            Log.d(TAG, "Current player retrieved: \${currentPlayer.name}")
+            return currentPlayer
+        } else {
+            Log.e(TAG, "Current player not found. Returning a default player.")
+            return Player("default", "Default Player")
+        }
     }
 
     override fun onDestroyView() {

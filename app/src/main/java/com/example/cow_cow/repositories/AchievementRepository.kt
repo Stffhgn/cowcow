@@ -9,6 +9,7 @@ import com.example.cow_cow.models.Player
 import com.example.cow_cow.enums.AchievementType
 import com.example.cow_cow.enums.RewardType
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
 
 class AchievementRepository(private val context: Context) {
@@ -35,12 +36,17 @@ class AchievementRepository(private val context: Context) {
     private fun loadAchievements() {
         val json = sharedPreferences.getString(ACHIEVEMENTS_KEY, null)
         if (json != null) {
-            val type = object : TypeToken<List<Achievement>>() {}.type
-            val loadedAchievements: List<Achievement> = gson.fromJson(json, type)
-            _achievements.value = loadedAchievements
-            Log.d("AchievementRepository", "Achievements loaded successfully")
+            try {
+                val type = object : TypeToken<List<Achievement>>() {}.type
+                val loadedAchievements: List<Achievement> = gson.fromJson(json, type)
+                _achievements.postValue(loadedAchievements)
+                Log.d("AchievementRepository", "Achievements loaded successfully. Total loaded: \${loadedAchievements.size}")
+            } catch (e: JsonSyntaxException) {
+                Log.e("AchievementRepository", "Failed to parse achievements JSON: \${e.message}")
+                _achievements.postValue(emptyList())
+            }
         } else {
-            _achievements.value = emptyList()  // Set empty if no achievements are saved
+            _achievements.postValue(emptyList())  // Set empty if no achievements are saved
             Log.d("AchievementRepository", "No achievements found in storage")
         }
     }
@@ -49,11 +55,16 @@ class AchievementRepository(private val context: Context) {
      * Save achievements to SharedPreferences.
      */
     private fun saveAchievements() {
+        val achievementsList = _achievements.value ?: emptyList()
+        val json = gson.toJson(achievementsList)
         val editor = sharedPreferences.edit()
-        val json = gson.toJson(_achievements.value)
         editor.putString(ACHIEVEMENTS_KEY, json)
-        editor.apply()
-        Log.d("AchievementRepository", "Achievements saved successfully")
+        val success = editor.commit()
+        if (success) {
+            Log.d("AchievementRepository", "Achievements saved successfully")
+        } else {
+            Log.e("AchievementRepository", "Failed to save achievements")
+        }
     }
 
     /**
@@ -63,7 +74,7 @@ class AchievementRepository(private val context: Context) {
      * @param achievement The achievement to be unlocked.
      */
     fun unlockAchievement(player: Player, achievement: Achievement) {
-        Log.d("AchievementRepository", "Attempting to unlock achievement '${achievement.name}' for player ${player.name}")
+        Log.d("AchievementRepository", "Attempting to unlock achievement '\${achievement.name}' for player \${player.name}")
 
         val currentAchievements = _achievements.value?.toMutableList() ?: mutableListOf()
 
@@ -71,23 +82,23 @@ class AchievementRepository(private val context: Context) {
         val existingAchievement = currentAchievements.find { it.id == achievement.id }
 
         existingAchievement?.let {
-            if (!it.isUnlocked && it.checkProgress()) {  // No player argument needed
-                Log.d("AchievementRepository", "Achievement '${it.name}' unlocked for player ${player.name}")
+            if (!it.isUnlocked && it.checkProgress()) {
+                Log.d("AchievementRepository", "Achievement '\${it.name}' unlocked for player \${player.name}")
                 it.unlockAchievement()
-                _achievements.value = currentAchievements
+                _achievements.postValue(currentAchievements)
                 saveAchievements()
             } else {
-                Log.d("AchievementRepository", "Achievement '${it.name}' is either already unlocked or progress not met.")
+                Log.d("AchievementRepository", "Achievement '\${it.name}' is either already unlocked or progress not met.")
             }
         } ?: run {
-            Log.d("AchievementRepository", "Achievement with id '${achievement.id}' not found.")
+            Log.w("AchievementRepository", "Achievement with ID '\${achievement.id}' not found.")
         }
     }
 
     /**
      * Check if an achievement is unlocked based on its ID.
      */
-    fun isAchievementUnlocked(achievementId: Int): Boolean {
+    fun isAchievementUnlocked(achievementId: String): Boolean {
         val unlocked = _achievements.value?.any { it.id == achievementId && it.isUnlocked } == true
         Log.d("AchievementRepository", "Achievement with ID $achievementId unlocked status: $unlocked")
         return unlocked
@@ -96,24 +107,24 @@ class AchievementRepository(private val context: Context) {
     /**
      * Get the list of achievements for a player.
      */
-    fun getAchievementsForPlayer(playerId: Int): List<Achievement> {
+    fun getAchievementsForPlayer(playerId: String): List<Achievement> {
         val playerAchievements = _achievements.value?.filter { it.playerId == playerId } ?: emptyList()
-        Log.d("AchievementRepository", "Achievements fetched for player ID: $playerId. Total: ${playerAchievements.size}")
+        Log.d("AchievementRepository", "Achievements fetched for player ID: $playerId. Total: \${playerAchievements.size}")
         return playerAchievements
     }
 
     /**
      * Increment achievement progress, check for unlocking.
      */
-    fun incrementAchievementProgress(achievementId: Int, progress: Int) {
+    fun incrementAchievementProgress(achievementId: String, progress: Int) {
         val currentAchievements = _achievements.value?.toMutableList() ?: mutableListOf()
 
         currentAchievements.find { it.id == achievementId }?.let { achievement ->
             achievement.incrementProgress(progress)
             Log.d("AchievementRepository", "Incremented progress for achievement ID: $achievementId by $progress")
-            _achievements.value = currentAchievements
+            _achievements.postValue(currentAchievements)
             saveAchievements()
-        } ?: Log.d("AchievementRepository", "Achievement with ID $achievementId not found for progress increment")
+        } ?: Log.w("AchievementRepository", "Achievement with ID $achievementId not found for progress increment")
     }
 
     /**
@@ -125,11 +136,11 @@ class AchievementRepository(private val context: Context) {
         // Add the new achievement if it doesn't already exist
         if (currentAchievements.none { it.id == achievement.id }) {
             currentAchievements.add(achievement)
-            _achievements.value = currentAchievements
+            _achievements.postValue(currentAchievements)
             saveAchievements()
-            Log.d("AchievementRepository", "Added new achievement: ${achievement.name}")
+            Log.d("AchievementRepository", "Added new achievement: \${achievement.name}")
         } else {
-            Log.d("AchievementRepository", "Achievement '${achievement.name}' already exists, not adding")
+            Log.w("AchievementRepository", "Achievement '\${achievement.name}' already exists, not adding")
         }
     }
 
@@ -137,7 +148,7 @@ class AchievementRepository(private val context: Context) {
      * Clear all achievements (e.g., for a new game/reset).
      */
     fun clearAchievements() {
-        _achievements.value = emptyList()
+        _achievements.postValue(emptyList())
         saveAchievements()
         Log.d("AchievementRepository", "All achievements cleared")
     }
@@ -145,10 +156,10 @@ class AchievementRepository(private val context: Context) {
     /**
      * Add special event achievements dynamically, such as for holidays or game events.
      */
-    fun addSpecialEventAchievement(playerId: Int, eventDescription: String) {
+    fun addSpecialEventAchievement(playerId: String, eventDescription: String) {
         addAchievement(
             Achievement(
-                id = (playerId * 1000) + 1,  // Example ID generation
+                id = (playerId.hashCode() * 1000).toString() + "-event",  // Example ID generation
                 name = "Special Event",
                 description = eventDescription,
                 type = AchievementType.SPECIAL_EVENT,
@@ -163,11 +174,11 @@ class AchievementRepository(private val context: Context) {
     /**
      * Add scoring-based achievements dynamically based on performance.
      */
-    fun addScoringAchievement(playerId: Int, scoreThreshold: Int) {
+    fun addScoringAchievement(playerId: String, scoreThreshold: Int) {
         val description = "Score exceeded $scoreThreshold points"
         addAchievement(
             Achievement(
-                id = (playerId * 1000) + scoreThreshold,  // Example ID generation
+                id = (playerId.hashCode() * 1000 + scoreThreshold).toString() + "-score",  // Example ID generation
                 name = "High Scorer",
                 description = description,
                 type = AchievementType.SCORING,

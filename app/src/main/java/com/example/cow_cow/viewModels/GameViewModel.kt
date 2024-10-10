@@ -1,11 +1,12 @@
 package com.example.cow_cow.viewModels
 
 import android.app.Application
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
+import com.example.cow_cow.enums.GameMode
 import com.example.cow_cow.enums.PenaltyType
 import com.example.cow_cow.enums.PowerUpType
 import com.example.cow_cow.managers.*
@@ -13,9 +14,16 @@ import com.example.cow_cow.models.*
 import com.example.cow_cow.repositories.GameRepository
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.repositories.ScavengerHuntRepository
+import com.example.cow_cow.repositories.TeamRepository
 import com.example.cow_cow.utils.TeamUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class GameViewModel(application: Application, private val repository: GameRepository) : AndroidViewModel(application) {
+class GameViewModel(
+    application: Application,
+    private val gameRepository: GameRepository,
+    private val teamRepository: TeamRepository
+) : AndroidViewModel(application) {
 
     private val TAG = "GameViewModel"
 
@@ -31,7 +39,7 @@ class GameViewModel(application: Application, private val repository: GameReposi
     private val powerUpManager = PowerUpManager
     private val penaltyManager = PenaltyManager
     private val playerManager = PlayerManager
-    private val teamManager = TeamManager
+    private val gameManager = GameManager
 
     // ---- Game settings ----
     var quietGameEnabled: Boolean = false
@@ -52,8 +60,11 @@ class GameViewModel(application: Application, private val repository: GameReposi
         loadTeam()
     }
 
-    // ---- Player and Team Management ----
+    // ---- Game and Player Management ----
 
+    /**
+     * Load all players from the repository.
+     */
     fun loadPlayers() {
         Log.d(TAG, "Loading players from repository.")
         val context = getApplication<Application>().applicationContext
@@ -62,71 +73,25 @@ class GameViewModel(application: Application, private val repository: GameReposi
         Log.d(TAG, "Players loaded: ${playerList.size} players.")
     }
 
+    /**
+     * Load the team from the repository and set it in the LiveData.
+     */
     fun loadTeam() {
-        Log.d(TAG, "Loading team from repository.")
-        val context = getApplication<Application>().applicationContext
-        val players = PlayerRepository(context).getTeam(context)  // This returns List<Player>
-
-        // Create a Team object from the list of players
-        val team = Team(id = 1, name = "Default Team", members = players.toMutableList())  // Pass the list as 'members'
-
-        _team.value = team  // Now _team.value is set to a Team object
-        Log.d(TAG, "Team loaded: ${team.members.size} players.")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                Log.d(TAG, "Loading team from repository.")
+                val loadedTeam = teamRepository.getTeam()
+                _team.postValue(loadedTeam)
+                Log.d(TAG, "Team loaded: ${loadedTeam.members.size} players.")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading team: ${e.message}")
+            }
+        }
     }
 
-
-    fun addPlayerToTeam(player: Player) {
-        Log.d(TAG, "Adding player ${player.name} to the team.")
-
-        // Set the player's team status to true
-        player.isOnTeam = true
-
-        // Get the current team or create a new one if none exists
-        val currentTeam = _team.value ?: Team(id = 1, name = "Team", members = mutableListOf())
-
-        // Use TeamUtils to add the player to the team and update the team score
-        TeamUtils.addPlayerToTeam(player, currentTeam)
-
-        // Update LiveData with the updated team
-        _team.value = currentTeam
-
-        // Save the updated team state to persist the changes
-        saveTeam()
-
-        // Ensure the player's status is updated in the system
-        updatePlayer(player)
-
-        // Log the successful addition
-        Log.d(TAG, "Player ${player.name} has been added to the team.")
-    }
-
-    fun removePlayerFromTeam(player: Player) {
-        Log.d(TAG, "Removing player ${player.name} from the team.")
-
-        // Set the player's team status to false
-        player.isOnTeam = false
-
-        // Retrieve the current team
-        val currentTeam = _team.value
-
-        // If the team exists, remove the player and update the team
-        currentTeam?.let {
-            // Use TeamUtils to remove the player from the team and update the team score
-            TeamUtils.removePlayerFromTeam(player, it)
-
-            // Update LiveData with the updated team
-            _team.value = it
-
-            // Save the updated team state to persist the changes
-            saveTeam()
-
-            // Ensure the player's status is updated in the system
-            updatePlayer(player)
-
-            // Log the successful removal
-            Log.d(TAG, "Player ${player.name} has been removed from the team.")
-        } ?: Log.e(TAG, "No team found to remove player from.")  // If no team is found, log an error
-    }
+    /**
+     * Save the players to the repository.
+     */
     fun savePlayers() {
         Log.d(TAG, "Saving players to repository.")
         val context = getApplication<Application>().applicationContext
@@ -135,38 +100,101 @@ class GameViewModel(application: Application, private val repository: GameReposi
         }
     }
 
+    /**
+     * Save the team to the repository.
+     */
     fun saveTeam() {
         Log.d(TAG, "Saving team to repository.")
-        val context = getApplication<Application>().applicationContext
-        _team.value?.let { team ->
-            PlayerRepository(context).saveTeam(team.members, context)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _team.value?.let { team ->
+                    teamRepository.saveTeam() // Save the current team
+                    Log.d(TAG, "Team saved successfully.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving team: ${e.message}")
+            }
         }
     }
 
     /**
-     * Calculate the total score of the team.
-     * Logs the calculated score and returns it.
-     *
-     * @return The total score of the team.
+     * Start a game with the specified game mode.
      */
-    fun calculateTeamScore(): Int {
-        val score = _team.value?.teamScore ?: 0
-        Log.d(TAG, "Calculated team score: $score")
-        return score
+    fun startGame(gameMode: GameMode, durationMillis: Long? = null) {
+        Log.d(TAG, "Starting game in $gameMode mode.")
+        gameManager.startGame(gameMode, durationMillis)
     }
 
-    fun distributePointsToTeam(totalPoints: Int) {
-        Log.d(TAG, "Distributing $totalPoints points to the team.")
+    /**
+     * Stop the current game.
+     */
+    fun stopGame() {
+        Log.d(TAG, "Stopping the game.")
+        gameManager.stopGame()
+    }
+
+    fun resetCalledObjects() {
+        Log.d(TAG, "Resetting called objects for all players.")
+        _players.value = _players.value?.map { player ->
+            player.copy(cowCount = 0, churchCount = 0, waterTowerCount = 0)
+        }
+        savePlayers()  // Save updated players to the repository
+    }
+
+    /**
+     * Add a player to the team.
+     */
+    fun addPlayerToTeam(player: Player) {
+        Log.d(TAG, "Adding player ${player.name} to the team.")
+        player.isOnTeam = true
+        val currentTeam = _team.value ?: teamRepository.getTeam()
+        TeamUtils.addPlayerToTeam(player, currentTeam)
+        _team.value = currentTeam
+        saveTeam()
+        updatePlayer(player)
+        Log.d(TAG, "Player ${player.name} has been added to the team.")
+    }
+
+    /**
+     * Remove a player from the team.
+     */
+    fun removePlayerFromTeam(player: Player) {
+        Log.d(TAG, "Removing player ${player.name} from the team.")
+        player.isOnTeam = false
         val currentTeam = _team.value
         currentTeam?.let {
-            TeamUtils.distributeTeamPoints(it, totalPoints)
+            TeamUtils.removePlayerFromTeam(player, it)
             _team.value = it
             saveTeam()
-        } ?: Log.e(TAG, "No team found to distribute points to.")
+            updatePlayer(player)
+            Log.d(TAG, "Player ${player.name} has been removed from the team.")
+        } ?: Log.e(TAG, "No team found to remove player from.")
     }
 
-    // ---- Game Logic ----
+    /**
+     * Update a player's data and save changes.
+     */
+    fun updatePlayer(player: Player) {
+        Log.d(TAG, "Updating player: ${player.name}")
+        _players.value = _players.value?.map {
+            if (it.id == player.id) player else it
+        }
+        savePlayers()
+    }
 
+// ---- Scavenger Hunt Management ----
+
+    fun initializeScavengerHunt(player: Player, scavengerHuntRepository: ScavengerHuntRepository, difficulty: String? = null) {
+        val context = getApplication<Application>().applicationContext
+        Log.d(TAG, "Initializing scavenger hunt for player: ${player.name} with difficulty: ${difficulty ?: "Default"}")
+        scavengerHuntManager.startScavengerHunt(player, scavengerHuntRepository, context, difficulty)
+    }
+
+    // ---- Game Actions ----
+
+    /**
+     * Apply points to the player based on the action performed.
+     */
     fun applyPointsForAction(player: Player, action: String) {
         Log.d(TAG, "Applying points for action: $action for player ${player.name}.")
         when (action) {
@@ -178,54 +206,7 @@ class GameViewModel(application: Application, private val repository: GameReposi
         updatePlayer(player)
     }
 
-    fun updatePlayer(player: Player) {
-        Log.d(TAG, "Updating player: ${player.name}")
-        _players.value = _players.value?.map {
-            if (it.id == player.id) player else it
-        }
-        savePlayers()
-    }
-
-    fun resetCalledObjects() {
-        Log.d(TAG, "Resetting called objects for all players.")
-        _players.value = _players.value?.map { player ->
-            player.copy(cowCount = 0, churchCount = 0, waterTowerCount = 0)
-        }
-        savePlayers()  // Save updated players to the repository
-    }
-
-    // ---- Scavenger Hunt ----
-
-    fun initializeScavengerHunt(player: Player, scavengerHuntRepository: ScavengerHuntRepository, context: Context, difficulty: String? = null) {
-        Log.d(TAG, "Initializing scavenger hunt for player: ${player.name} with difficulty: ${difficulty ?: "Default"}")
-
-        // Start the scavenger hunt, passing in the player, repository, context, and optional difficulty
-        scavengerHuntManager.startScavengerHunt(player, scavengerHuntRepository, context, difficulty)
-
-        // Add any additional logic if needed after starting the scavenger hunt
-    }
-
-    fun markScavengerItemAsFound(itemName: String, player: Player) {
-        Log.d(TAG, "Marking scavenger hunt item '$itemName' as found for player ${player.name}.")
-
-        // Assuming scavengerHuntItems is the list of available scavenger hunt items
-        val item = scavengerHuntManager.getActiveScavengerHuntItems().find { it.name == itemName }
-
-        if (item != null) {
-            scavengerHuntManager.markItemAsFound(item, player)  // Now passing the ScavengerHuntItem object
-            Log.d(TAG, "Item marked as found: ${item.name}")
-        } else {
-            Log.e(TAG, "Scavenger hunt item '$itemName' not found.")
-        }
-    }
-
-    fun isScavengerHuntComplete(): Boolean {
-        val isComplete = scavengerHuntManager.isHuntCompleted()
-        Log.d(TAG, "Scavenger hunt complete: $isComplete")
-        return isComplete
-    }
-
-    // ---- Power-Up Management ----
+    // ---- Power-Up and Penalty Management ----
 
     fun activatePowerUp(player: Player, type: PowerUpType, duration: Long) {
         Log.d(TAG, "Activating power-up $type for player ${player.name}.")
@@ -233,47 +214,25 @@ class GameViewModel(application: Application, private val repository: GameReposi
         updatePlayer(player)
     }
 
-    fun deactivatePowerUp(player: Player, type: PowerUpType) {
-        Log.d(TAG, "Deactivating power-up $type for player ${player.name}.")
-        powerUpManager.deactivatePowerUp(player, type)
-        updatePlayer(player)
-    }
-
-    // ---- Penalty Management ----
-
     fun applyPenalty(player: Player, penaltyType: PenaltyType, duration: Long) {
         Log.d(TAG, "Applying penalty of type $penaltyType to player ${player.name}.")
-
-// Create a Penalty object using the provided penaltyType and duration
         val penalty = Penalty(
-            id = Penalty.generatePenaltyId(player.id, penaltyType),  // Generate a unique ID for the penalty
-            name = penaltyType.name,                                 // Use the name from the PenaltyType enum
-            pointsDeducted = calculatePenaltyPoints(penaltyType),    // Calculate the points to deduct
-            penaltyType = penaltyType,                               // Assign the penalty type
-            isActive = true,                                         // Set the penalty as active
-            duration = duration,                                     // Duration in milliseconds
-            startTime = System.currentTimeMillis(),                  // Set the penalty start time to the current time
-            roundsRemaining = null,                                  // Optional: Penalty can be time-based instead of round-based
-            stackable = true,                                        // Allow the penalty to be stackable by default
-            multiplier = 1.0                                         // Default multiplier, adjust as needed
+            id = Penalty.generatePenaltyId(player.id, penaltyType).toString(),
+            name = penaltyType.name,
+            pointsDeducted = calculatePenaltyPoints(penaltyType),
+            penaltyType = penaltyType,
+            isActive = true,
+            duration = duration,
+            startTime = System.currentTimeMillis(),
+            stackable = true,
+            multiplier = 1.0
         )
-
-        // Apply the penalty to the player
         penaltyManager.applyPenalty(player, penalty)
-
-        // Update the player's data after applying the penalty
         updatePlayer(player)
-
         Log.d(TAG, "Penalty $penaltyType applied successfully to player ${player.name}.")
     }
 
-    fun isPlayerPenalized(player: Player): Boolean {
-        val isPenalized = penaltyManager.isPlayerPenalized(player)
-        Log.d(TAG, "Player ${player.name} penalized: $isPenalized")
-        return isPenalized
-    }
-
-    // ---- Game News ----
+    // ---- Game News Management ----
 
     fun addGameNewsMessage(message: String) {
         Log.d(TAG, "Adding game news message: $message")
@@ -286,4 +245,17 @@ class GameViewModel(application: Application, private val repository: GameReposi
         Log.d(TAG, "Rotating game news: $nextMessage")
         _gameNews.value = nextMessage
     }
+
+    // Utility for calculating penalty points
+    private fun calculatePenaltyPoints(penaltyType: PenaltyType): Int {
+        return when (penaltyType) {
+            PenaltyType.POINT_DEDUCTION -> 10
+            PenaltyType.SILENCED -> 0 // Silencing doesn't typically involve point deduction
+            PenaltyType.TEMPORARY_BAN -> 0 // Banning might not involve point deduction either
+            PenaltyType.FALSE_CALL -> 5
+            PenaltyType.TIME_PENALTY -> 0 // Time penalty is time-based rather than points-based
+            PenaltyType.OTHER -> 1 // Provide a default value for custom penalties
+        }
+    }
+
 }

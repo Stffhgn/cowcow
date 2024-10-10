@@ -3,11 +3,13 @@ package com.example.cow_cow.models
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
+import com.example.cow_cow.enums.PenaltyType
 import com.example.cow_cow.enums.PowerUpType
 import com.example.cow_cow.enums.RankType
+import com.example.cow_cow.managers.GameManager.applyTimePenaltyToGame
 
 data class Player(
-    val id: Int,
+    val id: String,
     var name: String,
     var cowCount: Int = 0,               // Number of cows spotted
     var churchCount: Int = 0,            // Number of churches spotted
@@ -23,7 +25,7 @@ data class Player(
     var activePowerUps: MutableList<PowerUp> = mutableListOf(),   // List of active power-ups
     var timePlayed: Long = 0L,           // Total time spent playing
     var distanceTraveled: Float = 0f,    // Total distance traveled
-    var teamId: Int? = null,             // Team ID (if applicable)
+    var teamId: String? = null,          // Team ID (if applicable)
     var customRule: CustomRule? = null,  // Custom rule affecting the player
     var isSilenced: Boolean = false,     // Is the player silenced by a penalty?
     var isPowerUpActive: Boolean = false,// Is any power-up active?
@@ -63,9 +65,43 @@ data class Player(
      */
     fun applyPenalty(penalty: Penalty) {
         penalties.add(penalty)
-        penaltyPoints += penalty.pointsDeducted
-        Log.d("Player", "Applied penalty '${penalty.name}' to player $name. Penalty points: $penaltyPoints.")
+
+        when (penalty.penaltyType) {
+            PenaltyType.POINT_DEDUCTION -> {
+                // Apply point deduction
+                val effectiveDeduction = (penalty.pointsDeducted * penalty.multiplier).toInt()
+                basePoints -= effectiveDeduction
+                penaltyPoints += effectiveDeduction
+                Log.d("Penalty", "Applied penalty '\${penalty.name}' to player $name. Deducted $effectiveDeduction points.")
+            }
+            PenaltyType.SILENCED -> {
+                // Silence player for a specific duration
+                isSilenced = true
+                Log.d("Penalty", "Player $name has been silenced due to penalty: \${penalty.name}.")
+            }
+            PenaltyType.TEMPORARY_BAN -> {
+                // Temporarily ban the player from making calls
+                isSilenced = true
+                Log.d("Penalty", "Player $name has been temporarily banned due to penalty: \${penalty.name}.")
+            }
+            PenaltyType.FALSE_CALL -> {
+                // Apply deduction for false call
+                val effectiveDeduction = (penalty.pointsDeducted * penalty.multiplier).toInt()
+                basePoints -= effectiveDeduction
+                penaltyPoints += effectiveDeduction
+                Log.d("Penalty", "Applied false call penalty '\${penalty.name}' to player $name. Deducted $effectiveDeduction points.")
+            }
+            PenaltyType.TIME_PENALTY -> {
+                applyTimePenaltyToGame(penalty.duration)
+                Log.d("Penalty", "Applied time penalty '\${penalty.name}' to player $name. Reduced the game timer by \${penalty.duration} milliseconds.")
+            }
+            PenaltyType.OTHER -> {
+                // Apply any other type of penalty
+                Log.d("Penalty", "Applied custom penalty '\${penalty.name}' to player $name.")
+            }
+        }
     }
+
     /**
      * Adds an object (e.g., Cow, Church, Water Tower) to the player's list of called objects.
      * @param objectType The object that the player has called.
@@ -101,17 +137,17 @@ data class Player(
                 }
                 PowerUpType.SCORE_MULTIPLIER -> {
                     totalPoints += powerUp.effectValue
-                    Log.d("PowerUpManager", "Score Multiplier applied: ${powerUp.effectValue} points added for player $name.")
+                    Log.d("PowerUpManager", "Score Multiplier applied: \${powerUp.effectValue} points added for player $name.")
                 }
                 PowerUpType.BONUS_POINTS -> {
                     totalPoints += powerUp.effectValue
-                    Log.d("PowerUpManager", "Bonus Points applied: ${powerUp.effectValue} points added for player $name.")
+                    Log.d("PowerUpManager", "Bonus Points applied: \${powerUp.effectValue} points added for player $name.")
                 }
                 PowerUpType.EXTRA_TIME -> {
                     Log.d("PowerUpManager", "Extra Time applied for player $name: No direct impact on points.")
                 }
                 else -> {
-                    Log.w("PowerUpManager", "Unknown PowerUpType: ${powerUp.type} applied to player $name. No effect on points.")
+                    Log.w("PowerUpManager", "Unknown PowerUpType: \${powerUp.type} applied to player $name. No effect on points.")
                 }
             }
         }
@@ -136,25 +172,6 @@ data class Player(
     }
 
     /**
-     * Check if the player is currently penalized.
-     * A player is penalized if they have any active penalties.
-     */
-    fun isPenalized(): Boolean {
-        val penalized = penalties.any { it.isActive }
-        Log.d("Player", "Player $name is penalized: $penalized.")
-        return penalized
-    }
-
-    /**
-     * Removes expired penalties from the player's list.
-     */
-    fun removeExpiredPenalties(): Boolean {
-        val removed = penalties.removeAll { !it.isActive }
-        Log.d("Player", "Removed expired penalties for player $name. Any removed: $removed.")
-        return removed
-    }
-
-    /**
      * Update the rank of the player based on the provided rank string.
      * This function attempts to convert the given string into a valid RankType.
      * If the provided rank is invalid, the current rank remains unchanged.
@@ -166,43 +183,21 @@ data class Player(
 
         // Attempt to convert the newRank string to a valid RankType.
         val rankType = try {
-            // Converts the provided string to uppercase to match the RankType enum values.
             RankType.valueOf(newRank.uppercase())
         } catch (e: IllegalArgumentException) {
-            // Log an error if the provided rank is invalid and do not update the player's rank.
             Log.e("Player", "Invalid rank: $newRank. Keeping current rank.")
             return
         }
 
-        // If the conversion is successful, update the player's rank.
+        // Update the player's rank.
         this.rank = rankType
         Log.d("Player", "Rank updated successfully for player $name to ${this.rank}")
-    }
-
-
-    /**
-     * Add an achievement to the player's list.
-     */
-    fun addAchievement(achievement: Achievement) {
-        achievements.add(achievement)
-        Log.d("Player", "Added achievement '${achievement.name}' to player $name.")
-    }
-
-
-
-    /**
-     * Apply a custom rule to the player.
-     * This could affect gameplay or scoring based on the rule type.
-     */
-    fun applyCustomRule(rule: CustomRule) {
-        customRules.add(rule)
-        Log.d("Player", "Applied custom rule '${rule.ruleName}' to player $name.")
     }
 
     // --- Parcelable Implementation ---
 
     constructor(parcel: Parcel) : this(
-        id = parcel.readInt(),
+        id = parcel.readString() ?: "",
         name = parcel.readString() ?: "",
         cowCount = parcel.readInt(),
         churchCount = parcel.readInt(),
@@ -226,16 +221,15 @@ data class Player(
         },
         timePlayed = parcel.readLong(),
         distanceTraveled = parcel.readFloat(),
-        teamId = parcel.readValue(Int::class.java.classLoader) as? Int,
+        teamId = parcel.readString(),
         isSilenced = parcel.readByte() != 0.toByte(),
         isPowerUpActive = parcel.readByte() != 0.toByte(),
         gamesPlayed = parcel.readInt(),
         objectsCalled = parcel.createStringArrayList() ?: mutableListOf()  // Reading the list of objects called
-
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeInt(id)
+        parcel.writeString(id)
         parcel.writeString(name)
         parcel.writeInt(cowCount)
         parcel.writeInt(churchCount)
@@ -251,7 +245,7 @@ data class Player(
         parcel.writeList(activePowerUps)
         parcel.writeLong(timePlayed)
         parcel.writeFloat(distanceTraveled)
-        parcel.writeValue(teamId)
+        parcel.writeString(teamId)
         parcel.writeByte(if (isSilenced) 1 else 0)
         parcel.writeByte(if (isPowerUpActive) 1 else 0)
         parcel.writeInt(gamesPlayed)

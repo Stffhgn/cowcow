@@ -62,4 +62,13 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
 
+    <!-- Reset Button -->
+    <Button
+        android:id="@+id/resetButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Reset All Data"
+        android:layout_marginTop="16dp"
+        android:layout_gravity="center_horizontal"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

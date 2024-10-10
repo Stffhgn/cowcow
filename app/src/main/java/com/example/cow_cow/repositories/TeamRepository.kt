@@ -2,7 +2,7 @@ package com.example.cow_cow.repositories
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.example.cow_cow.managers.TeamManager
+import android.util.Log
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Team
 import com.google.gson.Gson
@@ -11,9 +11,9 @@ import com.google.gson.reflect.TypeToken
 class TeamRepository(private val context: Context) {
 
     private val PREFS_NAME = "com.example.cow_cow.TEAM_PREFERENCES"
-    private val TEAMS_KEY = "TEAMS_KEY"
+    private val TEAM_KEY = "TEAM_KEY"
     private val gson = Gson()
-    private val teams = mutableListOf<Team>()
+    private var team: Team? = null
 
     /**
      * Get SharedPreferences instance
@@ -23,125 +23,101 @@ class TeamRepository(private val context: Context) {
     }
 
     /**
-     * Load teams from SharedPreferences and update TeamManager.
+     * Load the single team from SharedPreferences.
      */
-    fun loadTeams() {
+    fun loadTeam() {
         val prefs = getSharedPreferences()
-        val json = prefs.getString(TEAMS_KEY, null)
+        val json = prefs.getString(TEAM_KEY, null)
         if (json != null) {
-            val type = object : TypeToken<List<Team>>() {}.type
-            val loadedTeams: List<Team> = gson.fromJson(json, type)
+            val type = object : TypeToken<Team>() {}.type
+            team = gson.fromJson(json, type)
+            Log.d("TeamRepository", "Loaded team: ${team?.name} with members: ${team?.members?.size ?: 0}")
+        } else {
+            // Create a default team if none exists
+            team = Team(id = "1", name = "Default Team", members = mutableListOf())
+            Log.d("TeamRepository", "No team found, created default team: ${team?.name}")
+        }
+    }
 
-            // Reset the TeamManager and populate it with the loaded teams
-            TeamManager.resetAllTeams()
-            loadedTeams.forEach {
-                val team = TeamManager.createTeam(it.name).apply { members.addAll(it.members) }
-                teams.add(team) // Synchronize repository's teams list
+    /**
+     * Save the current team to SharedPreferences.
+     */
+    fun saveTeam() {
+        team?.let {
+            val prefs = getSharedPreferences()
+            val editor = prefs.edit()
+            val json = gson.toJson(it)
+            editor.putString(TEAM_KEY, json)
+            editor.apply() // Commit the changes
+            Log.d("TeamRepository", "Team saved to SharedPreferences: ${it.name}")
+        }
+    }
+
+    /**
+     * Get the current team (creates a default if none exists).
+     */
+    fun getTeam(): Team {
+        if (team == null) {
+            loadTeam()
+
+            // If loading the team still results in `team` being null, create a default one
+            if (team == null) {
+                Log.w("TeamRepository", "No existing team found, creating a new default team.")
+                team = Team(id = "1", name = "Default Team", members = mutableListOf())
+                saveTeam() // Save this new default team
+            }
+        }
+        return team!!
+    }
+
+
+    /**
+     * Add a player to the team and save changes.
+     */
+    fun addPlayerToTeam(player: Player) {
+        team?.let {
+            if (!it.members.contains(player)) {
+                it.addMember(player)
+                saveTeam()
+                Log.d("TeamRepository", "Added player ${player.name} to team ${it.name}")
+            } else {
+                Log.d("TeamRepository", "Player ${player.name} is already in team ${it.name}")
             }
         }
     }
 
     /**
-     * Save all teams to SharedPreferences.
+     * Remove a player from the team and save changes.
      */
-    private fun saveTeams() {
-        val prefs = getSharedPreferences()
-        val editor = prefs.edit()
-        val json = gson.toJson(teams)
-        editor.putString(TEAMS_KEY, json)
-        editor.apply() // Commit the changes
-    }
-
-    /**
-     * Save a single team and persist it.
-     */
-    fun saveTeam(team: Team) {
-        val index = teams.indexOfFirst { it.id == team.id }
-        if (index != -1) {
-            teams[index] = team
-        } else {
-            teams.add(team)
+    fun removePlayerFromTeam(player: Player) {
+        team?.let {
+            if (it.members.contains(player)) {
+                it.removeMember(player)
+                saveTeam()
+                Log.d("TeamRepository", "Removed player ${player.name} from team ${it.name}")
+            } else {
+                Log.d("TeamRepository", "Player ${player.name} not found in team ${it.name}")
+            }
         }
-        saveTeams() // Persist changes after saving the team
     }
 
     /**
-     * Get the current team (or create a default one if none exists).
+     * Distribute points to the team and save changes.
      */
-    fun getTeam(): Team {
-        return teams.firstOrNull() ?: Team(id = 1, name = "Team", members = mutableListOf())
+    fun distributeTeamPoints(points: Int) {
+        team?.let {
+            it.teamScore += points
+            saveTeam()
+            Log.d("TeamRepository", "Distributed $points points to team ${it.name}. New team score: ${it.teamScore}")
+        }
     }
 
     /**
-     * Create a new team, add it to the TeamManager, and save it.
+     * Reset the team and save changes.
      */
-    fun createTeam(teamName: String): Team {
-        val newTeam = TeamManager.createTeam(teamName)
-        teams.add(newTeam)
-        saveTeams()
-        return newTeam
-    }
-
-    /**
-     * Add a player to a team, update the score, and save the team.
-     */
-    fun addPlayerToTeam(player: Player, team: Team) {
-        TeamManager.addPlayerToTeam(player, team)
-        saveTeam(team) // Persist the changes after updating the team
-    }
-
-    /**
-     * Remove a player from a team and save the changes.
-     */
-    fun removePlayerFromTeam(player: Player, team: Team) {
-        TeamManager.removePlayerFromTeam(player, team)
-        saveTeam(team) // Persist the changes after updating the team
-    }
-
-    /**
-     * Distribute points to the team and save the changes.
-     */
-    fun distributeTeamPoints(team: Team, points: Int) {
-        TeamManager.distributeTeamPoints(team, points)
-        saveTeam(team) // Persist the changes after distributing points
-    }
-
-    /**
-     * Get a team by its name from TeamManager.
-     */
-    fun getTeamByName(teamName: String): Team? {
-        return TeamManager.getTeamByName(teamName)
-    }
-
-    /**
-     * Get all teams from TeamManager.
-     */
-    fun getAllTeams(): List<Team> {
-        return TeamManager.getAllTeams()
-    }
-
-    /**
-     * Reset all teams via TeamManager and save the changes.
-     */
-    fun resetAllTeams() {
-        TeamManager.resetAllTeams()
-        teams.clear() // Clear the local list of teams
-        saveTeams()   // Persist the reset state
-    }
-
-    /**
-     * Remove a team and save the changes.
-     */
-    fun removeTeam(team: Team) {
-        TeamManager.removeTeam(team)
-        teams.remove(team) // Remove it from the repository's list as well
-        saveTeams()        // Persist the removal
-    }
-
-    /**
-     * Check if a player is part of any team via TeamManager.
-     */
-    fun isPlayerInAnyTeam(player: Player): Boolean {
-        return TeamManager.isPlayerInAnyTeam(player)
+    fun resetTeam() {
+        team = Team(id = "1", name = "Default Team", members = mutableListOf())
+        saveTeam()
+        Log.d("TeamRepository", "Team has been reset to default.")
     }
 }

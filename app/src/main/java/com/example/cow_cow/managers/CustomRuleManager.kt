@@ -19,7 +19,8 @@ class CustomRuleManager(private val context: Context) {
 
     // Creates and adds a new custom rule
     fun createCustomRule(
-        ruleId: Int,
+        ruleId: String,
+        playerId: String? = null,
         ruleName: String,
         ruleDescription: String,
         ruleEffect: RuleEffectType,
@@ -30,6 +31,7 @@ class CustomRuleManager(private val context: Context) {
     ) {
         val customRule = CustomRule(
             ruleId = ruleId,
+            playerId = playerId,
             ruleName = ruleName,
             ruleDescription = ruleDescription,
             ruleEffect = ruleEffect,
@@ -47,9 +49,10 @@ class CustomRuleManager(private val context: Context) {
     fun applyCustomRulesForGame(players: List<Player>, gameMode: GameMode) {
         Log.d("CustomRuleManager", "Applying custom rules for game mode: $gameMode")
         players.forEach { player ->
-            player.customRule?.let { rule ->
+            val applicableRules = activeCustomRules.filter { it.playerId == null || it.playerId == player.id }
+            applicableRules.forEach { rule ->
                 applyCustomRule(player, rule)
-            } ?: Log.w("CustomRuleManager", "No custom rule found for player ${player.name}")
+            }
         }
     }
 

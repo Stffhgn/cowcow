@@ -88,6 +88,11 @@ class StartFragment : Fragment() {
                 Log.d("StartFragment", "Navigating to Store fragment")
                 findNavController().navigate(R.id.action_startFragment_to_storeFragment)
             }
+
+            // Reset Button
+            resetButton.setOnClickListener {
+                resetAllData()
+            }
         }
     }
 
@@ -104,6 +109,14 @@ class StartFragment : Fragment() {
                 requireActivity().finish()  // Ensure the current activity is finished
             }
         }
+    }
+
+    private fun resetAllData() {
+        Log.d("StartFragment", "Resetting all data")
+
+        // Reset all data using the PlayerViewModel
+        playerViewModel.resetAllPlayers()
+        // Add additional reset methods if needed, like team data, scores, etc.
     }
 
     override fun onDestroyView() {

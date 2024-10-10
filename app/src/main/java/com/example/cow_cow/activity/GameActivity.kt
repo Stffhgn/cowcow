@@ -1,5 +1,3 @@
-// GameActivity.kt
-
 package com.example.cow_cow.activity
 
 import android.os.Bundle
@@ -10,7 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
-import com.example.cow_cow.PlayerFragment.PlayerListFragment
+import com.example.cow_cow.playerFragment.PlayerListFragment
 import com.example.cow_cow.R
 import com.example.cow_cow.databinding.ActivityGameScreenBinding
 import com.example.cow_cow.gameFragments.CowCowFragment
@@ -18,11 +16,6 @@ import com.example.cow_cow.gameFragments.GameSettingsFragment
 import com.example.cow_cow.gameFragments.WhoCalledItFragment
 import com.example.cow_cow.managers.*
 import com.example.cow_cow.models.Player
-import com.example.cow_cow.models.Penalty
-import com.example.cow_cow.enums.PenaltyType
-import com.example.cow_cow.enums.PowerUpType
-import com.example.cow_cow.enums.GameMode
-import com.example.cow_cow.models.ScavengerHuntItem
 import com.example.cow_cow.repositories.*
 import com.example.cow_cow.viewModels.GameViewModel
 import com.example.cow_cow.handlers.GameEventHandler
@@ -42,12 +35,12 @@ class GameActivity : AppCompatActivity() {
     // Repositories
     private lateinit var playerRepository: PlayerRepository
     private lateinit var teamRepository: TeamRepository
+    private lateinit var gameRepository: GameRepository
     private lateinit var scavengerHuntRepository: ScavengerHuntRepository
 
     // Managers
     private lateinit var gameEventHandler: GameEventHandler
     private lateinit var playerManager: PlayerManager
-    private lateinit var teamManager: TeamManager
     private lateinit var scoreManager: ScoreManager
     private lateinit var scavengerHuntManager: ScavengerHuntManager
     private lateinit var soundManager: SoundManager
@@ -82,8 +75,8 @@ class GameActivity : AppCompatActivity() {
         // Start rotating news
         startRotatingNews()
 
-        // Setup drawer buttons
-        setupDrawerButtons()
+        // Setup buttons
+        setupButtons()
 
         // Load the initial fragment
         if (savedInstanceState == null) {
@@ -94,20 +87,21 @@ class GameActivity : AppCompatActivity() {
     // Function to initialize components
     private fun initializeComponents() {
         // Initialize GameRepository
-        val gameRepository = GameRepository(this) // Replace with your actual repository initialization
+        gameRepository = GameRepository(this)
+
+        // Initialize TeamRepository
+        teamRepository = TeamRepository(this)
 
         // Initialize GameViewModel with custom factory
-        val factory = GameViewModelFactory(application, gameRepository)
+        val factory = GameViewModelFactory(application, gameRepository, teamRepository)
         gameViewModel = ViewModelProvider(this, factory).get(GameViewModel::class.java)
 
         // Repositories
         playerRepository = PlayerRepository(this)
-        teamRepository = TeamRepository(this)
         scavengerHuntRepository = ScavengerHuntRepository(this)
 
         // Managers
         playerManager = PlayerManager
-        teamManager = TeamManager
         scoreManager = ScoreManager
         scavengerHuntManager = ScavengerHuntManager
         soundManager = SoundManager
@@ -119,7 +113,7 @@ class GameActivity : AppCompatActivity() {
         gameEventHandler = GameEventHandler(
             context = this,
             playerManager = playerManager,
-            teamManager = teamManager,
+            teamRepository = teamRepository,
             scoreManager = scoreManager,
             scavengerHuntManager = scavengerHuntManager,
             soundManager = soundManager,
@@ -151,7 +145,7 @@ class GameActivity : AppCompatActivity() {
     // Fetch all initial game data
     private fun initializeGameData() {
         players = playerRepository.getPlayers(this)
-        Log.d("GameActivity", "Number of players initialized: \${players.size}")
+        Log.d("GameActivity", "Number of players initialized: ${players.size}")
     }
 
     // Function to handle rotating game news
@@ -169,13 +163,13 @@ class GameActivity : AppCompatActivity() {
     // Updates the game news on the screen
     private fun updateGameNews() {
         val nextNews = gameNewsManager.getNextNewsMessage()
-        Log.d("GameActivity", "Displaying news: \$nextNews")
-        binding.rotatingTextView.text = nextNews
+        Log.d("GameActivity", "Displaying news: $nextNews")
+        binding.gameTextView.text = nextNews
     }
 
     // Replace the current fragment
     private fun loadFragment(fragment: Fragment) {
-        Log.d("GameActivity", "Loading fragment: \${fragment::class.simpleName}")
+        Log.d("GameActivity", "Loading fragment: ${fragment::class.simpleName}")
         supportFragmentManager.beginTransaction()
             .replace(R.id.nav_host_fragment, fragment)
             .addToBackStack(null)
@@ -184,7 +178,7 @@ class GameActivity : AppCompatActivity() {
 
     // Handle receiving an object from CowCowFragment
     fun receiveObject(objectType: String) {
-        Log.d("GameActivity", "Received object: \$objectType")
+        Log.d("GameActivity", "Received object: $objectType")
         calledObjectType = objectType
 
         // Handle unclaimed object event using GameEventHandler
@@ -210,44 +204,30 @@ class GameActivity : AppCompatActivity() {
         Log.d("GameActivity", "WhoCalledItFragment opened with player list and object type")
     }
 
-    // Set up drawer buttons
-    private fun setupDrawerButtons() {
+    // Set up buttons to switch fragments
+    private fun setupButtons() {
         binding.leftDrawerButton.setOnClickListener {
-            if (binding.drawerLayout.isDrawerOpen(binding.leftDrawer)) {
-                binding.drawerLayout.closeDrawer(binding.leftDrawer)
-            } else {
-                binding.drawerLayout.openDrawer(binding.leftDrawer)
-                loadGameSettingsFragment()
-            }
+            loadGameSettingsFragment()
         }
 
         binding.rightDrawerButton.setOnClickListener {
-            if (binding.drawerLayout.isDrawerOpen(binding.rightDrawer)) {
-                binding.drawerLayout.closeDrawer(binding.rightDrawer)
-            } else {
-                binding.drawerLayout.openDrawer(binding.rightDrawer)
-                loadPlayerListFragment()
-            }
+            loadPlayerListFragment()
         }
     }
 
     private fun loadPlayerListFragment() {
         val playerListFragment = PlayerListFragment()
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.rightDrawer, playerListFragment)
-            .commit()
+        loadFragment(playerListFragment)
     }
 
     private fun loadGameSettingsFragment() {
         val gameSettingsFragment = GameSettingsFragment()
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.leftDrawer, gameSettingsFragment)
-            .commit()
+        loadFragment(gameSettingsFragment)
     }
 
     // Receive selected player from WhoCalledItFragment
     fun receiveSelectedPlayer(player: Player) {
-        Log.d("GameActivity", "Player \${player.name} selected for object: \$calledObjectType")
+        Log.d("GameActivity", "Player ${player.name} selected for object: $calledObjectType")
         calledObjectType?.let {
             gameEventHandler.handlePlayerSelected(player, it)
         }

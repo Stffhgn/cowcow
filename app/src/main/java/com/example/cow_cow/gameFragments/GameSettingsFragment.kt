@@ -1,17 +1,16 @@
 package com.example.cow_cow.gameFragments
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.CompoundButton
-import android.widget.SeekBar
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.ViewModelProvider
 import com.example.cow_cow.databinding.FragmentSettingsBinding
-import com.example.cow_cow.enums.DifficultyLevel
 import com.example.cow_cow.viewModels.SettingsViewModel
+import com.example.cow_cow.viewModels.SettingsViewModelFactory
 
 class GameSettingsFragment : Fragment() {
 
@@ -19,20 +18,32 @@ class GameSettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
 
-    // Shared ViewModel
-    private val settingsViewModel: SettingsViewModel by activityViewModels()
+    // ViewModel
+    private lateinit var settingsViewModel: SettingsViewModel
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+
+        // Obtain shared preferences from the activity
+        val sharedPreferences = context.getSharedPreferences("game_settings", Context.MODE_PRIVATE)
+
+        // Instantiate SettingsViewModel with the custom factory
+        val factory = SettingsViewModelFactory(requireActivity().application, sharedPreferences)
+        settingsViewModel = ViewModelProvider(this, factory).get(SettingsViewModel::class.java)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // Inflate the layout for this fragment
+        Log.d("GameSettingsFragment", "onCreateView called - Inflating FragmentSettingsBinding")
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d("GameSettingsFragment", "onViewCreated called - Setting up UI and Observers")
 
         // Setup the initial UI state from ViewModel
         setupUI()
@@ -42,94 +53,24 @@ class GameSettingsFragment : Fragment() {
     }
 
     private fun setupUI() {
+        Log.d("GameSettingsFragment", "Setting up UI components with current ViewModel values")
+
         // Setup the sound toggle
         binding.soundSwitch.isChecked = settingsViewModel.isSoundMuted.value == false
-        binding.soundSwitch.setOnCheckedChangeListener { _: CompoundButton, isChecked: Boolean ->
+        binding.soundSwitch.setOnCheckedChangeListener { _, isChecked ->
             settingsViewModel.setSoundMuted(!isChecked)  // True if sound is muted
         }
 
         // Setup the difficulty spinner
-        binding.difficultySpinner.setSelection(getDifficultyPosition(settingsViewModel.difficultyLevel.value))
-        binding.difficultySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>, view: View?, position: Int, id: Long
-            ) {
-                val difficulty = getDifficultyLevelFromPosition(position)
-                settingsViewModel.setDifficultyLevel(difficulty)
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {
-                // No action needed
-            }
-        }
-
-        // Setup the dark mode switch
-        binding.darkModeSwitch.isChecked = settingsViewModel.isDarkModeEnabled.value == true
-        binding.darkModeSwitch.setOnCheckedChangeListener { _: CompoundButton, isChecked: Boolean ->
-            settingsViewModel.setDarkModeEnabled(isChecked)
-        }
-
-        // Setup the notifications switch
-        binding.notificationsSwitch.isChecked = settingsViewModel.isNotificationsEnabled.value == true
-        binding.notificationsSwitch.setOnCheckedChangeListener { _: CompoundButton, isChecked: Boolean ->
-            settingsViewModel.setNotificationsEnabled(isChecked)
-        }
-
-        // Setup the timer duration slider
-        binding.timerSeekBar.progress = (settingsViewModel.timerDuration.value ?: 300000L).toInt() / 1000
-        binding.timerSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                settingsViewModel.setTimerDuration(progress * 1000L)  // Save in milliseconds
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        // Add other UI setup as needed, for example:
+        // binding.volumeSlider.value = settingsViewModel.volumeLevel.value ?: 1.0f
     }
 
     private fun observeViewModel() {
-        // Observe settings data from ViewModel and update UI accordingly
-
         settingsViewModel.isSoundMuted.observe(viewLifecycleOwner) { isMuted ->
             binding.soundSwitch.isChecked = !isMuted
         }
-
-        settingsViewModel.difficultyLevel.observe(viewLifecycleOwner) { level: DifficultyLevel ->
-            binding.difficultySpinner.setSelection(getDifficultyPosition(level))
-        }
-
-        settingsViewModel.isDarkModeEnabled.observe(viewLifecycleOwner) { isEnabled ->
-            binding.darkModeSwitch.isChecked = isEnabled
-        }
-
-        settingsViewModel.isNotificationsEnabled.observe(viewLifecycleOwner) { isEnabled ->
-            binding.notificationsSwitch.isChecked = isEnabled
-        }
-
-        settingsViewModel.timerDuration.observe(viewLifecycleOwner) { duration ->
-            binding.timerSeekBar.progress = (duration / 1000).toInt()
-        }
-    }
-
-    // Helper method to get the selected difficulty position
-    private fun getDifficultyPosition(level: DifficultyLevel?): Int {
-        return when (level) {
-            DifficultyLevel.EASY -> 0
-            DifficultyLevel.MEDIUM -> 1
-            DifficultyLevel.HARD -> 2
-            else -> 1 // Default to medium
-        }
-    }
-
-    // Helper method to get the selected difficulty level from spinner position
-    private fun getDifficultyLevelFromPosition(position: Int): DifficultyLevel {
-        return when (position) {
-            0 -> DifficultyLevel.EASY
-            1 -> DifficultyLevel.MEDIUM
-            2 -> DifficultyLevel.HARD
-            else -> DifficultyLevel.MEDIUM
-        }
+        // Add other observers as needed
     }
 
     override fun onDestroyView() {

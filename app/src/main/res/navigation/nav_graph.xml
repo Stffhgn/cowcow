@@ -99,9 +99,6 @@
             app:destination="@id/playerStatsFragment">
             <argument
                 android:name="playerID"
-                app:argType="integer" />
-            <argument
-                android:name="playerName"
                 app:argType="string" />
         </action>
         <action
@@ -112,7 +109,7 @@
     <!-- Player List Fragment -->
     <fragment
         android:id="@+id/playerListFragment"
-        android:name="com.example.cow_cow.PlayerFragment.PlayerListFragment"
+        android:name="com.example.cow_cow.playerFragment.PlayerListFragment"
         android:label="Player List"
         tools:layout="@layout/fragment_player_list">
         <action
@@ -120,9 +117,6 @@
             app:destination="@id/playerStatsFragment">
             <argument
                 android:name="playerID"
-                app:argType="integer" />
-            <argument
-                android:name="playerName"
                 app:argType="string" />
         </action>
     </fragment>
@@ -130,21 +124,18 @@
     <!-- Player Stats Fragment -->
     <fragment
         android:id="@+id/playerStatsFragment"
-        android:name="com.example.cow_cow.PlayerFragment.PlayerStatsFragment"
+        android:name="com.example.cow_cow.playerFragment.PlayerStatsFragment"
         android:label="Player Stats"
         tools:layout="@layout/fragment_player_stats">
         <argument
             android:name="playerID"
-            app:argType="integer" />
-        <argument
-            android:name="playerName"
             app:argType="string" />
     </fragment>
 
     <!-- Onboarding Fragment -->
     <fragment
         android:id="@+id/onboardingFragment"
-        android:name="com.example.cow_cow.PlayerFragment.OnboardingFragment"
+        android:name="com.example.cow_cow.playerFragment.OnboardingFragment"
         android:label="Onboarding Fragment"
         tools:layout="@layout/fragment_onboarding">
         <action

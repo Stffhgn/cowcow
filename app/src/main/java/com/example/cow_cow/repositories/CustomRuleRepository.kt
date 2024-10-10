@@ -46,7 +46,7 @@ class CustomRuleRepository(private val context: Context) {
      * @param playerId The player ID to retrieve rules for.
      * @return A list of CustomRule objects associated with the player.
      */
-    fun getCustomRulesForPlayer(playerId: Int): List<CustomRule> {
+    fun getCustomRulesForPlayer(playerId: String): List<CustomRule> {
         Log.d(TAG, "Fetching custom rules for player ID: $playerId")
 
         val sharedPreferences = context.getSharedPreferences(CUSTOM_RULES_PREFS, Context.MODE_PRIVATE)
@@ -57,7 +57,7 @@ class CustomRuleRepository(private val context: Context) {
             val customRules: List<CustomRule> = gson.fromJson(json, type)
 
             // Filter custom rules for this specific player
-            val playerCustomRules = customRules.filter { it.ruleId == playerId }
+            val playerCustomRules = customRules.filter { it.playerId == playerId }
             Log.d(TAG, "Found ${playerCustomRules.size} custom rules for player ID: $playerId")
             playerCustomRules
         } else {
@@ -106,7 +106,7 @@ class CustomRuleRepository(private val context: Context) {
      *
      * @param ruleId The ID of the custom rule to remove.
      */
-    fun removeCustomRule(ruleId: Int) {
+    fun removeCustomRule(ruleId: String) {
         val currentRules = loadCustomRules().toMutableList()
 
         // Remove the rule with the matching ruleId

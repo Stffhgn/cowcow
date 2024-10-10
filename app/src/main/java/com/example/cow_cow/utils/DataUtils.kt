@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.cow_cow.models.Achievement
 import com.example.cow_cow.models.CustomRule
 import com.example.cow_cow.models.Player
+import com.example.cow_cow.repositories.TeamRepository
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -51,8 +52,11 @@ object DataUtils {
     /**
      * Saves the team data to SharedPreferences.
      */
-    fun saveTeam(context: Context, team: List<Player>) {
+    fun saveTeam(context: Context) {
         val sharedPreferences = context.getSharedPreferences(PLAYERS_PREFS, Context.MODE_PRIVATE)
+        val teamRepository = TeamRepository(context)
+        val team = teamRepository.getTeam()
+
         val editor = sharedPreferences.edit()
         val teamJson = gson.toJson(team)
         editor.putString(TEAM_KEY, teamJson)

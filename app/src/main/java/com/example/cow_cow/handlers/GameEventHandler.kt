@@ -1,5 +1,3 @@
-// GameEventHandler.kt
-
 package com.example.cow_cow.handlers
 
 import android.util.Log
@@ -8,11 +6,12 @@ import com.example.cow_cow.models.Player
 import com.example.cow_cow.managers.*
 import com.example.cow_cow.enums.*
 import com.example.cow_cow.models.*
+import com.example.cow_cow.repositories.TeamRepository
 
 class GameEventHandler(
     private val context: Context,
     private val playerManager: PlayerManager,
-    private val teamManager: TeamManager,
+    private val teamRepository: TeamRepository,
     private val scoreManager: ScoreManager,
     private val scavengerHuntManager: ScavengerHuntManager,
     private val soundManager: SoundManager,
@@ -36,55 +35,69 @@ class GameEventHandler(
 
     // Handle player selection for claiming an object
     fun handlePlayerSelected(player: Player, objectType: String) {
-        logAndAddNews("Handling player selection: Player: \${player.name}, Object type: $objectType")
+        logAndAddNews("Handling player selection: Player: ${player.name}, Object type: $objectType")
         val updatedScore = scoreManager.calculatePlayerScoreAfterEvent(player, objectType)
-        Log.d(TAG, "Player: \${player.name}, New score after claiming $objectType: $updatedScore")
+        Log.d(TAG, "Player: ${player.name}, New score after claiming $objectType: $updatedScore")
 
         updateTeamScoreIfMember(player)
         checkConditionsAfterEvent(player, objectType)
         achievementManager.checkAchievements(player)
         applyCustomRulesAndPenalties(player)
 
-        gameNewsManager.addNewsMessage("Player \${player.name} has claimed $objectType and earned $updatedScore points!")
+        gameNewsManager.addNewsMessage("Player ${player.name} has claimed $objectType and earned $updatedScore points!")
     }
 
     // Assign player to a team
-    fun assignPlayerToTeam(player: Player, teamId: Int) {
-        teamManager.getAllTeams().find { it.id == teamId }?.let { team ->
-            teamManager.addPlayerToTeam(player, team)
-            logAndAddNews("Player \${player.name} successfully assigned to team \${team.name}", "Player \${player.name} has joined team \${team.name}!")
-        } ?: Log.e(TAG, "Team with ID $teamId not found. Player \${player.name} could not be assigned.")
+    fun assignPlayerToTeam(player: Player) {
+        // Get the current team from the repository
+        val currentTeam = teamRepository.getTeam()
+
+        // Ensure the player isn't already part of the team
+        if (!currentTeam.members.contains(player)) {
+            // Add player to the current team
+            teamRepository.addPlayerToTeam(player)
+
+            // Log and add a news message for successful assignment
+            logAndAddNews(
+                "Player ${player.name} successfully assigned to team ${currentTeam.name}",
+                "Player ${player.name} has joined team ${currentTeam.name}!"
+            )
+        } else {
+            // Player is already in the team, log a warning
+            Log.w(TAG, "Player ${player.name} is already a member of team ${currentTeam.name}.")
+        }
     }
+
 
     // Handle scavenger hunt item found
     fun handleScavengerHuntItemFound(player: Player, item: ScavengerHuntItem) {
         scavengerHuntManager.markItemAsFound(item, player)
         achievementManager.trackProgress(player, AchievementType.SCAVENGER_HUNT, 1)
-        logAndAddNews("Player \${player.name} found scavenger hunt item: \${item.name}", "Player \${player.name} found the scavenger hunt item: \${item.name}!")
+        logAndAddNews("Player ${player.name} found scavenger hunt item: ${item.name}", "Player ${player.name} found the scavenger hunt item: ${item.name}!")
     }
 
     // Apply penalty to player
     fun applyPenaltyToPlayer(player: Player, penalty: Penalty) {
         penaltyManager.applyPenalty(player, penalty)
         if (penalty.penaltyType == PenaltyType.SILENCED || penalty.penaltyType == PenaltyType.TEMPORARY_BAN) {
-            if (player.isSilenced) Log.d(TAG, "Player \${player.name} is now silenced due to penalty: \${penalty.name}")
+            if (player.isSilenced) Log.d(TAG, "Player ${player.name} is now silenced due to penalty: ${penalty.name}")
         }
-        gameNewsManager.addNewsMessage("Player \${player.name} has received a penalty: \${penalty.name}.")
+        gameNewsManager.addNewsMessage("Player ${player.name} has received a penalty: ${penalty.name}.")
     }
 
     // Activate power-up for player
     fun activatePowerUpForPlayer(player: Player, powerUpType: PowerUpType, duration: Long, effectValue: Int = 0) {
         powerUpManager.activatePowerUp(player, powerUpType, duration, effectValue)
-        gameNewsManager.addNewsMessage("Player \${player.name} activated power-up: \${powerUpType.name}!")
+        gameNewsManager.addNewsMessage("Player ${player.name} activated power-up: ${powerUpType.name}!")
     }
 
     // Handle trivia question answer
     fun handleTriviaQuestionAnswer(player: Player, selectedAnswer: String) {
         val isCorrect = triviaManager.validateAnswer(player, selectedAnswer)
         val message = if (isCorrect) {
-            "Player \${player.name} answered the trivia question correctly and earned points!"
+            "Player ${player.name} answered the trivia question correctly and earned points!"
         } else {
-            "Player \${player.name} answered the trivia question incorrectly."
+            "Player ${player.name} answered the trivia question incorrectly."
         }
         gameNewsManager.addNewsMessage(message)
     }
@@ -145,15 +158,19 @@ class GameEventHandler(
     // Check conditions after an event
     private fun checkConditionsAfterEvent(player: Player, objectType: String) {
         if (conditionManager.evaluateAllConditions(listOf(Condition(ConditionType.SCORE_THRESHOLD, 10, "Player must reach a score of at least 10")), player)) {
-            Log.d(TAG, "Player \${player.name} has met the condition after claiming $objectType.")
+            Log.d(TAG, "Player ${player.name} has met the condition after claiming $objectType.")
         }
     }
 
     // Update team score if player is a member
     private fun updateTeamScoreIfMember(player: Player) {
-        teamManager.getAllTeams().find { it.members.contains(player) }?.let { team ->
-            Log.d(TAG, "\${player.name} is part of team: \${team.name}. Updating team score.")
-            teamManager.updateTeamScore(team)
+        val currentTeam = teamRepository.getTeam()
+        if (currentTeam.members.contains(player)) {
+            Log.d(TAG, "${player.name} is part of team: ${currentTeam.name}. Updating team score.")
+            currentTeam.teamScore = currentTeam.calculateTotalTeamScore()  // Calculate the updated score
+
+            // Save the updated team using the repository's saveTeam() method (no arguments)
+            teamRepository.saveTeam()  // Save updated score to repository
         }
     }
 

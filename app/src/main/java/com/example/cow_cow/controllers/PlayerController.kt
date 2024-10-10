@@ -7,8 +7,8 @@ class PlayerController {
 
     // Add a new player to the list of players
     fun addPlayer(players: MutableList<Player>, player: Player): Boolean {
-        if (players.any { it.name == player.name }) {
-            // Prevent adding duplicate player names
+        if (players.any { it.id == player.id }) {
+            // Prevent adding duplicate player IDs
             return false
         }
         players.add(player)
@@ -16,7 +16,7 @@ class PlayerController {
     }
 
     // Remove a player by their ID
-    fun removePlayer(players: MutableList<Player>, playerId: Int): Boolean {
+    fun removePlayer(players: MutableList<Player>, playerId: String): Boolean {
         return players.removeIf { it.id == playerId }
     }
 
@@ -31,7 +31,7 @@ class PlayerController {
     }
 
     // Assign a player to a team (and mark them as part of the team)
-    fun assignToTeam(player: Player, teamId: Int) {
+    fun assignToTeam(player: Player, teamId: String) {
         player.isOnTeam = true
         player.teamId = teamId
     }
@@ -61,5 +61,10 @@ class PlayerController {
         player.penaltyPoints = 0
         player.achievements.clear()
         player.penalties.clear()
+        player.bonusPoints = 0
+        player.activePowerUps.clear()
+        player.winStreak = 0
+        player.objectivesCompleted = 0
+        player.gamesPlayed = 0
     }
 }

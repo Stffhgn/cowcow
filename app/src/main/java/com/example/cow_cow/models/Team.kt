@@ -5,7 +5,7 @@ import android.os.Parcelable
 import android.util.Log
 
 data class Team(
-    var id: Int,                                 // Unique identifier for the team
+    var id: String,                                 // Unique identifier for the team
     var name: String,                            // Name of the team
     var members: MutableList<Player> = mutableListOf(),  // List of team members (players)
     var teamScore: Int = 0,                      // Total team score
@@ -73,7 +73,7 @@ data class Team(
 
     // Parcelable implementation to allow Team objects to be passed between Activities/Fragments
     constructor(parcel: Parcel) : this(
-        id = parcel.readInt(),
+        id = parcel.readString() ?: "",
         name = parcel.readString() ?: "",
         members = parcel.createTypedArrayList(Player.CREATOR) ?: mutableListOf(),
         teamScore = parcel.readInt(),
@@ -86,7 +86,7 @@ data class Team(
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeInt(id)
+        parcel.writeString(id)
         parcel.writeString(name)
         parcel.writeTypedList(members)
         parcel.writeInt(teamScore)

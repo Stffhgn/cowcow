@@ -4,10 +4,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -37,25 +33,16 @@ class PlayerAdapter(
             // Log data binding action
             Log.d(TAG, "Binding player: ${player.name}, ID: ${player.id}")
 
+            // Set player details
             binding.playerNameTextView.text = player.name
             binding.playerScoreTextView.text = "Score: ${player.calculateTotalPoints()}"
 
-            // Set checkbox state
+            // Set checkbox state to indicate if the player is the current one
             binding.isPlayingCheckbox.isChecked = player.isCurrentPlayer
 
-            // Control visibility of additional elements based on context
-            if (isWhoCalledItContext) {
-                // Show only the elements relevant to WhoCalledItFragment
-                binding.avatarImageView.visibility = View.GONE
-                binding.playerNameEditText.visibility = View.GONE
-                binding.playerNameTextView.visibility = View.VISIBLE
-                binding.playerScoreTextView.visibility = View.VISIBLE
-                binding.isPlayingCheckbox.visibility = View.VISIBLE
-            } else {
-                // Default visibility for other contexts
-                binding.avatarImageView.visibility = View.VISIBLE
-                binding.playerNameEditText.visibility = View.VISIBLE
-            }
+            // Control visibility of elements based on the context
+            binding.avatarImageView.visibility = if (isWhoCalledItContext) View.GONE else View.VISIBLE
+            binding.isPlayingCheckbox.visibility = if (isWhoCalledItContext) View.VISIBLE else View.GONE
 
             // Handle item clicks and log when a player is clicked
             binding.root.setOnClickListener {
@@ -63,7 +50,7 @@ class PlayerAdapter(
                 onPlayerClick(player)
             }
 
-            // (Optional) Set checkbox click listener if you need it
+            // Checkbox listener for updating player status
             binding.isPlayingCheckbox.setOnCheckedChangeListener { _, isChecked ->
                 player.isCurrentPlayer = isChecked
                 Log.d(TAG, "Player ${player.name} checkbox changed: $isChecked")
@@ -90,7 +77,7 @@ class PlayerAdapter(
 // DiffUtil Callback to handle efficient updates
 class PlayerDiffCallback : DiffUtil.ItemCallback<Player>() {
     override fun areItemsTheSame(oldItem: Player, newItem: Player): Boolean {
-        // Assuming player ID is unique
+        // Player ID should be unique
         return oldItem.id == newItem.id
     }
 

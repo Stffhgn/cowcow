@@ -127,12 +127,15 @@ class WhoCalledItFragment : Fragment() {
         // Set adapter context back to false
         adapter.setWhoCalledItContext(false)
 
-        // Replace WhoCalledItFragment with CowCowFragment explicitly
-        val fragmentManager = requireActivity().supportFragmentManager
-        fragmentManager.beginTransaction()
-            .replace(R.id.game_fragment_container, CowCowFragment())
-            .commit()
-        Log.d("WhoCalledItFragment", "Replaced WhoCalledItFragment with CowCowFragment.")
+        // Use post to ensure that the fragment transaction occurs after the view is ready
+        binding.root.post {
+            val fragmentManager = requireActivity().supportFragmentManager
+            fragmentManager.beginTransaction()
+                .replace(R.id.nav_host_fragment, CowCowFragment())
+                .addToBackStack(null)
+                .commit()
+            Log.d("WhoCalledItFragment", "Replaced WhoCalledItFragment with CowCowFragment.")
+        }
     }
 
 

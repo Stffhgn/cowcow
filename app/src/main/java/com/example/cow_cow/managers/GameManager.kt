@@ -2,21 +2,20 @@ package com.example.cow_cow.managers
 
 import android.content.Context
 import android.util.Log
+import com.example.cow_cow.utils.GameTimer
 import com.example.cow_cow.enums.GameMode
 import com.example.cow_cow.enums.RuleConditionType
 import com.example.cow_cow.enums.RuleEffectType
+import com.example.cow_cow.listeners.GameEventListener
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Team
 import com.example.cow_cow.utils.GameUtils
-import com.example.cow_cow.managers.CustomRuleManager
 import com.example.cow_cow.models.CustomRule
-import java.util.Timer
-import kotlin.concurrent.schedule
 
 object GameManager {
 
     var currentGameMode: GameMode? = null
-    private var gameTimer: Timer? = null
+    private var gameTimer: GameTimer? = null
     private var isGamePaused: Boolean = false
     private var gameDurationMillis: Long = 0L  // For tracking time-based game modes
 
@@ -27,40 +26,27 @@ object GameManager {
      */
     fun startGame(gameMode: GameMode, durationMillis: Long? = null) {
         currentGameMode = gameMode
-        gameDurationMillis = durationMillis ?: 0L  // Optional time limit for the game mode
+        gameDurationMillis = durationMillis ?: 0L
         isGamePaused = false
 
         notifyListeners { onGameStarted(gameMode) }
 
         when (gameMode) {
             GameMode.CLASSIC -> {
-                // Initialize classic game logic
+                Log.d("GameManager", "Starting game in CLASSIC mode")
             }
-            GameMode.SCAVENGER_HUNT -> {
-                // Initialize scavenger hunt game logic
+            GameMode.SCAVENGER_HUNT, GameMode.TRIVIA -> {
+                Log.d("GameManager", "Starting game in $gameMode mode with timer")
                 startTimer(durationMillis)
             }
             GameMode.TEAM_BATTLE -> {
-                // Initialize team battle logic
-            }
-            /*
-            GameMode.TIME_TRIAL -> {
-                // Initialize time-trial game logic
-                startTimer(durationMillis)
-            }
-            GameMode.CUSTOM -> {
-                // Initialize custom rules game mode
-            }
-            GameMode.COOPERATIVE -> {
-                // Initialize cooperative game logic
-            }
-            */
-            GameMode.TRIVIA -> {
-                // Initialize trivia game logic
-                startTimer(durationMillis)
+                Log.d("GameManager", "Starting game in TEAM_BATTLE mode")
             }
             GameMode.RAINBOW_CAR -> {
-                // Initialize rainbow car game logic
+                Log.d("GameManager", "Starting game in RAINBOW_CAR mode")
+            }
+            else -> {
+                Log.w("GameManager", "Game mode $gameMode not implemented.")
             }
         }
     }
@@ -70,9 +56,9 @@ object GameManager {
      */
     fun stopGame() {
         currentGameMode = null
-        gameTimer?.cancel()
+        gameTimer?.stop()
         notifyListeners { onGameStopped() }
-        // Perform any necessary cleanup for the current game mode
+        Log.d("GameManager", "Game has been stopped.")
     }
 
     /**
@@ -80,8 +66,9 @@ object GameManager {
      */
     fun pauseGame() {
         isGamePaused = true
-        gameTimer?.cancel()  // Stop the game timer if applicable
+        gameTimer?.pause()
         notifyListeners { onGamePaused() }
+        Log.d("GameManager", "Game has been paused.")
     }
 
     /**
@@ -90,8 +77,9 @@ object GameManager {
     fun resumeGame() {
         if (isGamePaused && currentGameMode != null) {
             isGamePaused = false
-            startTimer(gameDurationMillis)  // Resume the timer
+            gameTimer?.resume()
             notifyListeners { onGameResumed() }
+            Log.d("GameManager", "Game has been resumed.")
         }
     }
 
@@ -100,13 +88,30 @@ object GameManager {
      */
     private fun startTimer(durationMillis: Long?) {
         durationMillis?.let {
-            gameTimer = Timer().apply {
-                schedule(it) {
-                    stopGame()  // Auto-stop the game when the timer finishes
-                    notifyListeners { onGameTimeExpired() }
-                }
-            }
+            gameTimer = GameTimer(it, {
+                stopGame()  // Auto-stop the game when the timer finishes
+                notifyListeners { onGameTimeExpired() }
+                Log.d("GameManager", "Game timer expired. Stopping game.")
+            })
+            gameTimer?.start()
         }
+    }
+
+    /**
+     * Apply a time penalty to the game timer.
+     */
+    fun applyTimePenaltyToGame(duration: Long) {
+        gameTimer?.applyPenalty(duration)
+        Log.d("GameManager", "Game time reduced by $duration milliseconds due to penalty.")
+    }
+
+    /**
+     * Apply a speed multiplier penalty to the game timer based on penalty level.
+     */
+    fun applySpeedMultiplierPenalty(penaltyLevel: Int) {
+        val multiplier = 1.0 + (penaltyLevel * 0.25)
+        gameTimer?.applySpeedMultiplier(multiplier)
+        Log.d("GameManager", "Game timer speed increased by multiplier of $multiplier due to penalty level $penaltyLevel.")
     }
 
     // ----- Game Event Listeners -----
@@ -147,27 +152,11 @@ object GameManager {
     fun distributePointsToTeam(team: Team, points: Int) {
         GameUtils.distributeTeamPoints(team, points)
     }
-/*
-    /**
-     * Trigger game-specific achievements based on the mode.
-     */
-    fun triggerAchievementsForMode(players: List<Player>, gameMode: GameMode) {
-        when (gameMode) {
-            GameMode.SCAVENGER_HUNT -> AchievementManager.unlockAchievementsForPlayers(players, "Scavenger Hunt Master")
-            GameMode.TRIVIA -> AchievementManager.unlockAchievementsForPlayers(players, "Trivia Genius")
-            GameMode.RAINBOW_CAR -> AchievementManager.unlockAchievementsForPlayers(players, "Rainbow Car Champ")
-            GameMode.CLASSIC -> AchievementManager.unlockAchievementsForPlayers(players, "Classic Game Champion")
-        }
-    }
-*/
-    /**
-     * Apply custom rules based on game mode.
-     */
+
     /**
      * Apply custom rules based on game mode.
      */
     fun applyCustomRulesForGame(context: Context, gameMode: GameMode) {
-        // Fetch players from PlayerManager dynamically
         val players = PlayerManager.getAllPlayers()
 
         players.forEach { player ->
@@ -175,27 +164,29 @@ object GameManager {
             rule?.let {
                 player.customRule = it
                 CustomRuleManager.applyCustomRule(player, rule)
-                Log.d("GameManager", "Assigned custom rule ${rule.ruleName} to player ${player.name}")
-            } ?: Log.w("GameManager", "No custom rule found for player ${player.name}")
+                Log.d("GameManager", "Assigned custom rule '\${rule.ruleName}' to player '\${player.name}'")
+            } ?: Log.w("GameManager", "No custom rule found for player '\${player.name}' in mode $gameMode")
         }
     }
 
     private fun getCustomRuleForGameMode(gameMode: GameMode): CustomRule? {
         return when (gameMode) {
             GameMode.CLASSIC -> CustomRule(
-                ruleId = 1,
-                ruleName = "Classic Rule",
+                ruleId = "classic_001",
+                playerId = null,  // Applies to all players
+                ruleName = "Classic Boost",
                 ruleDescription = "Adds 10 points to your score",
                 ruleEffect = RuleEffectType.ADD_POINTS,
                 value = 10,
-                duration = 0L, // Set duration if applicable
+                duration = 0L,
                 conditionType = RuleConditionType.ALWAYS,
                 conditionValue = 0
             )
             GameMode.SCAVENGER_HUNT -> CustomRule(
-                ruleId = 2,
-                ruleName = "Scavenger Hunt Rule",
-                ruleDescription = "Silences a player",
+                ruleId = "scavenger_001",
+                playerId = null,
+                ruleName = "Silence Rule",
+                ruleDescription = "Silences a player for 1 round",
                 ruleEffect = RuleEffectType.SILENCE_PLAYER,
                 value = 0,
                 duration = 0L,
@@ -203,9 +194,10 @@ object GameManager {
                 conditionValue = 0
             )
             GameMode.TEAM_BATTLE -> CustomRule(
-                ruleId = 3,
-                ruleName = "Team Battle Rule",
-                ruleDescription = "Doubles points earned",
+                ruleId = "team_battle_001",
+                playerId = null,
+                ruleName = "Double Points Battle",
+                ruleDescription = "Doubles points earned for the next round",
                 ruleEffect = RuleEffectType.DOUBLE_POINTS,
                 value = 5,
                 duration = 0L,
@@ -213,8 +205,9 @@ object GameManager {
                 conditionValue = 0
             )
             GameMode.TRIVIA -> CustomRule(
-                ruleId = 4,
-                ruleName = "Trivia Rule",
+                ruleId = "trivia_001",
+                playerId = null,
+                ruleName = "Trivia Bonus",
                 ruleDescription = "Adds 15 points to your score",
                 ruleEffect = RuleEffectType.ADD_POINTS,
                 value = 15,
@@ -223,9 +216,10 @@ object GameManager {
                 conditionValue = 0
             )
             GameMode.RAINBOW_CAR -> CustomRule(
-                ruleId = 5,
-                ruleName = "Rainbow Car Rule",
-                ruleDescription = "Silences a player",
+                ruleId = "rainbow_car_001",
+                playerId = null,
+                ruleName = "Rainbow Silence",
+                ruleDescription = "Silences a player for 1 round",
                 ruleEffect = RuleEffectType.SILENCE_PLAYER,
                 value = 0,
                 duration = 0L,
@@ -235,13 +229,4 @@ object GameManager {
             else -> null // Handle other game modes or return null if no rule applies
         }
     }
-    }
-
-// Interface for game event listeners
-interface GameEventListener {
-    fun onGameStarted(gameMode: GameMode)
-    fun onGameStopped()
-    fun onGamePaused()
-    fun onGameResumed()
-    fun onGameTimeExpired()  // For time-based modes
 }

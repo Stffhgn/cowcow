@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.cow_cow.models.*
+import com.example.cow_cow.utils.PlayerIDGenerator
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -37,17 +38,17 @@ class PlayerRepository(private val context: Context) {
      * Fetches the list of players from SharedPreferences.
      */
     fun getPlayers(context: Context): List<Player> {
-        Log.d("PlayerRepository", "Fetching players from SharedPreferences.")
         val prefs = getSharedPreferences(context)
         val json = prefs.getString(PLAYERS_KEY, null)
-        return if (json != null) {
-            Log.d("PlayerRepository", "Players found in SharedPreferences.")
+        val playerList = if (json != null) {
             val type = object : TypeToken<List<Player>>() {}.type
-            gson.fromJson(json, type)
+            gson.fromJson<List<Player>>(json, type)
         } else {
-            Log.d("PlayerRepository", "No players found in SharedPreferences.")
             emptyList()
         }
+
+        _playersLiveData.postValue(playerList)
+        return playerList
     }
 
     /**
@@ -62,8 +63,29 @@ class PlayerRepository(private val context: Context) {
         editor.apply()
         Log.d("PlayerRepository", "Players saved to SharedPreferences: ${players.size} players")
 
-        // Using postValue for background thread updates
+        // Update the LiveData after saving the players
         _playersLiveData.postValue(players)
+    }
+
+    /**
+     * Adds a new player to the list and saves it to SharedPreferences.
+     */
+    fun addPlayer(name: String, teamName: String? = null, userLogin: String? = null): Player {
+        Log.d("PlayerRepository", "Adding new player: $name")
+        val players = getPlayers(context).toMutableList()
+
+        // Generate a unique ID for the new player
+        val playerId = PlayerIDGenerator.generatePlayerID(teamName, userLogin)
+
+        val newPlayer = Player(
+            id = playerId,
+            name = name,
+        )
+        players.add(newPlayer)
+        savePlayers(players, context)
+        Log.d("PlayerRepository", "New player added with ID: ${newPlayer.id}")
+
+        return newPlayer
     }
 
     /**
@@ -85,7 +107,7 @@ class PlayerRepository(private val context: Context) {
     /**
      * Retrieves player-specific settings from SharedPreferences.
      */
-    fun getPlayerSettings(context: Context, playerId: Int): PlayerSettings {
+    fun getPlayerSettings(context: Context, playerId: String): PlayerSettings {
         Log.d("PlayerRepository", "Fetching settings for player ID: $playerId.")
         val sharedPreferences = getSharedPreferences(context)
         val settingsJson = sharedPreferences.getString("player_settings_$playerId", null)
@@ -111,7 +133,7 @@ class PlayerRepository(private val context: Context) {
     /**
      * Updates the player's name in SharedPreferences.
      */
-    fun updatePlayerName(playerId: Int, newName: String, context: Context) {
+    fun updatePlayerName(playerId: String, newName: String, context: Context) {
         Log.d("PlayerRepository", "Updating name for player ID: $playerId.")
         val players = getPlayers(context).toMutableList()
         val index = players.indexOfFirst { it.id == playerId }
@@ -127,7 +149,7 @@ class PlayerRepository(private val context: Context) {
     /**
      * Saves player-specific settings to SharedPreferences.
      */
-    fun savePlayerSettings(playerId: Int, settings: PlayerSettings, context: Context) {
+    fun savePlayerSettings(playerId: String, settings: PlayerSettings, context: Context) {
         Log.d("PlayerRepository", "Saving settings for player ID: $playerId.")
         val sharedPreferences = getSharedPreferences(context)
         val editor = sharedPreferences.edit()
@@ -143,7 +165,7 @@ class PlayerRepository(private val context: Context) {
     /**
      * Removes a player by their ID from the list.
      */
-    fun removePlayerById(playerId: Int, context: Context) {
+    fun removePlayerById(playerId: String, context: Context) {
         Log.d("PlayerRepository", "Removing player with ID: $playerId.")
         val players = getPlayers(context).toMutableList()
         val updatedPlayers = players.filter { it.id != playerId }
@@ -178,22 +200,16 @@ class PlayerRepository(private val context: Context) {
     /**
      * Saves the current team to SharedPreferences.
      */
-    fun saveTeam(team: List<Player>, context: Context) {
-        Log.d("PlayerRepository", "Saving team to SharedPreferences.")
-        val prefs = getSharedPreferences(context)
-        val editor = prefs.edit()
-        val json = gson.toJson(team)
-        editor.putString(TEAM_KEY, json)
-        editor.apply()
-
-        // Use postValue to update LiveData from background thread
-        _teamLiveData.postValue(team)
+    fun saveTeam() {
+        Log.d("PlayerRepository", "Delegating team save to TeamRepository.")
+        val teamRepository = TeamRepository(context)
+        teamRepository.saveTeam()
     }
 
     /**
      * Fetches achievements for a specific player.
      */
-    fun getAchievements(context: Context, playerId: Int): List<Achievement> {
+    fun getAchievements(context: Context, playerId: String): List<Achievement> {
         val player = getPlayerById(context, playerId)
         return player?.achievements ?: emptyList()
     }
@@ -201,7 +217,7 @@ class PlayerRepository(private val context: Context) {
     /**
      * Fetches penalties for a specific player.
      */
-    fun getPenalties(context: Context, playerId: Int): List<Penalty> {
+    fun getPenalties(context: Context, playerId: String): List<Penalty> {
         val player = getPlayerById(context, playerId)
         return player?.penalties ?: emptyList()
     }
@@ -209,7 +225,7 @@ class PlayerRepository(private val context: Context) {
     /**
      * Fetches custom rules for a specific player.
      */
-    fun getCustomRules(context: Context, playerId: Int): List<CustomRule> {
+    fun getCustomRules(context: Context, playerId: String): List<CustomRule> {
         val player = getPlayerById(context, playerId)
         return player?.customRules ?: emptyList()
     }
@@ -217,7 +233,7 @@ class PlayerRepository(private val context: Context) {
     /**
      * Retrieves a player by their ID.
      */
-    private fun getPlayerById(context: Context, playerId: Int): Player? {
+    private fun getPlayerById(context: Context, playerId: String): Player? {
         val players = getPlayers(context)
         return players.find { it.id == playerId }
     }
@@ -225,7 +241,7 @@ class PlayerRepository(private val context: Context) {
     /**
      * Updates the player's achievements in SharedPreferences.
      */
-    fun updatePlayerAchievements(context: Context, playerId: Int, achievements: List<Achievement>) {
+    fun updatePlayerAchievements(context: Context, playerId: String, achievements: List<Achievement>) {
         Log.d("PlayerRepository", "Updating achievements for player ID: $playerId.")
         val players = getPlayers(context).toMutableList()
         val playerIndex = players.indexOfFirst { it.id == playerId }
@@ -242,7 +258,7 @@ class PlayerRepository(private val context: Context) {
     /**
      * Updates the player's penalties in SharedPreferences.
      */
-    fun updatePlayerPenalties(context: Context, playerId: Int, penalties: List<Penalty>) {
+    fun updatePlayerPenalties(context: Context, playerId: String, penalties: List<Penalty>) {
         Log.d("PlayerRepository", "Updating penalties for player ID: $playerId.")
         val players = getPlayers(context).toMutableList()
         val playerIndex = players.indexOfFirst { it.id == playerId }
@@ -259,7 +275,7 @@ class PlayerRepository(private val context: Context) {
     /**
      * Updates the player's custom rules in SharedPreferences.
      */
-    fun updatePlayerCustomRules(context: Context, playerId: Int, customRules: List<CustomRule>) {
+    fun updatePlayerCustomRules(context: Context, playerId: String, customRules: List<CustomRule>) {
         Log.d("PlayerRepository", "Updating custom rules for player ID: $playerId.")
         val players = getPlayers(context).toMutableList()
         val playerIndex = players.indexOfFirst { it.id == playerId }
@@ -283,5 +299,13 @@ class PlayerRepository(private val context: Context) {
             Log.e("PlayerRepository", "Error fetching players: ${e.message}")
             throw e  // Re-throw exception
         }
+    }
+
+    fun resetPlayers() {
+        val prefs = getSharedPreferences(context)
+        val editor = prefs.edit()
+        editor.remove(PLAYERS_KEY) // Remove all players data
+        editor.apply()
+        Log.d("PlayerRepository", "All players have been reset.")
     }
 }

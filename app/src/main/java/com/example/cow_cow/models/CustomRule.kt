@@ -6,40 +6,24 @@ import com.example.cow_cow.enums.RuleConditionType
 import com.example.cow_cow.enums.RuleEffectType
 
 data class CustomRule(
-    val ruleId: Int,                      // Unique ID for the custom rule
-    val ruleName: String,                     // Rule name (e.g., "Double Points for Low Score")
-    val ruleDescription: String,              // Description of the rule effect and condition
-    val ruleEffect: RuleEffectType,           // The effect the rule has (e.g., add points, deduct points, etc.)
-    val value: Int = 0,                   // Value associated with the effect (e.g., points to add/deduct)
-    val duration: Long = 0L,              // Duration of the effect, in milliseconds (for time-based effects)
-    val conditionType: RuleConditionType, // The condition that triggers the rule (e.g., player has less than X points)
-    val conditionValue: Int = 0,          // Value related to the condition (e.g., X points in "less than X points")
-    val isGlobal: Boolean = false,        // Whether this rule applies globally to all players or to a specific player
-    val isOneTimeUse: Boolean = false,    // Whether this rule can only be used once in the game
-    var isActive: Boolean = true          // Whether the rule is currently active
+    val ruleId: String,                      // Unique ID for the custom rule
+    val playerId: String?,                   // Player ID this rule belongs to (optional for global rules)
+    val ruleName: String,                    // Rule name (e.g., "Double Points for Low Score")
+    val ruleDescription: String,             // Description of the rule effect and condition
+    val ruleEffect: RuleEffectType,          // The effect the rule has (e.g., add points, deduct points, etc.)
+    val value: Int = 0,                      // Value associated with the effect (e.g., points to add/deduct)
+    val duration: Long = 0L,                 // Duration of the effect, in milliseconds (for time-based effects)
+    val conditionType: RuleConditionType,    // The condition that triggers the rule (e.g., player has less than X points)
+    val conditionValue: Int = 0,             // Value related to the condition (e.g., X points in "less than X points")
+    val isGlobal: Boolean = false,           // Whether this rule applies globally to all players or to a specific player
+    val isOneTimeUse: Boolean = false,       // Whether this rule can only be used once in the game
+    var isActive: Boolean = true             // Whether the rule is currently active
 ) : Parcelable {
-
-    // Check if the condition of the rule is met
-    fun checkCondition(playerPoints: Int): Boolean {
-        return when (conditionType) {
-            RuleConditionType.ALWAYS -> true
-            RuleConditionType.PLAYER_HAS_LESS_THAN_X_POINTS -> playerPoints < conditionValue
-            RuleConditionType.PLAYER_HAS_MORE_THAN_X_POINTS -> playerPoints > conditionValue
-        }
-    }
-
-    // Apply the effect of the rule to the player's points or state
-    fun applyEffect(playerPoints: Int): Int {
-        return when (ruleEffect) {
-            RuleEffectType.ADD_POINTS -> playerPoints + value
-            RuleEffectType.DEDUCT_POINTS -> playerPoints - value
-            else -> playerPoints  // Other effects might not change points directly
-        }
-    }
 
     // Parcelable implementation
     constructor(parcel: Parcel) : this(
-        ruleId = parcel.readInt(),
+        ruleId = parcel.readString() ?: "",
+        playerId = parcel.readString(),
         ruleName = parcel.readString() ?: "",
         ruleDescription = parcel.readString() ?: "",
         ruleEffect = RuleEffectType.valueOf(parcel.readString() ?: RuleEffectType.ADD_POINTS.name),
@@ -53,7 +37,8 @@ data class CustomRule(
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeInt(ruleId)
+        parcel.writeString(ruleId)
+        parcel.writeString(playerId)
         parcel.writeString(ruleName)
         parcel.writeString(ruleDescription)
         parcel.writeString(ruleEffect.name)

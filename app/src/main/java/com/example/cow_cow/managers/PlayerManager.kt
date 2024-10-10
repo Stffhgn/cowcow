@@ -1,6 +1,5 @@
 package com.example.cow_cow.managers
 
-import android.content.ContentValues.TAG
 import android.util.Log
 import com.example.cow_cow.models.CustomRule
 import com.example.cow_cow.models.Player
@@ -57,7 +56,7 @@ object PlayerManager {
      *
      * @param playerId The ID of the player to be removed.
      */
-    fun removePlayer(playerId: Int) {
+    fun removePlayer(playerId: String) {
         players.find { it.id == playerId }?.let {
             players.remove(it)
             Log.d(TAG, "Player removed: \${it.name}")
@@ -70,7 +69,7 @@ object PlayerManager {
      * @param playerId The ID of the player to retrieve.
      * @return The player object, or null if not found.
      */
-    fun getPlayerById(playerId: Int): Player? {
+    fun getPlayerById(playerId: String): Player? {
         return players.find { it.id == playerId }
     }
 
@@ -123,7 +122,7 @@ object PlayerManager {
      * @param playerId The ID of the player to be added.
      * @param teamId The ID of the team the player is being added to.
      */
-    fun addPlayerToTeam(playerId: Int, teamId: Int) {
+    fun addPlayerToTeam(playerId: String, teamId: String) {
         val player = getPlayerById(playerId)
         val team = teams.find { it.id == teamId }
 
@@ -140,7 +139,7 @@ object PlayerManager {
      * @param playerId The ID of the player to be removed.
      * @param teamId The ID of the team the player is being removed from.
      */
-    fun removePlayerFromTeam(playerId: Int, teamId: Int) {
+    fun removePlayerFromTeam(playerId: String, teamId: String) {
         val player = getPlayerById(playerId)
         val team = teams.find { it.id == teamId }
 
@@ -196,7 +195,7 @@ object PlayerManager {
     fun randomizeTeams(teamCount: Int) {
         clearTeams()
         val shuffledPlayers = players.shuffled()
-        val teamsToCreate = (1..teamCount).map { Team(id = it, name = "Team $it", members = mutableListOf()) }
+        val teamsToCreate = (1..teamCount).map { Team(id = it.toString(), name = "Team \$it", members = mutableListOf()) }
 
         shuffledPlayers.forEachIndexed { index, player ->
             val team = teamsToCreate[index % teamCount]
@@ -204,7 +203,7 @@ object PlayerManager {
             player.isOnTeam = true
         }
         teams.addAll(teamsToCreate)
-        Log.d(TAG, "Players have been randomly assigned to $teamCount teams.")
+        Log.d(TAG, "Players have been randomly assigned to \$teamCount teams.")
     }
 
     /**
@@ -213,10 +212,10 @@ object PlayerManager {
      * @param playerId The ID of the player receiving points.
      * @param points The number of points to add.
      */
-    fun assignPointsToPlayer(playerId: Int, points: Int) {
+    fun assignPointsToPlayer(playerId: String, points: Int) {
         getPlayerById(playerId)?.let {
             it.basePoints += points
-            Log.d(TAG, "Assigned $points points to player: \${it.name}")
+            Log.d(TAG, "Assigned \$points points to player: \${it.name}")
         }
     }
 }

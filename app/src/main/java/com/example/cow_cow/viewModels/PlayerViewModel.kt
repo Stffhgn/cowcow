@@ -97,15 +97,14 @@ class PlayerViewModel(
      * Add a new player and save to repository
      */
     fun addPlayer(player: Player) {
-        _players.value?.apply {
-            add(player)
-            savePlayers(getApplication()) // Save players after adding
-            _statusMessage.postValue("${player.name} added successfully.") // Post status message
-            Log.d(TAG, "Player added: ${player.name}")
-        }
+        val context = getApplication<Application>().applicationContext
+        val updatedPlayers = players.value?.toMutableList() ?: mutableListOf()
+        updatedPlayers.add(player)
+        repository.savePlayers(updatedPlayers, context)
+        Log.d("PlayerViewModel", "Player added: ${player.name}")
     }
 
-    /**
+     /**
      * Update player information in the repository
      */
     fun updatePlayer(player: Player) {
@@ -139,7 +138,7 @@ class PlayerViewModel(
     /**
      * Remove a player by ID and update the repository
      */
-    fun removePlayerById(playerId: Int) {
+    fun removePlayerById(playerId: String) {
         _players.value?.apply {
             removeAll { it.id == playerId }
             savePlayers(getApplication()) // Save players after removal
@@ -151,7 +150,7 @@ class PlayerViewModel(
     /**
      * Update player name and save to repository
      */
-    fun updatePlayerName(playerId: Int, newName: String, context: Context) {
+    fun updatePlayerName(playerId: String, newName: String, context: Context) {
         Log.d(TAG, "Updating player name to: $newName")
         viewModelScope.launch(Dispatchers.IO) {
             repository.updatePlayerName(playerId, newName, context)
@@ -165,7 +164,7 @@ class PlayerViewModel(
     /**
      * Get player by ID
      */
-    fun getPlayerById(id: Int): LiveData<Player?> {
+    fun getPlayerById(id: String): LiveData<Player?> {
         val playerLiveData = MutableLiveData<Player?>()
         playerLiveData.value = _players.value?.find { it.id == id }
         return playerLiveData
@@ -226,7 +225,7 @@ class PlayerViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>().applicationContext
             _teamPlayers.value?.let { teamPlayers ->
-                repository.saveTeam(teamPlayers, context)
+                repository.saveTeam()
                 Log.d(TAG, "Team saved successfully.")
             }
         }
@@ -268,4 +267,23 @@ class PlayerViewModel(
     fun isPlayerInTeam(player: Player): Boolean {
         return _teamPlayers.value?.contains(player) ?: false
     }
+
+    /**
+     * Resets all players
+     */
+    fun resetAllPlayers() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                Log.d("PlayerViewModel", "Resetting all players.")
+                repository.resetPlayers()
+                withContext(Dispatchers.Main) {
+                    _players.value = mutableListOf() // Clear the players LiveData with an empty MutableList<Player>
+                    Log.d("PlayerViewModel", "All players have been reset.")
+                }
+            } catch (e: Exception) {
+                Log.e("PlayerViewModel", "Error resetting players: ${e.message}")
+            }
+        }
+    }
+
 }

@@ -1,4 +1,4 @@
-package com.example.cow_cow.PlayerFragment
+package com.example.cow_cow.playerFragment
 
 import android.os.Bundle
 import android.view.LayoutInflater

@@ -41,8 +41,8 @@ class TriviaFragment : Fragment() {
         triviaManager = TriviaManager(triviaRepository)
 
         // Assume player data is passed in via Fragment arguments
-        val playerId = arguments?.getInt("playerId") ?: 1 // Example of how player ID could be passed
-        val playerName = arguments?.getString("playerName") ?: "John Doe" // Example of how name could be passed
+        val playerId = arguments?.getString("playerId") ?: "default_id" // Updated to String
+        val playerName = arguments?.getString("playerName") ?: "John Doe"
         player = Player(playerId, playerName)
 
         // Create ViewModel using the factory

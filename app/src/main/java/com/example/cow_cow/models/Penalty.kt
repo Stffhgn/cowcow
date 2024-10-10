@@ -14,14 +14,14 @@ fun calculatePenaltyPoints(penaltyType: PenaltyType): Int {
         PenaltyType.TIME_PENALTY -> 20  // Deduct 20 points for time penalties
         else -> {
             // Default case for any unexpected penalty types
-            Log.w("Penalty", "Unknown penalty type: ${penaltyType.name}. No points deducted.")
+            Log.w("Penalty", "Unknown penalty type: \${penaltyType.name}. No points deducted.")
             0  // No deduction for unhandled penalty types
         }
     }
 }
 
 data class Penalty(
-    val id: Int,                                // Unique ID for the penalty
+    val id: String,                             // Unique ID for the penalty
     val name: String,                           // Name of the penalty (e.g., "False Call")
     val pointsDeducted: Int = 0,                // Number of points to deduct as part of the penalty
     val penaltyType: PenaltyType,               // Type of the penalty (e.g., Point Deduction, Silenced)
@@ -68,17 +68,38 @@ data class Penalty(
      * @param player The player to whom the penalty is applied.
      */
     fun applyPenalty(player: Player) {
-        if (penaltyType == PenaltyType.POINT_DEDUCTION) {
-            val effectiveDeduction = (pointsDeducted * multiplier).toInt()
-            player.basePoints -= effectiveDeduction
-            Log.d("Penalty", "Applied penalty $name to player ${player.name}. Deducted $effectiveDeduction points.")
+        when (penaltyType) {
+            PenaltyType.POINT_DEDUCTION -> {
+                val effectiveDeduction = (pointsDeducted * multiplier).toInt()
+                player.basePoints -= effectiveDeduction
+                Log.d("Penalty", "Applied penalty $name to player \${player.name}. Deducted \$effectiveDeduction points.")
+            }
+            PenaltyType.SILENCED -> {
+                player.isSilenced = true
+                Log.d("Penalty", "Player \${player.name} has been silenced due to penalty: $name.")
+            }
+            PenaltyType.TEMPORARY_BAN -> {
+                player.isSilenced = true
+                Log.d("Penalty", "Player \${player.name} has been temporarily banned due to penalty: $name.")
+            }
+            PenaltyType.FALSE_CALL -> {
+                val effectiveDeduction = (pointsDeducted * multiplier).toInt()
+                player.basePoints -= effectiveDeduction
+                Log.d("Penalty", "Applied false call penalty $name to player \${player.name}. Deducted \$effectiveDeduction points.")
+            }
+            PenaltyType.TIME_PENALTY -> {
+                player.timePlayed += duration
+                Log.d("Penalty", "Applied time penalty $name to player \${player.name}. Added \$duration milliseconds to player's time penalty.")
+            }
+            PenaltyType.OTHER -> {
+                Log.d("Penalty", "Applied custom penalty $name to player \${player.name}.")
+            }
         }
-        // Add more logic for other penalty types, such as silencing the player
     }
 
     // Parcelable implementation for passing Penalty between activities/fragments
     constructor(parcel: Parcel) : this(
-        parcel.readInt(),  // id
+        parcel.readString() ?: "",  // id
         parcel.readString() ?: "",  // name
         parcel.readInt(),  // pointsDeducted
         PenaltyType.valueOf(parcel.readString() ?: PenaltyType.OTHER.name),  // penaltyType
@@ -92,7 +113,7 @@ data class Penalty(
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeInt(id)
+        parcel.writeString(id)
         parcel.writeString(name)
         parcel.writeInt(pointsDeducted)
         parcel.writeString(penaltyType.name)
@@ -117,8 +138,8 @@ data class Penalty(
          * @param penaltyType The type of penalty being applied.
          * @return A unique penalty ID.
          */
-        fun generatePenaltyId(playerId: Int, penaltyType: PenaltyType): Int {
-            return playerId * 100 + penaltyType.ordinal
+        fun generatePenaltyId(playerId: String, penaltyType: PenaltyType): Int {
+            return (playerId.hashCode() * 100) + penaltyType.ordinal
         }
     }
 }

@@ -142,7 +142,7 @@ object PenaltyManager {
         Log.d(TAG, "Handling false call for player ${player.name}. Applying penalty.")
         // For false calls, deduct points or apply other penalties
         val falseCallPenalty = Penalty(
-            id = UUID.randomUUID().hashCode(),
+            id = UUID.randomUUID().toString(),
             name = "False Call",
             pointsDeducted = 5, // Example deduction
             penaltyType = PenaltyType.POINT_DEDUCTION
@@ -221,7 +221,7 @@ object PenaltyManager {
         when (event) {
             "missed_call" -> {
                 val penalty = Penalty(
-                    id = UUID.randomUUID().hashCode(),
+                    id = UUID.randomUUID().toString(),
                     name = "Missed Call",
                     pointsDeducted = 10,
                     penaltyType = PenaltyType.POINT_DEDUCTION,
@@ -231,7 +231,7 @@ object PenaltyManager {
             }
             "overstepped_turn" -> {
                 val penalty = Penalty(
-                    id = UUID.randomUUID().hashCode(),
+                    id = UUID.randomUUID().toString(),
                     name = "Turn Violation",
                     penaltyType = PenaltyType.SILENCED,
                     duration = 5000L // Silenced for 5 seconds

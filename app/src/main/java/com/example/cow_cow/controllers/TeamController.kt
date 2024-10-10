@@ -2,8 +2,14 @@ package com.example.cow_cow.controllers
 
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.viewModels.GameViewModel
+import com.example.cow_cow.viewModels.ScoreViewModel
 
-class TeamController(private val gameViewModel: GameViewModel) {
+class TeamController(
+
+    private val gameViewModel: GameViewModel,
+    private val scoreViewModel: ScoreViewModel
+
+) {
 
     /**
      * Add a player to the team.
@@ -33,7 +39,8 @@ class TeamController(private val gameViewModel: GameViewModel) {
      * Calculate and return the current team score.
      */
     fun updateTeamScore(): Int {
-        return gameViewModel.calculateTeamScore()  // Assuming you have this function in your ViewModel
+        scoreViewModel.calculateTeamScore()  // Trigger the calculation in ScoreViewModel
+        return scoreViewModel.teamScore.value ?: 0  // Return the calculated team score
     }
 
     /**
