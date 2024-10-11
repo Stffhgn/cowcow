@@ -12,7 +12,7 @@ import com.example.cow_cow.models.Team
 import com.example.cow_cow.utils.GameUtils
 import com.example.cow_cow.models.CustomRule
 
-object GameManager {
+class GameManager(private val playerManager: PlayerManager) {
 
     var currentGameMode: GameMode? = null
     private var gameTimer: GameTimer? = null
@@ -157,15 +157,15 @@ object GameManager {
      * Apply custom rules based on game mode.
      */
     fun applyCustomRulesForGame(context: Context, gameMode: GameMode) {
-        val players = PlayerManager.getAllPlayers()
+        val players = playerManager.getAllPlayers()
 
         players.forEach { player ->
             val rule = getCustomRuleForGameMode(gameMode)
             rule?.let {
                 player.customRule = it
                 CustomRuleManager.applyCustomRule(player, rule)
-                Log.d("GameManager", "Assigned custom rule '\${rule.ruleName}' to player '\${player.name}'")
-            } ?: Log.w("GameManager", "No custom rule found for player '\${player.name}' in mode $gameMode")
+                Log.d("GameManager", "Assigned custom rule '${rule.ruleName}' to player '${player.name}'")
+            } ?: Log.w("GameManager", "No custom rule found for player '${player.name}' in mode $gameMode")
         }
     }
 

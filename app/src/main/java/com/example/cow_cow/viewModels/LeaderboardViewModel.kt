@@ -20,7 +20,7 @@ class LeaderboardViewModel(
      * Load the leaderboard data by fetching all players and sorting by their scores.
      */
     fun loadLeaderboard() {
-        val players = playerRepository.getPlayers(context)
+        val players = playerRepository.getPlayers()
         _leaderboard.value = players.sortedByDescending { it.calculateTotalPoints() }
     }
 }

@@ -41,8 +41,7 @@ class PlayerListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // Initialize ViewModel using PlayerListViewModelFactory
+       // Initialize ViewModel using PlayerListViewModelFactory
         val playerRepository = PlayerRepository(requireActivity().applicationContext)
         val factory = PlayerListViewModelFactory(requireActivity().application, playerRepository)
         playerListViewModel = ViewModelProvider(requireActivity(), factory).get(PlayerListViewModel::class.java)

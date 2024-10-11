@@ -1,8 +1,6 @@
 package com.example.cow_cow.viewModels
 
 import android.app.Application
-import android.content.ContentValues.TAG
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
 import com.example.cow_cow.models.Player
@@ -17,21 +15,23 @@ class PlayerViewModel(
     private val repository: PlayerRepository
 ) : AndroidViewModel(application) {
 
+    // Tag for logging
+    private val TAG = "PlayerViewModel"
+
     // LiveData for loading state
     private val _loading = MutableLiveData<Boolean>()
     val loading: LiveData<Boolean> get() = _loading
 
-    // LiveData for Players
-    private val _players = MutableLiveData<MutableList<Player>>(mutableListOf())
-    val players: LiveData<MutableList<Player>> get() = _players
+    // LiveData for Players from Repository
+    val players: LiveData<List<Player>> = repository.playersLiveData
 
     // LiveData for Team Players
-    private val _teamPlayers = MutableLiveData<MutableList<Player>>(mutableListOf())
-    val teamPlayers: LiveData<MutableList<Player>> get() = _teamPlayers
+    private val _teamPlayers = MutableLiveData<List<Player>>()
+    val teamPlayers: LiveData<List<Player>> get() = _teamPlayers
 
     // LiveData for Player Settings
-    private val _playerSettings = MutableLiveData<Map<Player, PlayerSettings>>()
-    val playerSettings: LiveData<Map<Player, PlayerSettings>> get() = _playerSettings
+    private val _playerSettings = MutableLiveData<Map<String, PlayerSettings>>()
+    val playerSettings: LiveData<Map<String, PlayerSettings>> get() = _playerSettings
 
     // LiveData for Status Message
     private val _statusMessage = MutableLiveData<String>()
@@ -59,37 +59,21 @@ class PlayerViewModel(
     }
 
     /**
-     * Load players from repository asynchronously
+     * Load players from repository
      */
     fun loadPlayers() {
         Log.d(TAG, "Loading players from repository.")
         _loading.value = true // Start loading
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val context = getApplication<Application>().applicationContext
-                val playerList = withContext(Dispatchers.IO) {
-                    Log.d(TAG, "Coroutine started to fetch players from SharedPreferences")
-                    repository.getPlayers(context)
-                }
-                _players.postValue(playerList.toMutableList()) // Update LiveData safely
-                Log.d(TAG, "Players loaded successfully: ${playerList.size} players found.")
+                repository.getPlayers() // Ensure repository loads data if necessary
+                Log.d(TAG, "Players loaded successfully.")
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading players: ${e.message}", e)
+                _errorMessage.postValue("Error loading players: ${e.message}")
             } finally {
                 _loading.postValue(false) // Stop loading
-                Log.d(TAG, "Coroutine completed or canceled for loading players")
             }
-        }
-    }
-
-    /**
-     * Save players to repository asynchronously
-     */
-    private fun savePlayers(context: Context) {
-        Log.d(TAG, "Saving players to repository.")
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.savePlayers(_players.value ?: emptyList(), context)
-            Log.d(TAG, "Players saved successfully.")
         }
     }
 
@@ -97,33 +81,215 @@ class PlayerViewModel(
      * Add a new player and save to repository
      */
     fun addPlayer(player: Player) {
-        val context = getApplication<Application>().applicationContext
-        val updatedPlayers = players.value?.toMutableList() ?: mutableListOf()
-        updatedPlayers.add(player)
-        repository.savePlayers(updatedPlayers, context)
-        Log.d("PlayerViewModel", "Player added: ${player.name}")
+        Log.d(TAG, "Adding new player: ${player.name}")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.addPlayer(player)
+                Log.d(TAG, "Player added: ${player.name}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error adding player: ${e.message}", e)
+                _errorMessage.postValue("Error adding player: ${e.message}")
+            }
+        }
     }
 
-     /**
+    /**
      * Update player information in the repository
      */
     fun updatePlayer(player: Player) {
         Log.d(TAG, "Updating player: ${player.name}")
         _loading.value = true // Start loading
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val context = getApplication<Application>().applicationContext
-                repository.updatePlayer(player, context)
-
-                _players.value = _players.value?.map {
-                    if (it.id == player.id) player else it
-                }?.toMutableList() // Update LiveData safely
-
+                repository.updatePlayer(player)
                 Log.d(TAG, "Player updated successfully: ${player.name}")
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating player: ${e.message}", e)
+                _errorMessage.postValue("Error updating player: ${e.message}")
             } finally {
                 _loading.postValue(false) // Stop loading
+            }
+        }
+    }
+
+    /**
+     * Remove a player by ID and update the repository
+     */
+    fun removePlayerById(playerId: String) {
+        Log.d(TAG, "Removing player with ID: $playerId")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.removePlayerById(playerId)
+                Log.d(TAG, "Player removed with ID: $playerId")
+                _statusMessage.postValue("Player removed.")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error removing player: ${e.message}", e)
+                _errorMessage.postValue("Error removing player: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Update player name and save to repository
+     */
+    fun updatePlayerName(playerId: String, newName: String) {
+        Log.d(TAG, "Updating player name to: $newName")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.updatePlayerName(playerId, newName)
+                Log.d(TAG, "Player name updated to $newName")
+                _statusMessage.postValue("Player name updated to $newName")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating player name: ${e.message}", e)
+                _errorMessage.postValue("Error updating player name: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Get player by ID
+     */
+    fun getPlayerById(id: String): LiveData<Player?> {
+        val playerLiveData = MutableLiveData<Player?>()
+        playerLiveData.value = players.value?.find { it.id == id }
+        return playerLiveData
+    }
+
+    /**
+     * Load player-specific settings from repository
+     */
+    private fun loadPlayerSettings() {
+        Log.d(TAG, "Loading player settings.")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val settingsMap = mutableMapOf<String, PlayerSettings>()
+                players.value?.forEach { player ->
+                    val playerSettings = repository.getPlayerSettings(player.id)
+                    settingsMap[player.id] = playerSettings
+                }
+                _playerSettings.postValue(settingsMap) // Update LiveData safely
+                Log.d(TAG, "Player settings loaded successfully.")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading player settings: ${e.message}", e)
+                _errorMessage.postValue("Error loading player settings: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Update player settings and save to repository
+     */
+    fun updatePlayerSettings(player: Player, settings: PlayerSettings) {
+        Log.d(TAG, "Updating settings for player: ${player.name}")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.savePlayerSettings(player.id, settings)
+                withContext(Dispatchers.Main) {
+                    val updatedSettingsMap = _playerSettings.value?.toMutableMap() ?: mutableMapOf()
+                    updatedSettingsMap[player.id] = settings
+                    _playerSettings.value = updatedSettingsMap
+                    _statusMessage.postValue("${player.name}'s settings updated.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating player settings: ${e.message}", e)
+                _errorMessage.postValue("Error updating player settings: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Load team from repository
+     */
+    private fun loadTeam() {
+        Log.d(TAG, "Loading team from repository.")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val savedTeam = repository.getTeam()
+                _teamPlayers.postValue(savedTeam) // Update LiveData safely
+                Log.d(TAG, "Team loaded successfully.")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading team: ${e.message}", e)
+                _errorMessage.postValue("Error loading team: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Save team to repository
+     */
+    fun saveTeam() {
+        Log.d(TAG, "Saving team to repository.")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _teamPlayers.value?.let { teamPlayers ->
+                    repository.saveTeam(teamPlayers)
+                    Log.d(TAG, "Team saved successfully.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving team: ${e.message}", e)
+                _errorMessage.postValue("Error saving team: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Add a player to the team
+     */
+    fun addPlayerToTeam(player: Player) {
+        Log.d(TAG, "Adding player to team: ${player.name}")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.addPlayerToTeam(player)
+                withContext(Dispatchers.Main) {
+                    _statusMessage.postValue("${player.name} added to the team.")
+                    loadTeam() // Reload team after adding
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error adding player to team: ${e.message}", e)
+                _errorMessage.postValue("Error adding player to team: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Remove a player from the team
+     */
+    fun removePlayerFromTeam(player: Player) {
+        Log.d(TAG, "Removing player from team: ${player.name}")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.removePlayerFromTeam(player)
+                withContext(Dispatchers.Main) {
+                    _statusMessage.postValue("${player.name} removed from the team.")
+                    loadTeam() // Reload team after removal
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error removing player from team: ${e.message}", e)
+                _errorMessage.postValue("Error removing player from team: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Check if player is in the team
+     */
+    fun isPlayerInTeam(player: Player): Boolean {
+        return teamPlayers.value?.contains(player) ?: false
+    }
+
+    /**
+     * Resets all players
+     */
+    fun resetAllPlayers() {
+        Log.d(TAG, "Resetting all players.")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.resetPlayers()
+                Log.d(TAG, "All players have been reset.")
+                _statusMessage.postValue("All players have been reset.")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error resetting players: ${e.message}")
+                _errorMessage.postValue("Error resetting players: ${e.message}")
             }
         }
     }
@@ -134,156 +300,4 @@ class PlayerViewModel(
     fun clearError() {
         _errorMessage.value = null
     }
-
-    /**
-     * Remove a player by ID and update the repository
-     */
-    fun removePlayerById(playerId: String) {
-        _players.value?.apply {
-            removeAll { it.id == playerId }
-            savePlayers(getApplication()) // Save players after removal
-            _statusMessage.postValue("Player removed.") // Post status message
-            Log.d(TAG, "Player removed with ID: $playerId")
-        }
-    }
-
-    /**
-     * Update player name and save to repository
-     */
-    fun updatePlayerName(playerId: String, newName: String, context: Context) {
-        Log.d(TAG, "Updating player name to: $newName")
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.updatePlayerName(playerId, newName, context)
-            withContext(Dispatchers.Main) {
-                loadPlayers() // Reload players after update
-                _statusMessage.postValue("Player name updated to $newName") // Post status message
-            }
-        }
-    }
-
-    /**
-     * Get player by ID
-     */
-    fun getPlayerById(id: String): LiveData<Player?> {
-        val playerLiveData = MutableLiveData<Player?>()
-        playerLiveData.value = _players.value?.find { it.id == id }
-        return playerLiveData
-    }
-
-    /**
-     * Load player-specific settings from repository
-     */
-    private fun loadPlayerSettings() {
-        Log.d(TAG, "Loading player settings.")
-        viewModelScope.launch(Dispatchers.IO) {
-            val settingsMap = mutableMapOf<Player, PlayerSettings>()
-            val context = getApplication<Application>().applicationContext
-
-            _players.value?.forEach { player ->
-                val playerSettings = repository.getPlayerSettings(context, player.id)
-                settingsMap[player] = playerSettings
-            }
-
-            _playerSettings.postValue(settingsMap) // Update LiveData safely
-            Log.d(TAG, "Player settings loaded successfully.")
-        }
-    }
-
-    /**
-     * Update player settings and save to repository
-     */
-    fun updatePlayerSettings(player: Player, settings: PlayerSettings) {
-        Log.d(TAG, "Updating settings for player: ${player.name}")
-        val context = getApplication<Application>().applicationContext
-        repository.savePlayerSettings(player.id, settings, context)
-        val updatedSettingsMap = _playerSettings.value?.toMutableMap() ?: mutableMapOf()
-        updatedSettingsMap[player] = settings
-        _playerSettings.value = updatedSettingsMap
-        _statusMessage.postValue("${player.name}'s settings updated.") // Post status message
-    }
-
-    /**
-     * Load team from repository asynchronously
-     */
-    private fun loadTeam() {
-        Log.d(TAG, "Loading team from repository.")
-        viewModelScope.launch {
-            val context = getApplication<Application>().applicationContext
-            val savedTeam = withContext(Dispatchers.IO) {
-                repository.getTeam(context)
-            }
-            _teamPlayers.postValue(savedTeam.toMutableList()) // Update LiveData safely
-            Log.d(TAG, "Team loaded successfully.")
-        }
-    }
-
-    /**
-     * Save team to repository asynchronously
-     */
-    fun saveTeam() {
-        Log.d(TAG, "Saving team to repository.")
-        viewModelScope.launch(Dispatchers.IO) {
-            val context = getApplication<Application>().applicationContext
-            _teamPlayers.value?.let { teamPlayers ->
-                repository.saveTeam()
-                Log.d(TAG, "Team saved successfully.")
-            }
-        }
-    }
-
-    /**
-     * Add a player to the team
-     */
-    fun addPlayerToTeam(player: Player) {
-        _teamPlayers.value?.apply {
-            if (!contains(player)) {
-                add(player)
-                player.isOnTeam = true
-                updatePlayer(player) // Update player after adding to team
-                saveTeam() // Save team after update
-                _statusMessage.postValue("${player.name} added to the team.") // Post status message
-                Log.d(TAG, "Player added to the team: ${player.name}")
-            }
-        }
-    }
-
-    /**
-     * Remove a player from the team
-     */
-    fun removePlayerFromTeam(player: Player) {
-        _teamPlayers.value?.apply {
-            remove(player)
-            player.isOnTeam = false
-            updatePlayer(player) // Update player after removing from team
-            saveTeam() // Save team after update
-            _statusMessage.postValue("${player.name} removed from the team.") // Post status message
-            Log.d(TAG, "Player removed from the team: ${player.name}")
-        }
-    }
-
-    /**
-     * Check if player is in the team
-     */
-    fun isPlayerInTeam(player: Player): Boolean {
-        return _teamPlayers.value?.contains(player) ?: false
-    }
-
-    /**
-     * Resets all players
-     */
-    fun resetAllPlayers() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                Log.d("PlayerViewModel", "Resetting all players.")
-                repository.resetPlayers()
-                withContext(Dispatchers.Main) {
-                    _players.value = mutableListOf() // Clear the players LiveData with an empty MutableList<Player>
-                    Log.d("PlayerViewModel", "All players have been reset.")
-                }
-            } catch (e: Exception) {
-                Log.e("PlayerViewModel", "Error resetting players: ${e.message}")
-            }
-        }
-    }
-
 }

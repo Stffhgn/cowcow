@@ -71,7 +71,7 @@ class CustomRuleManager(private val context: Context) {
             RuleEffectType.DOUBLE_POINTS -> player.addBasePoints(rule.value * 2)
         }
         Log.d("CustomRuleManager", "Applied rule '${rule.ruleName}' to player ${player.name}")
-        PlayerManager.updatePlayer(player) // Optionally update player state
+        //PlayerManager.updatePlayer(player) // Optionally update player state
     }
 
     // Check if the rule's condition is satisfied before applying it

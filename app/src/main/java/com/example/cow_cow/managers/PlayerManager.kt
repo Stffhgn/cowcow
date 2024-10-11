@@ -4,12 +4,13 @@ import android.util.Log
 import com.example.cow_cow.models.CustomRule
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Team
+import com.example.cow_cow.repositories.PlayerRepository
 
-object PlayerManager {
+class PlayerManager(private val playerRepository: PlayerRepository) {
 
     private val players: MutableList<Player> = mutableListOf()
     private val teams: MutableList<Team> = mutableListOf()
-    private const val TAG = "PlayerManager"
+    private val TAG = "PlayerManager"
 
     /**
      * Add a new player to the game.
@@ -88,10 +89,8 @@ object PlayerManager {
      * @param updatedPlayer The player object with updated information.
      */
     fun updatePlayer(updatedPlayer: Player) {
-        players.indexOfFirst { it.id == updatedPlayer.id }.takeIf { it != -1 }?.let {
-            players[it] = updatedPlayer
-            Log.d(TAG, "Player updated: \${updatedPlayer.name}")
-        }
+        Log.d(TAG, "Updating player via PlayerManager: ${updatedPlayer.name}")
+        playerRepository.updatePlayer(updatedPlayer)
     }
 
     /**

@@ -32,108 +32,274 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Player name TextView -->
-    <TextView
-        android:id="@+id/playerNameTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Player Name"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
-
-    <!-- Player total score TextView -->
-    <TextView
-        android:id="@+id/totalScoreTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Total Score: 0"
-        android:textSize="18sp"
-        app:layout_constraintTop_toBottomOf="@id/playerNameTextView"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp" />
-
-    <!-- Stats container for cows, churches, water towers -->
-    <LinearLayout
+    <!-- ScrollView to contain all player data -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/totalScoreTextView"
-        android:gravity="center_horizontal"
-        android:layout_marginTop="16dp">
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:padding="16dp">
 
-        <!-- Cow stats -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:layout_margin="16dp">
+            android:gravity="center_horizontal">
 
+            <!-- Avatar Image View -->
+            <ImageView
+                android:id="@+id/avatarImageView"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/ic_launcher_round"
+                android:contentDescription="@string/avatar_image" />
+
+            <!-- Player name TextView -->
             <TextView
-                android:id="@+id/cowStatTextView"
+                android:id="@+id/playerNameTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:text="Player Name"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
 
+            <!-- Stats container for cows, churches, water towers -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <!-- Cow stats -->
+                <LinearLayout
+                    android:id="@+id/cowStatContainer"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:layout_margin="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/churchStatContainer"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <TextView
+                        android:id="@+id/cowStatTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <!-- Church stats -->
+                <LinearLayout
+                    android:id="@+id/churchStatContainer"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:layout_margin="8dp"
+                    app:layout_constraintStart_toEndOf="@id/cowStatContainer"
+                    app:layout_constraintEnd_toStartOf="@id/waterTowerStatContainer"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <TextView
+                        android:id="@+id/churchStatTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                 </LinearLayout>
+
+                <!-- Water tower stats -->
+                <LinearLayout
+                    android:id="@+id/waterTowerStatContainer"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:layout_margin="8dp"
+                    app:layout_constraintStart_toEndOf="@id/churchStatContainer"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <TextView
+                        android:id="@+id/waterTowerStatTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Additional stats or information for the player can go here -->
             <TextView
+                android:id="@+id/totalScoreTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cows"
-                android:textSize="16sp" />
+                android:text="Total Score: 0"
+                android:textSize="18sp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/winStreakTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Win Streak: 0"
+                android:textSize="18sp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/penaltiesTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Penalties: 0"
+                android:textSize="18sp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Other player attributes in a vertical list -->
+            <TextView
+                android:id="@+id/bonusPointsTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bonus Points: 0"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/achievementsTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Achievements: 0"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/customRulesTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Custom Rules: 0"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/activePowerUpsTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Active Power-Ups: 0"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/timePlayedTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Time Played: 0 ms"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/distanceTraveledTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Distance Traveled: 0 m"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/teamIdTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Team ID: None"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/isSilencedTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Is Silenced: false"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/isPowerUpActiveTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Is Power-Up Active: false"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/timeSpentTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Time Spent: 0 ms"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/objectivesCompletedTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Objectives Completed: 0"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/notificationsEnabledTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Notifications Enabled: true"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/gamesPlayedTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Games Played: 0"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/rankTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Rank: Beginner"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/objectsCalledTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Objects Called: 0"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/isOnTeamTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Is On Team: false"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/isCurrentPlayerTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Is Current Player: false"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/basePointsTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Base Points: 0"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/penaltyPointsTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Penalty Points: 0"
+                android:layout_marginTop="8dp" />
+
         </LinearLayout>
-
-        <!-- Church stats -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:layout_margin="16dp">
-
-            <TextView
-                android:id="@+id/churchStatTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Churches"
-                android:textSize="16sp" />
-        </LinearLayout>
-
-        <!-- Water tower stats -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:layout_margin="16dp">
-
-            <TextView
-                android:id="@+id/waterTowerStatTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Water Towers"
-                android:textSize="16sp" />
-        </LinearLayout>
-    </LinearLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

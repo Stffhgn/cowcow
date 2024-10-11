@@ -1,6 +1,7 @@
 package com.example.cow_cow.viewModels
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -25,6 +26,8 @@ class GameViewModel(
     private val teamRepository: TeamRepository
 ) : AndroidViewModel(application) {
 
+    private val context: Context = getApplication<Application>().applicationContext
+    private val playerRepository = PlayerRepository(context)
     private val TAG = "GameViewModel"
 
     // ---- LiveData for players and team ----
@@ -34,12 +37,17 @@ class GameViewModel(
     private val _team = MutableLiveData<Team>()
     val team: LiveData<Team> get() = _team
 
+    // Now you can instantiate PlayerManager
+    private val playerManager = PlayerManager(playerRepository)
+
+    // Similarly, instantiate GameManager with required dependencies
+    private val gameManager = GameManager(playerManager)
+
     // ---- Managers ----
     private val scavengerHuntManager = ScavengerHuntManager
     private val powerUpManager = PowerUpManager
     private val penaltyManager = PenaltyManager
-    private val playerManager = PlayerManager
-    private val gameManager = GameManager
+
 
     // ---- Game settings ----
     var quietGameEnabled: Boolean = false
@@ -68,7 +76,7 @@ class GameViewModel(
     fun loadPlayers() {
         Log.d(TAG, "Loading players from repository.")
         val context = getApplication<Application>().applicationContext
-        val playerList = PlayerRepository(context).getPlayers(context)
+        val playerList = PlayerRepository(context).getPlayers()
         _players.value = playerList
         Log.d(TAG, "Players loaded: ${playerList.size} players.")
     }
@@ -96,7 +104,7 @@ class GameViewModel(
         Log.d(TAG, "Saving players to repository.")
         val context = getApplication<Application>().applicationContext
         _players.value?.let { playerList ->
-            PlayerRepository(context).savePlayers(playerList, context)
+            PlayerRepository(context).savePlayers(playerList)
         }
     }
 

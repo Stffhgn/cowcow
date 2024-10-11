@@ -9,6 +9,7 @@ import com.example.cow_cow.repositories.PlayerRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PlayerStatsViewModel(
     application: Application,
@@ -19,18 +20,17 @@ class PlayerStatsViewModel(
     private val _player = MutableLiveData<Player>()
     val player: LiveData<Player> get() = _player
 
-    init {
-        loadPlayer()
-    }
-
     /**
      * Load player data by ID.
      */
-    private fun loadPlayer() {
-        val context = getApplication<Application>().applicationContext
-        val playerData = playerRepository.getPlayers(context).find { it.id == playerId }
-        playerData?.let {
-            _player.value = it
+    fun loadPlayer() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val playerData = playerRepository.getPlayers().find { it.id == playerId }
+            playerData?.let {
+                withContext(Dispatchers.Main) {
+                    _player.value = it
+                }
+            }
         }
     }
 
@@ -43,10 +43,12 @@ class PlayerStatsViewModel(
             it.cowCount += newCowCount
             it.churchCount += newChurchCount
             it.waterTowerCount += newWaterTowerCount
-            // Update locally
-            playerRepository.updatePlayer(it, getApplication())
-            // Sync with server
-            //syncWithServer(it)
+            CoroutineScope(Dispatchers.IO).launch {
+                playerRepository.updatePlayer(it) // Update the player asynchronously
+                withContext(Dispatchers.Main) {
+                    loadPlayer() // Reload player data to make sure everything's up to date in UI
+                }
+            }
         }
     }
 
@@ -69,5 +71,6 @@ class PlayerStatsViewModel(
             }
         }
     }
-     */
+    */
+
 }

@@ -34,8 +34,8 @@ class PlayerListViewModel(
      */
     fun loadPlayers() {
         Log.d(TAG, "Loading players from repository")
-        val context = getApplication<Application>().applicationContext
-        val playerList = playerRepository.getPlayers(context)
+        val context = getApplication<Application>().applicationContext  // Get the context from application
+        val playerList = playerRepository.getPlayers()  // Pass context to getPlayers function
         _players.value = playerList
         Log.d(TAG, "Loaded ${playerList.size} players.")
     }
@@ -71,7 +71,7 @@ class PlayerListViewModel(
 
             // Save the updated list in the repository
             val context = getApplication<Application>().applicationContext
-            playerRepository.savePlayers(updatedPlayers, context)
+            playerRepository.savePlayers(updatedPlayers)
 
             withContext(Dispatchers.Main) {
                 // Update LiveData to force UI update
@@ -93,7 +93,7 @@ class PlayerListViewModel(
             val player = getPlayerById(playerId)
             player?.let {
                 it.incrementGamesPlayed()
-                playerRepository.updatePlayer(it, context)
+                playerRepository.updatePlayer(it)
                 withContext(Dispatchers.Main) {
                     loadPlayers()  // Reload players to reflect changes
                     Log.d(TAG, "Games played updated for player ID: $playerId")
@@ -115,7 +115,7 @@ class PlayerListViewModel(
             val player = getPlayerById(playerId)
             player?.let {
                 it.updateRank(newRank)
-                playerRepository.updatePlayer(it, context)
+                playerRepository.updatePlayer(it)
                 withContext(Dispatchers.Main) {
                     loadPlayers()  // Reload players to reflect changes
                     Log.d(TAG, "Player rank updated for player ID: $playerId")
@@ -147,7 +147,7 @@ class PlayerListViewModel(
 
             // Save updated players to repository
             val context = getApplication<Application>().applicationContext
-            playerRepository.savePlayers(updatedPlayers, context)
+            playerRepository.savePlayers(updatedPlayers)
 
             // Update LiveData on the main thread
             withContext(Dispatchers.Main) {

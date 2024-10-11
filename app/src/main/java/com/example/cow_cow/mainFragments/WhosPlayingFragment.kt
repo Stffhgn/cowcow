@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -62,15 +63,17 @@ class WhosPlayingFragment : Fragment() {
         viewModel.players.observe(viewLifecycleOwner) { players ->
             if (players.isNotEmpty()) {
                 binding.playerListTitle.text = "Players"  // Set the title back to "Players"
-                binding.playerRecyclerView.visibility = View.VISIBLE // Show RecyclerView
-                binding.playerListTitle.visibility = View.VISIBLE // Show title
+                binding.playerRecyclerView.isVisible = true // Show RecyclerView
+                binding.playerListTitle.isVisible = true // Show title
 
                 adapter.submitList(players.toList()) // Update the adapter with the new player list
+                binding.startGameButton.isEnabled = true // Enable Start Game button
                 Log.d(TAG, "Player list updated. Number of players: ${players.size}")
             } else {
                 Log.d(TAG, "No players found to display.")
                 binding.playerListTitle.text = "No Players Available"  // Update the title when empty
-                binding.playerRecyclerView.visibility = View.GONE // Hide RecyclerView
+                binding.playerRecyclerView.isVisible = false // Hide RecyclerView
+                binding.startGameButton.isEnabled = false // Disable Start Game button
             }
         }
 
@@ -95,6 +98,18 @@ class WhosPlayingFragment : Fragment() {
             }
         }
 
+        // Start Game Button Click Listener
+        binding.startGameButton.setOnClickListener {
+            Log.d(TAG, "Start Game button clicked.")
+            navigateToGameOrAddPlayer() // Ensure players are present before starting the game
+        }
+
+        // Back Button Click Listener
+        binding.backButton.setOnClickListener {
+            Log.d(TAG, "Back button clicked.")
+            findNavController().navigateUp() // Navigate back in the navigation stack
+        }
+
         // Log ViewModel observer setup
         Log.d(TAG, "ViewModel observer set up for players LiveData.")
     }
@@ -106,6 +121,26 @@ class WhosPlayingFragment : Fragment() {
             .actionWhosPlayingFragmentToPlayerStatsFragment(player.id)
         findNavController().navigate(action)
         Log.d(TAG, "Navigating to PlayerStatsFragment with player: ${player.name}, ID: ${player.id}")
+    }
+
+    // Function to handle starting the game if players are present
+    private fun navigateToGameOrAddPlayer() {
+        viewModel.players.value?.let { players ->
+            if (players.isNotEmpty()) {
+                Log.d(TAG, "Players found, navigating to GameFragment.")
+                val action = WhosPlayingFragmentDirections.actionWhosPlayingFragmentToGameFragment()
+                findNavController().navigate(action)
+            } else {
+                Log.d(TAG, "No players found, unable to start the game.")
+                // Optional: Show a Toast message or alert dialog indicating no players are present
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume: Reloading players to update scores.")
+        viewModel.loadPlayers() // Reload player data to ensure latest score updates
     }
 
     override fun onDestroyView() {

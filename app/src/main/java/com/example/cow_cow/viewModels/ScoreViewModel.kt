@@ -11,7 +11,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class ScoreViewModel(application: Application, private val playerRepository: PlayerRepository) : AndroidViewModel(application) {
+class ScoreViewModel(application: Application) : AndroidViewModel(application) {
+
+    // Initialize playerRepository using the application context
+    private val playerRepository: PlayerRepository = PlayerRepository(application.applicationContext)
 
     // LiveData to hold individual player scores
     private val _playerScores = MutableLiveData<Map<Player, Int>>()
@@ -44,9 +47,8 @@ class ScoreViewModel(application: Application, private val playerRepository: Pla
     private fun loadPlayerScores() {
         viewModelScope.launch {
             try {
-                val context = getApplication<Application>().applicationContext
                 val players = withContext(Dispatchers.IO) {
-                    playerRepository.getPlayers(context)
+                    playerRepository.getPlayers()
                 }
                 val scores = players.associateWith { it.calculateTotalPoints() }
                 _playerScores.value = scores
@@ -63,9 +65,8 @@ class ScoreViewModel(application: Application, private val playerRepository: Pla
     fun calculateTeamScore() {
         viewModelScope.launch {
             try {
-                val context = getApplication<Application>().applicationContext
                 val team = withContext(Dispatchers.IO) {
-                    playerRepository.getTeam(context)
+                    playerRepository.getTeam()
                 }
                 val totalTeamScore = team.sumOf { it.calculateTotalPoints() }
                 _teamScore.value = totalTeamScore
@@ -105,7 +106,7 @@ class ScoreViewModel(application: Application, private val playerRepository: Pla
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val context = getApplication<Application>().applicationContext
-                playerRepository.savePlayers(players, context)
+                playerRepository.savePlayers(players)
                 _statusMessage.postValue("Player scores saved successfully")
             } catch (e: Exception) {
                 _statusMessage.postValue("Failed to save player scores: ${e.message}")

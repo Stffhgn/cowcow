@@ -6,7 +6,6 @@ import android.util.Log
 import com.example.cow_cow.enums.PenaltyType
 import com.example.cow_cow.enums.PowerUpType
 import com.example.cow_cow.enums.RankType
-import com.example.cow_cow.managers.GameManager.applyTimePenaltyToGame
 
 data class Player(
     val id: String,
@@ -92,7 +91,8 @@ data class Player(
                 Log.d("Penalty", "Applied false call penalty '\${penalty.name}' to player $name. Deducted $effectiveDeduction points.")
             }
             PenaltyType.TIME_PENALTY -> {
-                applyTimePenaltyToGame(penalty.duration)
+                val effectiveDeduction = (penalty.pointsDeducted * penalty.multiplier).toInt()
+                basePoints -= effectiveDeduction
                 Log.d("Penalty", "Applied time penalty '\${penalty.name}' to player $name. Reduced the game timer by \${penalty.duration} milliseconds.")
             }
             PenaltyType.OTHER -> {

@@ -93,6 +93,7 @@
         android:name="com.example.cow_cow.mainFragments.WhosPlayingFragment"
         android:label="Who's Playing"
         tools:layout="@layout/fragment_whos_playing">
+
         <!-- Actions from Who's Playing Fragment -->
         <action
             android:id="@+id/action_whosPlayingFragment_to_playerStatsFragment"
@@ -101,9 +102,15 @@
                 android:name="playerID"
                 app:argType="string" />
         </action>
+
         <action
             android:id="@+id/action_whosPlayingFragment_to_playerListFragment"
             app:destination="@id/playerListFragment" />
+
+        <!-- Add Start Game action to navigate to GameFragment -->
+        <action
+            android:id="@+id/action_whosPlayingFragment_to_gameFragment"
+            app:destination="@id/gameFragment" />
     </fragment>
 
     <!-- Player List Fragment -->

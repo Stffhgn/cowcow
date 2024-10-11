@@ -36,14 +36,27 @@ class GameEventHandler(
     // Handle player selection for claiming an object
     fun handlePlayerSelected(player: Player, objectType: String) {
         logAndAddNews("Handling player selection: Player: ${player.name}, Object type: $objectType")
+
+        // Calculate updated score
         val updatedScore = scoreManager.calculatePlayerScoreAfterEvent(player, objectType)
         Log.d(TAG, "Player: ${player.name}, New score after claiming $objectType: $updatedScore")
 
+        // Persist player update
+        playerManager.updatePlayer(player)
+
+        // Update team score if the player is a member
         updateTeamScoreIfMember(player)
+
+        // Check conditions
         checkConditionsAfterEvent(player, objectType)
+
+        // Check for achievements
         achievementManager.checkAchievements(player)
+
+        // Apply custom rules and penalties
         applyCustomRulesAndPenalties(player)
 
+        // Log and add news
         gameNewsManager.addNewsMessage("Player ${player.name} has claimed $objectType and earned $updatedScore points!")
     }
 
@@ -167,10 +180,12 @@ class GameEventHandler(
         val currentTeam = teamRepository.getTeam()
         if (currentTeam.members.contains(player)) {
             Log.d(TAG, "${player.name} is part of team: ${currentTeam.name}. Updating team score.")
-            currentTeam.teamScore = currentTeam.calculateTotalTeamScore()  // Calculate the updated score
 
-            // Save the updated team using the repository's saveTeam() method (no arguments)
-            teamRepository.saveTeam()  // Save updated score to repository
+            // Calculate updated score
+            currentTeam.teamScore = currentTeam.calculateTotalTeamScore()
+
+            // Persist team update
+            teamRepository.saveTeam()
         }
     }
 
