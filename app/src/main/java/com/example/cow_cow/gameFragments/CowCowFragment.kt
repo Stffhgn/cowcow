@@ -1,5 +1,6 @@
 package com.example.cow_cow.gameFragments
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -10,12 +11,26 @@ import androidx.navigation.fragment.findNavController
 import com.example.cow_cow.R
 import com.example.cow_cow.activity.GameActivity
 import com.example.cow_cow.databinding.FragmentCowCowBinding
+import com.example.cow_cow.interfaces.OnObjectSelectedListener
 
 class CowCowFragment : Fragment() {
 
+    // View binding for the fragment
     private var _binding: FragmentCowCowBinding? = null
     private val binding get() = _binding!!
+    private var listener: OnObjectSelectedListener? = null
 
+    // Attach listener when fragment is attached to an activity
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is OnObjectSelectedListener) {
+            listener = context
+        } else {
+            throw RuntimeException("$context must implement OnObjectSelectedListener")
+        }
+    }
+
+    // Inflate the layout for this fragment and set up binding
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -25,12 +40,14 @@ class CowCowFragment : Fragment() {
         return binding.root
     }
 
+    // Set up button listeners when the view is created
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d("CowCowFragment", "View created, setting up button listeners")
+        Log.d("CowCowFragment", "CowCowFragment view created, setting up button listeners")
         setupButtonListeners()
     }
 
+    // Set up click listeners for the buttons
     private fun setupButtonListeners() {
         binding.cowButton.setOnClickListener {
             Log.d("CowCowFragment", "Cow button clicked")
@@ -44,33 +61,29 @@ class CowCowFragment : Fragment() {
             Log.d("CowCowFragment", "Water Tower button clicked")
             sendObjectToActivity("Water Tower")
         }
+        binding.whiteFenceButton.setOnClickListener {
+            Log.d("CowCowFragment", "White Fence button clicked")
+            openTeamManagementDialog()
+        }
     }
 
+    // CowCowFragment: Send the selected object type to the activity
     private fun sendObjectToActivity(objectType: String) {
         Log.d("CowCowFragment", "Sending object to activity: $objectType")
 
-        val activity = requireActivity() as? GameActivity
-        if (activity != null) {
-            activity.receiveObject(objectType)  // Send the object to GameActivity
-            Log.d("CowCowFragment", "Object sent to GameActivity successfully: $objectType")
-
-            // Navigate to WhoCalledItFragment instead of popping back stack immediately
-            navigateToWhoCalledItFragment()
-        } else {
-            Log.e("CowCowFragment", "Activity is not GameActivity, failed to send object")
-        }
+        // Send the object to the listener (GameActivity)
+        listener?.onObjectSelected(objectType)
+            ?: Log.e("CowCowFragment", "OnObjectSelectedListener is not attached")
     }
 
-    private fun navigateToWhoCalledItFragment() {
-        try {
-            Log.d("CowCowFragment", "Navigating to WhoCalledItFragment")
-            val navController = findNavController()
-            navController.navigate(R.id.action_cowCowFragment_to_whoCalledItFragment)
-        } catch (e: Exception) {
-            Log.e("CowCowFragment", "Error navigating to WhoCalledItFragment: ${e.message}")
-        }
+    // Function to open Team Management Dialog
+    private fun openTeamManagementDialog() {
+        // Get the GameActivity instance and call the method to open the dialog
+        (activity as? GameActivity)?.openTeamManagementDialog()
+            ?: Log.e("CowCowFragment", "GameActivity not found!")
     }
 
+    // Clean up view binding when the view is destroyed
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

@@ -118,6 +118,20 @@ class PlayerRepository(private val context: Context) {
     }
 
     /**
+     * Refresh the list of players from SharedPreferences and update LiveData.
+     */
+    fun refreshPlayers() {
+        Log.d("PlayerRepository", "Refreshing player list.")
+        CoroutineScope(Dispatchers.IO).launch {
+            val updatedPlayers = getPlayers() // Fetch updated players from SharedPreferences
+            withContext(Dispatchers.Main) {
+                _playersLiveData.value = updatedPlayers // Update LiveData on the main thread
+            }
+            Log.d("PlayerRepository", "Player list refreshed with ${updatedPlayers.size} players.")
+        }
+    }
+
+    /**
      * Removes a player by their ID from the list.
      */
     fun removePlayerById(playerId: String) {

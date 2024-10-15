@@ -39,6 +39,7 @@ object TeamManager {
         team?.let {
             if (!it.members.contains(player)) {
                 it.addMember(player)
+                player.isOnTeam = true // Update the isOnTeam property
                 updateTeamScore()
             }
         }
@@ -53,6 +54,7 @@ object TeamManager {
         team?.let {
             if (it.members.contains(player)) {
                 it.removeMember(player)
+                player.isOnTeam = false // Update the isOnTeam property
                 updateTeamScore()
             }
         }

@@ -9,52 +9,68 @@
     <!-- Cow Button -->
     <ImageButton
         android:id="@+id/cowButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:contentDescription="@string/cow_button"
         android:background="?attr/selectableItemBackground"
         app:srcCompat="@drawable/ic_cow_cow_cow"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/churchButton"
+        app:layout_constraintHeight_percent="0.15"
+        android:scaleType="fitCenter"
+        android:padding="0dp" />
 
     <!-- Church Button -->
     <ImageButton
         android:id="@+id/churchButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:contentDescription="@string/church_button"
         android:background="?attr/selectableItemBackground"
         app:srcCompat="@drawable/ic_cow_cow_church"
         app:layout_constraintTop_toBottomOf="@id/cowButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
+        app:layout_constraintBottom_toTopOf="@id/waterTowerButton"
+        app:layout_constraintHeight_percent="0.15"
+        android:layout_marginTop="16dp"
+        android:scaleType="fitCenter"
+        android:padding="0dp" />
 
     <!-- Water Tower Button -->
     <ImageButton
         android:id="@+id/waterTowerButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:contentDescription="@string/water_tower_button"
         android:background="?attr/selectableItemBackground"
         app:srcCompat="@drawable/ic_cow_cow_water_tower"
         app:layout_constraintTop_toBottomOf="@id/churchButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
+        app:layout_constraintBottom_toTopOf="@id/whiteFenceButton"
+        app:layout_constraintHeight_percent="0.15"
+        android:layout_marginTop="16dp"
+        android:scaleType="fitCenter"
+        android:padding="0dp" />
 
     <!-- White Fence Button -->
     <ImageButton
         android:id="@+id/whiteFenceButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:contentDescription="@string/white_fence_button"
         android:background="?attr/selectableItemBackground"
         app:srcCompat="@drawable/ic_cow_cow_white_fence"
         app:layout_constraintTop_toBottomOf="@id/waterTowerButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHeight_percent="0.15"
+        android:layout_marginTop="16dp"
+        android:scaleType="fitCenter"
+        android:padding="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

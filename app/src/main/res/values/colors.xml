@@ -18,4 +18,6 @@
     <color name="colorOnSecondary">#000000</color>
     <color name="primary_color">#6200EA</color>
     <color name="secondary_color">#03DAC6</color>
+    <color name="colorOnTeam">#ADD8E6</color>
+    <color name="colorNotOnTeam">#FFFFC5</color>
 </resources>

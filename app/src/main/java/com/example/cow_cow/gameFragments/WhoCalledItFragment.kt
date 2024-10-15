@@ -5,25 +5,21 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
+import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.R
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentWhoCalledItBinding
 import com.example.cow_cow.models.Player
-import com.example.cow_cow.activity.GameActivity
 
-class WhoCalledItFragment : Fragment() {
+class WhoCalledItFragment : DialogFragment() {
 
     // View binding for the fragment layout
     private var _binding: FragmentWhoCalledItBinding? = null
     private val binding get() = _binding!!
 
     // List of players passed from the GameActivity
-    private lateinit var players: List<Player>
-
-    // Adapter for displaying players
-    private lateinit var adapter: PlayerAdapter
+    private var players: List<Player> = emptyList()
 
     companion object {
         private const val PLAYER_LIST_KEY = "players"
@@ -62,34 +58,9 @@ class WhoCalledItFragment : Fragment() {
         // Log the object type received
         Log.d("WhoCalledItFragment", "Object type received: $calledObject")
 
-        // Log each player's name
-        players.forEach { player ->
-            Log.d("WhoCalledItFragment", "Player received: ${player.name}")
-        }
-
         // Setup UI elements
         setupHeaderText(calledObject)
         setupRecyclerView()
-    }
-
-    // Sets up the RecyclerView to display the list of players
-    private fun setupRecyclerView() {
-        // Initialize the adapter with isWhoCalledItContext set to true for this fragment
-        adapter = PlayerAdapter(
-            isWhoCalledItContext = true,
-            onPlayerClick = { player -> onPlayerSelected(player) }
-        )
-        binding.playerRecyclerView.adapter = adapter
-        binding.playerRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-
-        if (players.isNotEmpty()) {
-            // Update adapter with player list
-            adapter.submitList(players)
-            Log.d("WhoCalledItFragment", "Displaying ${players.size} players.")
-        } else {
-            Log.d("WhoCalledItFragment", "No players found to display.")
-            binding.noPlayersMessage.visibility = View.VISIBLE  // Show "No players found" message
-        }
     }
 
     // Sets up the header text indicating which object was called
@@ -103,42 +74,31 @@ class WhoCalledItFragment : Fragment() {
         }
     }
 
-    // Handles player selection from the list
-    private fun onPlayerSelected(player: Player) {
-        // Log the beginning of player selection
-        Log.d("WhoCalledItFragment", "onPlayerSelected() called")
+    // Sets up the RecyclerView to display the list of players
+    private fun setupRecyclerView() {
+        if (players.isNotEmpty()) {
+            // Initialize the adapter
+            val adapter = PlayerAdapter(
+                isWhoCalledItContext = true,
+                onPlayerClick = { player -> onPlayerSelected(player) }
+            )
+            binding.playerRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+            binding.playerRecyclerView.adapter = adapter
 
-        // Log which player was selected
-        Log.d("WhoCalledItFragment", "Player selected: ${player.name}")
-
-        // Determine which object was called (for example: "Cow", "Church", "Water Tower")
-        val objectCalled = "Cow"  // Replace this with the actual object called, which can be passed or obtained based on your logic
-
-        // Update player stats based on the object called
-        player.addObjectCalled(objectCalled)
-
-        // Log the updated state
-        Log.d("WhoCalledItFragment", "Object called: $objectCalled for player ${player.name}. Current base points: ${player.basePoints}")
-
-        // Pass the selected player back to GameActivity (if needed)
-        (activity as? GameActivity)?.receiveSelectedPlayer(player)
-        Log.d("WhoCalledItFragment", "Selected player passed back to GameActivity")
-
-        // Set adapter context back to false
-        adapter.setWhoCalledItContext(false)
-
-        // Use post to ensure that the fragment transaction occurs after the view is ready
-        binding.root.post {
-            val fragmentManager = requireActivity().supportFragmentManager
-            fragmentManager.beginTransaction()
-                .replace(R.id.nav_host_fragment, CowCowFragment())
-                .addToBackStack(null)
-                .commit()
-            Log.d("WhoCalledItFragment", "Replaced WhoCalledItFragment with CowCowFragment.")
+            // Update adapter with player list
+            adapter.submitList(players)
+            Log.d("WhoCalledItFragment", "Displaying ${players.size} players.")
+        } else {
+            Log.d("WhoCalledItFragment", "No players found to display.")
+            binding.noPlayersMessage.visibility = View.VISIBLE  // Show "No players found" message
         }
     }
 
-
+    // Handles player selection from the list
+    private fun onPlayerSelected(player: Player) {
+        Log.d("WhoCalledItFragment", "Player selected: ${player.name}")
+        // Add additional logic here for what happens after a player is selected.
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

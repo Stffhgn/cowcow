@@ -111,5 +111,7 @@ class PlayerStatsFragment : Fragment(R.layout.fragment_player_stats) {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        Log.d("PlayerStatsFragment", "Navigating back to WhosPlayingDialogFragment")
+
     }
 }

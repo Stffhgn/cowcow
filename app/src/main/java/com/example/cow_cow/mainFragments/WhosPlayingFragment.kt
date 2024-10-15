@@ -1,5 +1,6 @@
 package com.example.cow_cow.mainFragments
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.R
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentWhosPlayingBinding
+import com.example.cow_cow.interfaces.OnPlayerSelectedListener
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.utils.PlayerIDGenerator
@@ -28,6 +30,18 @@ class WhosPlayingFragment : Fragment() {
 
     // Logging tag for debugging
     private val TAG = "WhosPlayingFragment"
+
+    // Interface to communicate with GameActivity
+    private var listener: OnPlayerSelectedListener? = null
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is OnPlayerSelectedListener) {
+            listener = context
+        } else {
+            throw RuntimeException("$context must implement OnPlayerSelectedListener")
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -114,12 +128,12 @@ class WhosPlayingFragment : Fragment() {
         Log.d(TAG, "ViewModel observer set up for players LiveData.")
     }
 
-    // Handle player click to navigate to PlayerStatsFragment
     private fun onPlayerClick(player: Player) {
-        // Use Safe Args to navigate and pass the player's ID to PlayerStatsFragment
-        val action = WhosPlayingFragmentDirections
-            .actionWhosPlayingFragmentToPlayerStatsFragment(player.id)
-        findNavController().navigate(action)
+        Log.d(TAG, "Player clicked: ${player.name}, ID: ${player.id}")
+
+        // Use the listener to communicate with GameActivity without requiring an objectType
+        listener?.onPlayerSelected(player.id)
+
         Log.d(TAG, "Navigating to PlayerStatsFragment with player: ${player.name}, ID: ${player.id}")
     }
 
@@ -128,7 +142,7 @@ class WhosPlayingFragment : Fragment() {
         viewModel.players.value?.let { players ->
             if (players.isNotEmpty()) {
                 Log.d(TAG, "Players found, navigating to GameFragment.")
-                val action = WhosPlayingFragmentDirections.actionWhosPlayingFragmentToGameFragment()
+                val action = WhosPlayingFragmentDirections.actionWhosPlayingFragmentToCowCowFragment()
                 findNavController().navigate(action)
             } else {
                 Log.d(TAG, "No players found, unable to start the game.")
@@ -140,7 +154,7 @@ class WhosPlayingFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume: Reloading players to update scores.")
-        viewModel.loadPlayers() // Reload player data to ensure latest score updates
+        viewModel.loadPlayers() // Reload player data to ensure the latest score updates
     }
 
     override fun onDestroyView() {

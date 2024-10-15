@@ -104,9 +104,8 @@ class StartFragment : Fragment() {
             } else {
                 Log.d("StartFragment", "Players found, starting GameActivity")
                 val intent = Intent(requireContext(), GameActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
+                // Optionally clear the back stack or set necessary flags
                 startActivity(intent)
-                requireActivity().finish()  // Ensure the current activity is finished
             }
         }
     }

@@ -4,9 +4,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.cow_cow.R
 import com.example.cow_cow.databinding.ItemPlayerBinding
 import com.example.cow_cow.models.Player
 
@@ -26,7 +28,7 @@ class PlayerAdapter(
     }
 
     // ViewHolder to bind player data to the UI
-    inner class PlayerViewHolder(private val binding: ItemPlayerBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class PlayerViewHolder(val binding: ItemPlayerBinding) : RecyclerView.ViewHolder(binding.root) {
 
         // Bind player data to the view and handle click events
         fun bind(player: Player) {
@@ -69,8 +71,24 @@ class PlayerAdapter(
 
     // Bind player data to the ViewHolder
     override fun onBindViewHolder(holder: PlayerViewHolder, position: Int) {
-        val player = getItem(position)
+        val player = getItem(position) // Assuming you're using a DiffUtil-based adapter (ListAdapter), use getItem() to retrieve the player
+        Log.d("PlayerAdapter", "Binding player: ${player.name}, Is on team: ${player.isOnTeam}")
         holder.bind(player)
+
+        // Set background color based on whether the player is on a team
+        if (player.isOnTeam) {
+            holder.binding.teamStatusTextView.text = "In Team"
+            holder.itemView.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.colorOnTeam))
+        } else {
+            holder.binding.teamStatusTextView.text = "Not in Team"
+            holder.itemView.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.colorNotOnTeam))
+        }
+
+        // Handle player item click
+        holder.itemView.setOnClickListener {
+            Log.d("PlayerAdapter", "Player clicked: ${player.name}, Current team status: ${player.isOnTeam}")
+            onPlayerClick(player)
+        }
     }
 }
 

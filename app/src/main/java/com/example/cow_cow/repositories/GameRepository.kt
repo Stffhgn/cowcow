@@ -23,26 +23,25 @@ class GameRepository(private val context: Context) {
     }
 
     init {
-        // Load initial game data
+        // Load initial data for players and game state
         loadPlayers()
         loadGameState()
     }
 
     // --- PLAYER MANAGEMENT ---
-
     /**
-     * Retrieve the list of players from memory.
+     * Retrieve the current list of players.
      */
-    fun getPlayers(): List<Player> {
-        return players
-    }
+    fun getPlayers(): List<Player> = players
 
     /**
      * Add a player and save the updated list to persistent storage.
      */
     fun addPlayer(player: Player) {
-        players.add(player)
-        savePlayers()  // Save to persistent storage
+        if (!players.contains(player)) {
+            players.add(player)
+            savePlayers()
+        }
     }
 
     /**
@@ -50,19 +49,19 @@ class GameRepository(private val context: Context) {
      */
     fun removePlayer(player: Player) {
         players.remove(player)
-        savePlayers()  // Save to persistent storage
+        savePlayers()
     }
 
     /**
-     * Clear all players (for game reset) and update persistent storage.
+     * Clear all players and update persistent storage.
      */
     fun clearPlayers() {
         players.clear()
-        savePlayers()  // Save the empty list
+        savePlayers()
     }
 
     /**
-     * Save players to SharedPreferences.
+     * Save the current list of players to SharedPreferences.
      */
     private fun savePlayers() {
         val editor = sharedPreferences.edit()
@@ -72,7 +71,7 @@ class GameRepository(private val context: Context) {
     }
 
     /**
-     * Load players from SharedPreferences.
+     * Load the list of players from SharedPreferences.
      */
     private fun loadPlayers() {
         val json = sharedPreferences.getString(PLAYERS_KEY, null)
@@ -84,13 +83,10 @@ class GameRepository(private val context: Context) {
     }
 
     // --- GAME STATE MANAGEMENT ---
-
     /**
      * Retrieve the current game state.
      */
-    fun getGameState(): Game? {
-        return _gameState.value
-    }
+    fun getGameState(): Game? = _gameState.value
 
     /**
      * Update the game state and save it to persistent storage.
@@ -101,7 +97,7 @@ class GameRepository(private val context: Context) {
     }
 
     /**
-     * Save the game state to SharedPreferences.
+     * Save the current game state to SharedPreferences.
      */
     private fun saveGameState() {
         val editor = sharedPreferences.edit()
@@ -125,27 +121,24 @@ class GameRepository(private val context: Context) {
     }
 
     // --- SCORE MANAGEMENT ---
-
     /**
-     * Calculate total score for a player based on game rules.
+     * Calculate the total score for a player based on game rules.
      */
     fun calculatePlayerScore(player: Player): Int {
-        // Apply logic to calculate score based on player's actions
-        var score = player.basePoints
-        score -= player.penaltyPoints
-        return score
+        return player.basePoints - player.penaltyPoints
     }
 
     /**
-     * Update a player's score and persist changes.
+     * Update a player's score and save the changes.
      */
     fun updatePlayerScore(player: Player, points: Int) {
         player.basePoints += points
         savePlayers()  // Persist the updated player data
     }
 
+    // --- GAME RESET ---
     /**
-     * Reset the game by clearing players and state.
+     * Reset the game by clearing all players and resetting the game state.
      */
     fun resetGame() {
         clearPlayers()

@@ -196,6 +196,12 @@ class PlayerViewModel(
             }
         }
     }
+    /**
+     * Refresh player list from the repository.
+     */
+    fun refreshPlayers() {
+        repository.refreshPlayers() // Trigger LiveData update in repository
+    }
 
     /**
      * Load team from repository

@@ -18,7 +18,7 @@
     <string name="total_score">Your Total Score is: %d</string>
 
     <!--WhoCalledIt Header  -->
-    <string name="who_called_it_header">Who called the calledObject</string>
+    <string name="who_called_it_header">Who called the %1$s?</string>
     <string name="who_called_it_header_default">Header is defaultFixME</string>
 
 

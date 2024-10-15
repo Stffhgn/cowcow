@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center_horizontal">
+
+    <!-- Total Players -->
+    <TextView
+        android:id="@+id/totalPlayersTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Total Players: "
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:paddingTop="8dp" />
+
+    <!-- Total Rounds -->
+    <TextView
+        android:id="@+id/totalRoundsTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Total Rounds: "
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:paddingTop="8dp" />
+
+    <!-- Elapsed Time -->
+    <TextView
+        android:id="@+id/elapsedTimeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Elapsed Time: "
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:paddingTop="8dp" />
+
+    <!-- Game Mode -->
+    <TextView
+        android:id="@+id/gameModeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Game Mode: "
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:paddingTop="8dp" />
+
+    <!-- Game Status -->
+    <TextView
+        android:id="@+id/gameStatusTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Game Status: "
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:paddingTop="8dp" />
+
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:visibility="gone" />
+
+    <!-- Error Message -->
+    <TextView
+        android:id="@+id/errorTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Error"
+        android:textColor="@android:color/holo_red_dark"
+        android:layout_marginTop="16dp"
+        android:visibility="gone" />
+
+</LinearLayout>

@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.cow_cow.R
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentPlayerListBinding
 import com.example.cow_cow.models.Player
@@ -41,28 +42,39 @@ class PlayerListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-       // Initialize ViewModel using PlayerListViewModelFactory
+
+        // Log when setting up navigation
+        Log.d(TAG, "Attempting to get NavController...")
+
+        // Try to ensure that NavController is correctly linked before proceeding
+        try {
+            val navController = findNavController()
+            Log.d(TAG, "NavController found: $navController")
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Error finding NavController: ${e.message}")
+        }
+
+        // Initialize ViewModel using PlayerListViewModelFactory
         val playerRepository = PlayerRepository(requireActivity().applicationContext)
         val factory = PlayerListViewModelFactory(requireActivity().application, playerRepository)
         playerListViewModel = ViewModelProvider(requireActivity(), factory).get(PlayerListViewModel::class.java)
 
-        // Log for ViewModel initialization
         Log.d(TAG, "onViewCreated: PlayerListViewModel initialized.")
 
         // Initialize PlayerAdapter with a click listener
         playerAdapter = PlayerAdapter { player ->
-            // Log player click event
             Log.d(TAG, "Player clicked: ${player.name}, ID: ${player.id}")
 
             // Handle player click - navigate to PlayerStatsFragment with SafeArgs
-            val action = PlayerListFragmentDirections
-                .actionPlayerListFragmentToPlayerStatsFragment(player.id)
+            val action = PlayerListFragmentDirections.actionPlayerListFragmentToPlayerStatsFragment(player.id)
 
-            // Log the navigation action
-            Log.d(TAG, "Navigating to PlayerStatsFragment with player: ${player.name}, ID: ${player.id}")
-
-            // Navigate to the PlayerStatsFragment
-            findNavController().navigate(action)
+            try {
+                Log.d(TAG, "Navigating to PlayerStatsFragment with player: ${player.name}, ID: ${player.id}")
+                // Perform the actual navigation
+                findNavController().navigate(action)
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "Navigation error: NavController not found. Error: ${e.message}")
+            }
         }
 
         // Set up RecyclerView for the player list
@@ -71,19 +83,14 @@ class PlayerListFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
         }
 
-        // Log RecyclerView setup
         Log.d(TAG, "RecyclerView set up with PlayerAdapter.")
 
         // Observe LiveData from the ViewModel for the list of players
         playerListViewModel.players.observe(viewLifecycleOwner) { players ->
-            // Update the adapter with the new player list
             playerAdapter.submitList(players)
-
-            // Log the player list update
             Log.d(TAG, "Player list updated. Number of players: ${players.size}")
         }
 
-        // Log ViewModel observer setup
         Log.d(TAG, "ViewModel observer set up for players LiveData.")
 
         // Set up button listeners
@@ -117,11 +124,7 @@ class PlayerListFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-
-        // Clean up ViewBinding when the view is destroyed
         _binding = null
-
-        // Log fragment destruction
         Log.d(TAG, "onDestroyView: View destroyed and binding cleared.")
     }
 }

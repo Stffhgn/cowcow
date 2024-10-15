@@ -60,27 +60,50 @@ class GameEventHandler(
         gameNewsManager.addNewsMessage("Player ${player.name} has claimed $objectType and earned $updatedScore points!")
     }
 
-    // Assign player to a team
-    fun assignPlayerToTeam(player: Player) {
-        // Get the current team from the repository
+    // Toggle player team status
+    fun togglePlayerTeamStatus(player: Player) {
         val currentTeam = teamRepository.getTeam()
 
-        // Ensure the player isn't already part of the team
-        if (!currentTeam.members.contains(player)) {
-            // Add player to the current team
-            teamRepository.addPlayerToTeam(player)
-
-            // Log and add a news message for successful assignment
-            logAndAddNews(
-                "Player ${player.name} successfully assigned to team ${currentTeam.name}",
-                "Player ${player.name} has joined team ${currentTeam.name}!"
-            )
+        if (currentTeam.members.contains(player)) {
+            // Player is currently on the team, so remove them
+            removePlayerFromTeam(player)
         } else {
-            // Player is already in the team, log a warning
-            Log.w(TAG, "Player ${player.name} is already a member of team ${currentTeam.name}.")
+            // Player is not on the team, so add them
+            addPlayerToTeam(player)
+        }
+
+        // Persist the player update in PlayerManager
+        playerManager.updatePlayer(player)
+
+        // Update the team score after player is added or removed
+        updateTeamScore()
+
+        // Log and notify
+        logAndAddNews(
+            "Player ${player.name} team status updated: isOnTeam=${player.isOnTeam}",
+            "Player ${player.name} has ${if (player.isOnTeam) "joined" else "left"} the team."
+        )
+    }
+
+    // Add player to the team
+    private fun addPlayerToTeam(player: Player) {
+        val currentTeam = teamRepository.getTeam()
+        if (!currentTeam.members.contains(player)) {
+            currentTeam.addMember(player)
+            player.isOnTeam = true  // Set the flag to true
+            Log.d(TAG, "Player ${player.name} added to team ${currentTeam.name}")
         }
     }
 
+    // Remove player from the team
+    private fun removePlayerFromTeam(player: Player) {
+        val currentTeam = teamRepository.getTeam()
+        if (currentTeam.members.contains(player)) {
+            currentTeam.removeMember(player)
+            player.isOnTeam = false  // Set the flag to false
+            Log.d(TAG, "Player ${player.name} removed from team ${currentTeam.name}")
+        }
+    }
 
     // Handle scavenger hunt item found
     fun handleScavengerHuntItemFound(player: Player, item: ScavengerHuntItem) {
@@ -173,6 +196,19 @@ class GameEventHandler(
         if (conditionManager.evaluateAllConditions(listOf(Condition(ConditionType.SCORE_THRESHOLD, 10, "Player must reach a score of at least 10")), player)) {
             Log.d(TAG, "Player ${player.name} has met the condition after claiming $objectType.")
         }
+    }
+
+    // Update the team score after changes
+    fun updateTeamScore() {
+        val currentTeam = teamRepository.getTeam()
+        currentTeam.teamScore = currentTeam.calculateTotalTeamScore()
+
+        // Persist the team update in the repository
+        teamRepository.saveTeam()
+
+        // Log and notify
+        Log.d(TAG, "Team ${currentTeam.name} score updated: ${currentTeam.teamScore}")
+        gameNewsManager.addNewsMessage("Team ${currentTeam.name} score updated: ${currentTeam.teamScore}")
     }
 
     // Update team score if player is a member
