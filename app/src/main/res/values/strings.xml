@@ -42,6 +42,9 @@
     <string name="white_fence_button">Join Team (White Fence)</string>
     <string name="reset_button">Reset Game</string>
 
+    <!-- Rainbow Car -->
+    <string name="find_car_in_color">Find a car in this color: %1$s</string>
+
     <!-- Difficulty Levels -->
     <string-array name="difficulty_levels">
         <item>Easy</item>

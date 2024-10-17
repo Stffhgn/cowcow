@@ -1,23 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="background_color">#FFFFFF</color> <!-- Change to your desired color -->
-    <color name="ad_background_color">#EEEEEE</color> <!-- Change to your desired color -->
-    <color name="background">#FFFFFF</color> <!-- Replace with your preferred color -->
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryVariant">#3700B3</color>
-    <color name="colorOnPrimary">#FFFFFF</color>
-    <color name="colorSecondary">#03DAC6</color>
-    <color name="colorSecondaryVariant">#018786</color>
-    <color name="colorOnSecondary">#000000</color>
-    <color name="primary_color">#6200EA</color>
-    <color name="secondary_color">#03DAC6</color>
-    <color name="colorOnTeam">#ADD8E6</color>
-    <color name="colorNotOnTeam">#FFFFC5</color>
+
+    <!-- Primary and Secondary Theme Colors -->
+    <color name="colorPrimary">#6200EE</color> <!-- Primary theme color -->
+    <color name="colorPrimaryVariant">#3700B3</color> <!-- Darker variant of primary color -->
+    <color name="colorOnPrimary">#FFFFFF</color> <!-- Text/icon color on primary background -->
+
+    <color name="colorSecondary">#03DAC6</color> <!-- Secondary theme color -->
+    <color name="colorSecondaryVariant">#018786</color> <!-- Darker variant of secondary color -->
+    <color name="colorOnSecondary">#000000</color> <!-- Text/icon color on secondary background -->
+
+    <!-- General Colors -->
+    <color name="black">#FF000000</color> <!-- Black color -->
+    <color name="white">#FFFFFFFF</color> <!-- White color -->
+    <color name="background_color">#FFFFFF</color> <!-- Main background color -->
+    <color name="ad_background_color">#EEEEEE</color> <!-- Background color for ads -->
+    <color name="background">#FFFFFF</color> <!-- Alternate background color -->
+
+    <!-- Game-Specific Colors -->
+    <color name="colorOnTeam">#ADD8E6</color> <!-- Light blue for players on the team -->
+    <color name="colorNotOnTeam">#FFFFC5</color> <!-- Light yellow for players not on the team -->
+
+    <!-- Rainbow Colors (For RainbowCar Game) -->
+    <color name="red">#FF0000</color> <!-- Red color -->
+    <color name="orange">#FFA500</color> <!-- Orange color -->
+    <color name="yellow">#FFFF00</color> <!-- Yellow color -->
+    <color name="green">#008000</color> <!-- Green color -->
+    <color name="blue">#0000FF</color> <!-- Blue color -->
+    <color name="indigo">#4B0082</color> <!-- Indigo color -->
+    <color name="violet">#EE82EE</color> <!-- Violet color -->
+
+    <!-- Miscellaneous Colors -->
+    <color name="purple_200">#FFBB86FC</color> <!-- Purple theme variant 200 -->
+    <color name="purple_500">#FF6200EE</color> <!-- Purple theme variant 500 -->
+    <color name="purple_700">#FF3700B3</color> <!-- Purple theme variant 700 -->
+    <color name="teal_200">#FF03DAC5</color> <!-- Teal theme variant 200 -->
+    <color name="teal_700">#FF018786</color> <!-- Teal theme variant 700 -->
+
+    <!-- Custom Project Colors -->
+    <color name="primary_color">#6200EA</color> <!-- Custom primary color (similar to colorPrimary) -->
+    <color name="secondary_color">#03DAC6</color> <!-- Custom secondary color (similar to colorSecondary) -->
+
 </resources>

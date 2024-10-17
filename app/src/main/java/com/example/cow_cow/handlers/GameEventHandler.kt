@@ -29,7 +29,10 @@ class GameEventHandler(
 
     // Handle unclaimed object event
     fun handleUnclaimedObjectEvent(objectType: String) {
-        logAndAddNews("Handling unclaimed object event: Object type: $objectType", "An unclaimed object ($objectType) was spotted but no one claimed it!")
+        logAndAddNews(
+            "Handling unclaimed object event: Object type: $objectType",
+            "An unclaimed object ($objectType) was spotted but no one claimed it!"
+        )
         playSoundForEvent(SoundType.COW_SOUND)
     }
 
@@ -109,20 +112,31 @@ class GameEventHandler(
     fun handleScavengerHuntItemFound(player: Player, item: ScavengerHuntItem) {
         scavengerHuntManager.markItemAsFound(item, player)
         achievementManager.trackProgress(player, AchievementType.SCAVENGER_HUNT, 1)
-        logAndAddNews("Player ${player.name} found scavenger hunt item: ${item.name}", "Player ${player.name} found the scavenger hunt item: ${item.name}!")
+        logAndAddNews(
+            "Player ${player.name} found scavenger hunt item: ${item.name}",
+            "Player ${player.name} found the scavenger hunt item: ${item.name}!"
+        )
     }
 
     // Apply penalty to player
     fun applyPenaltyToPlayer(player: Player, penalty: Penalty) {
         penaltyManager.applyPenalty(player, penalty)
         if (penalty.penaltyType == PenaltyType.SILENCED || penalty.penaltyType == PenaltyType.TEMPORARY_BAN) {
-            if (player.isSilenced) Log.d(TAG, "Player ${player.name} is now silenced due to penalty: ${penalty.name}")
+            if (player.isSilenced) Log.d(
+                TAG,
+                "Player ${player.name} is now silenced due to penalty: ${penalty.name}"
+            )
         }
         gameNewsManager.addNewsMessage("Player ${player.name} has received a penalty: ${penalty.name}.")
     }
 
     // Activate power-up for player
-    fun activatePowerUpForPlayer(player: Player, powerUpType: PowerUpType, duration: Long, effectValue: Int = 0) {
+    fun activatePowerUpForPlayer(
+        player: Player,
+        powerUpType: PowerUpType,
+        duration: Long,
+        effectValue: Int = 0
+    ) {
         powerUpManager.activatePowerUp(player, powerUpType, duration, effectValue)
         gameNewsManager.addNewsMessage("Player ${player.name} activated power-up: ${powerUpType.name}!")
     }
@@ -193,7 +207,16 @@ class GameEventHandler(
 
     // Check conditions after an event
     private fun checkConditionsAfterEvent(player: Player, objectType: String) {
-        if (conditionManager.evaluateAllConditions(listOf(Condition(ConditionType.SCORE_THRESHOLD, 10, "Player must reach a score of at least 10")), player)) {
+        if (conditionManager.evaluateAllConditions(
+                listOf(
+                    Condition(
+                        ConditionType.SCORE_THRESHOLD,
+                        10,
+                        "Player must reach a score of at least 10"
+                    )
+                ), player
+            )
+        ) {
             Log.d(TAG, "Player ${player.name} has met the condition after claiming $objectType.")
         }
     }
@@ -225,6 +248,68 @@ class GameEventHandler(
         }
     }
 
+    // Handle the completion of the Rainbow Car game, taking the team as a parameter
+    fun handleRainbowCarCompletion(team: Team) {
+        Log.d("GameEventHandler", "Handling Rainbow Car completion for team: ${team.name}")
+
+        // Iterate over each player in the team and process individual actions
+        team.members.forEach { player ->
+            // Process the score for each player
+            calculateRainbowCarScore(player)
+
+            // Check for any achievements for each player
+            checkAchievements(player)
+
+            // Grant power-ups if applicable for each player
+            grantRainbowCarPowerUps(player)
+        }
+
+        // Log or add a news message for team completion
+        gameNewsManager.addNewsMessage("Rainbow Car game completed! Well done, ${team.name}!")
+    }
+
+
+    private fun calculateRainbowCarScore(player: Player) {
+        val pointsPerColor = 2
+        val totalColors = 7
+        val totalPoints = pointsPerColor * totalColors
+
+        // Update the player's score using the score manager
+        scoreManager.addPointsToPlayer(player, totalPoints)
+        gameNewsManager.addNewsMessage("Player ${player.name} earned $totalPoints points for completing Rainbow Car!")
+    }
+
+
+    // Check for any achievements unlocked during the Rainbow Car game for an individual player
+    private fun checkAchievements(player: Player) {
+        val achievementType = AchievementType.TEAMWORK
+
+        // Check if the player has already unlocked the achievement
+        if (!achievementManager.hasAchievement(player, achievementType)) {
+            // Find the Achievement object from AchievementManager
+            val achievement = achievementManager.getAchievementByType(achievementType)
+
+            // Unlock the "Teamwork" achievement for the player
+            if (achievement != null) {
+                achievementManager.unlockAchievement(player, achievement)
+                gameNewsManager.addNewsMessage("Player ${player.name} unlocked the '${achievement.name}' achievement!")
+            } else {
+                Log.e("GameEventHandler", "Achievement for type $achievementType not found.")
+            }
+        }
+    }
+
+    // Grant power-ups based on the completion of the Rainbow Car game for an individual player
+    private fun grantRainbowCarPowerUps(player: Player) {
+        val powerUpType = PowerUpType.BONUS_POINTS
+        val bonusPoints = 50 // Example value for the power-up reward
+
+        // Grant a power-up to the player
+        powerUpManager.grantPowerUp(player, powerUpType, bonusPoints)
+        gameNewsManager.addNewsMessage("Player ${player.name} was granted a Bonus Points power-up (50 points)!")
+    }
+
+
     // Apply custom rules and remove expired penalties/power-ups
     private fun applyCustomRulesAndPenalties(player: Player) {
         player.customRule?.let { customRuleManager.applyCustomRule(player, it) }
@@ -232,3 +317,4 @@ class GameEventHandler(
         powerUpManager.checkForExpiredPowerUps(player)
     }
 }
+

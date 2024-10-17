@@ -35,6 +35,20 @@ class AchievementManager(private val context: Context) {
         }
     }
 
+    /**
+     * Check if the player already has an achievement of a certain type.
+     *
+     * @param player The player to check.
+     * @param achievementType The type of the achievement to check for.
+     * @return True if the player has already unlocked this achievement, false otherwise.
+     */
+    fun hasAchievement(player: Player, achievementType: AchievementType): Boolean {
+        val hasAchievement = player.achievements.any { it.type == achievementType && it.isUnlocked }
+        Log.d(TAG, "Player ${player.name} has achievement $achievementType: $hasAchievement")
+        return hasAchievement
+    }
+
+
     // Track progress for progressive achievements
     fun trackProgress(player: Player, achievementType: AchievementType, progressAmount: Int = 1) {
         Log.d(TAG, "Tracking progress for achievement: $achievementType, Progress amount: $progressAmount")
@@ -51,9 +65,12 @@ class AchievementManager(private val context: Context) {
         } ?: Log.d(TAG, "No unlocked achievements found for type: $achievementType")
     }
 
+    fun getAchievementByType(achievementType: AchievementType): Achievement? {
+        return achievements.find { it.type == achievementType }
+    }
 
     // Unlock achievement and apply rewards
-    private fun unlockAchievement(player: Player, achievement: Achievement) {
+    fun unlockAchievement(player: Player, achievement: Achievement) {
         Log.d(TAG, "Unlocking achievement: ${achievement.name}")
 
         achievement.unlockAchievement()

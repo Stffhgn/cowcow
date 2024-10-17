@@ -89,4 +89,11 @@ class CowCowFragment : Fragment() {
         _binding = null
         Log.d("CowCowFragment", "CowCowFragment view destroyed, binding set to null")
     }
+    // Companion object to handle instance creation of CowCowFragment
+    companion object {
+        @JvmStatic
+        fun newInstance(): CowCowFragment {
+            return CowCowFragment()
+        }
+    }
 }

@@ -7,7 +7,13 @@
     android:layout_height="match_parent"
     tools:context=".activity.MainActivity">
 
-    <!-- NavHostFragment to manage fragment navigation -->
+    <!-- RollingHillsView as the background -->
+    <com.example.cow_cow.background.RollingHillsView
+        android:id="@+id/rollingHillsView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- NavHostFragment layered on top -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"
         android:layout_width="match_parent"

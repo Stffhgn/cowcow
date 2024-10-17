@@ -91,6 +91,33 @@ object PowerUpManager {
             }
         }
     }
+    /**
+     * Grants a specific power-up to a player.
+     *
+     * @param player The player receiving the power-up.
+     * @param powerUpType The type of power-up being granted.
+     * @param effectValue Optional: The value associated with the power-up effect (e.g., extra points).
+     */
+    fun grantPowerUp(player: Player, powerUpType: PowerUpType, effectValue: Int = 0) {
+        Log.d(TAG, "Granting power-up ${powerUpType.name} to player ${player.name}")
+
+        // Create the power-up and add it to the player's list of power-ups
+        val powerUp = PowerUp(
+            type = powerUpType,
+            isActive = true,
+            duration = 300000, // Assigning a default duration if needed
+            effectValue = effectValue
+        )
+
+        // Add power-up to player's active power-ups
+        player.activePowerUps.add(powerUp)
+
+        // Log that the power-up was successfully granted
+        Log.d(TAG, "Power-up ${powerUpType.name} with effect value $effectValue granted to player ${player.name}")
+
+        // Apply the power-up effect immediately if applicable
+        applyPowerUpEffect(player, powerUp)
+    }
 
     /**
      * Removes the effect of the given power-up from the player.

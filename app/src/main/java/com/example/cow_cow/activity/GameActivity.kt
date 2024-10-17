@@ -1,8 +1,11 @@
 package com.example.cow_cow.activity
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
+import android.view.View
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProvider
@@ -14,6 +17,7 @@ import com.example.cow_cow.databinding.ActivityGameBinding
 import com.example.cow_cow.gameFragments.CowCowFragment
 import com.example.cow_cow.gameFragments.CowCowFragmentDirections
 import com.example.cow_cow.gameFragments.GameSettingsFragmentDialog
+import com.example.cow_cow.gameFragments.TeamGamesFragmentDialog
 import com.example.cow_cow.gameFragments.TeamManagementFragmentDialog
 import com.example.cow_cow.gameFragments.WhoCalledItFragment
 import com.example.cow_cow.gameFragments.WhoCalledItFragmentDirections
@@ -29,11 +33,15 @@ import com.example.cow_cow.interfaces.OnPlayerSelectedListener
 import com.example.cow_cow.gameFragments.WhosPlayingDialogFragment
 import com.example.cow_cow.gameFragments.WhosPlayingDialogFragmentDirections
 import com.example.cow_cow.mainFragments.StartFragmentDirections
+import com.example.cow_cow.models.Team
 import com.example.cow_cow.playerFragment.PlayerListDialogFragment
 
 class GameActivity : AppCompatActivity(), OnPlayerSelectedListener, OnPlayerAndObjectSelectedListener, OnObjectSelectedListener {
 
     private var unclaimedPlayerId: String? = null
+    private lateinit var currentTeam: Team // Example initialization in GameActivity
+
+
     // View Binding
     private lateinit var binding: ActivityGameBinding
 
@@ -51,7 +59,7 @@ class GameActivity : AppCompatActivity(), OnPlayerSelectedListener, OnPlayerAndO
 
     // Managers
     private lateinit var gameEventHandler: GameEventHandler
-    private lateinit var playerManager: PlayerManager
+    lateinit var playerManager: PlayerManager
     private lateinit var scoreManager: ScoreManager
     private lateinit var scavengerHuntManager: ScavengerHuntManager
     private lateinit var soundManager: SoundManager
@@ -177,6 +185,8 @@ class GameActivity : AppCompatActivity(), OnPlayerSelectedListener, OnPlayerAndO
 
         // Update repository and UI as necessary
         gameEventHandler.updateTeamScore()
+        //Team Game Button if everyone is on a team
+        updateTeamGamesButtonVisibility()
     }
 
     fun openTeamManagementDialog() {
@@ -196,6 +206,38 @@ class GameActivity : AppCompatActivity(), OnPlayerSelectedListener, OnPlayerAndO
         // Show PlayerListDialogFragment with the selected object type
         val dialogFragment = PlayerListDialogFragment.newInstance(objectType)
         dialogFragment.show(supportFragmentManager, PlayerListDialogFragment.TAG)
+    }
+
+
+    fun areAllPlayersOnTeam(): Boolean {
+        return players.all { it.isOnTeam }
+    }
+
+    fun updateTeamGamesButtonVisibility() {
+        val teamGamesButton = findViewById<Button>(R.id.teamGamesButton)
+
+        if (areAllPlayersOnTeam()) {
+            teamGamesButton.visibility = View.VISIBLE
+
+            // Set the currentTeam if it has not been initialized yet
+            if (!::currentTeam.isInitialized) {
+                setupCurrentTeam()
+            }
+
+        } else {
+            teamGamesButton.visibility = View.GONE
+        }
+    }
+
+    private fun setupCurrentTeam() {
+        // Fetch the team from TeamManager, creating a default one if necessary
+        currentTeam = TeamManager.getTeam()
+
+        // If players are not yet added to the team, add all players marked as "isOnTeam"
+        players.filter { it.isOnTeam && !TeamManager.isPlayerInTeam(it) }
+            .forEach { player -> TeamManager.addPlayerToTeam(player) }
+
+        Log.d("GameActivity", "Current team set with members: ${currentTeam.members.map { it.name }} and name: ${currentTeam.name}")
     }
 
     // Implementation for OnPlayerSelectedListener (for WhosPlayingFragment)
@@ -265,16 +307,46 @@ class GameActivity : AppCompatActivity(), OnPlayerSelectedListener, OnPlayerAndO
         binding.gameTextView.text = nextNews
     }
 
-    // Set up buttons to switch fragments
+    fun onRainbowCarGameCompleted() {
+        Log.d("GameActivity", "Handling Rainbow Car game completion")
+
+        // Retrieve all players from the player manager and filter by `isOnTeam`
+        val teamPlayers = playerManager.getAllPlayers().filter { it.isOnTeam }
+
+        if (teamPlayers.isNotEmpty()) {
+            Log.d("GameActivity", "Team players found: ${teamPlayers.size}, processing each member")
+
+            // Create a temporary team object for processing purposes
+            val tempTeam = Team(id = "temp", name = "Dynamic Team", members = teamPlayers.toMutableList())
+
+            // Pass the filtered players to the game event handler
+            gameEventHandler.handleRainbowCarCompletion(tempTeam)
+        } else {
+            Log.e("GameActivity", "No team members found for Rainbow Car completion. Please make sure players are added to the team.")
+        }
+    }
+
     private fun setupButtons() {
-        binding.leftDrawerButton.setOnClickListener {
+        // Settings button setup
+        binding.settingsButton.setOnClickListener {
+            // Load the game settings dialog
             loadGameSettingsDialog()
         }
 
-        binding.rightDrawerButton.setOnClickListener {
+        // Team Games button setup
+        binding.teamGamesButton.setOnClickListener {
+            Log.d("GameActivity", "Team Games button clicked")
+            val dialogFragment = TeamGamesFragmentDialog()
+            dialogFragment.show(supportFragmentManager, "TeamGamesFragmentDialog")
+        }
+
+        // Who Is Playing button setup
+        binding.whoIsPlayingButton.setOnClickListener {
+            // Open the Who's Playing dialog
             openWhosPlayingDialog()
         }
     }
+
 
     private fun openWhosPlayingDialog() {
         val dialogFragment = WhosPlayingDialogFragment.newInstance()

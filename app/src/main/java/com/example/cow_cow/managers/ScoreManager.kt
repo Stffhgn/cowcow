@@ -66,6 +66,23 @@ object ScoreManager {
     }
 
     /**
+     * Add a specified number of points to a player's base score.
+     *
+     * @param player The player to whom points will be added.
+     * @param points The number of points to add.
+     */
+    fun addPointsToPlayer(player: Player, points: Int) {
+        Log.d(TAG, "Adding $points points to player: ${player.name}")
+
+        // Add the points to the player's base score
+        player.addBasePoints(points)
+
+        // Log the updated score
+        val updatedScore = calculatePlayerScore(player)
+        Log.d(TAG, "Player ${player.name}'s new total score: $updatedScore")
+    }
+
+    /**
      * Apply a power-up's effect to the score.
      *
      * @param currentScore The current score before applying the power-up.
