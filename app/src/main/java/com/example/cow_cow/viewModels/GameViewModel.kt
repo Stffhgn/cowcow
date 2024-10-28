@@ -38,7 +38,7 @@ class GameViewModel(
     val team: LiveData<Team> get() = _team
 
     // Now you can instantiate PlayerManager
-    private val playerManager = PlayerManager(playerRepository)
+    val playerManager = PlayerManager(playerRepository)
 
     // Similarly, instantiate GameManager with required dependencies
     private val gameManager = GameManager(playerManager)

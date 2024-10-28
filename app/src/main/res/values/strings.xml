@@ -6,6 +6,9 @@
     <string name="no">No</string>
     <string name="ok">Okay</string>
 
+    <string name="players">Players</string>
+    <string name="no_players_available">No Players Available</string>
+
     <!-- Main Menu Strings -->
     <string name="start_game">Start Game</string>
     <string name="settings">Settings</string>

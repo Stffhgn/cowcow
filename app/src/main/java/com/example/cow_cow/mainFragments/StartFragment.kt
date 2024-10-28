@@ -11,8 +11,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.cow_cow.R
 import com.example.cow_cow.activity.GameActivity
+import com.example.cow_cow.controllers.PowerUpController
 import com.example.cow_cow.databinding.FragmentStartBinding
+import com.example.cow_cow.managers.*
 import com.example.cow_cow.repositories.PlayerRepository
+import com.example.cow_cow.repositories.TriviaRepository
 import com.example.cow_cow.viewModels.PlayerViewModel
 import com.example.cow_cow.viewModels.PlayerViewModelFactory
 
@@ -22,6 +25,11 @@ class StartFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var playerViewModel: PlayerViewModel
+
+    // Initialize instances for managers that require a repository
+    private lateinit var playerManager: PlayerManager
+    private lateinit var teamManager: TeamManager
+    private lateinit var triviaManager: TriviaManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,21 +42,25 @@ class StartFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize the repository with context for SharedPreferences
-        val repository = PlayerRepository(requireContext())
+        // Initialize the repositories
+        val playerRepository = PlayerRepository(requireContext())
+        val triviaRepository = TriviaRepository()
+
+        // Initialize manager instances that require repositories
+        playerManager = PlayerManager(playerRepository)
+        teamManager = TeamManager(playerRepository)
+        triviaManager = TriviaManager(triviaRepository)
 
         // Create ViewModel using the custom factory
-        val factory = PlayerViewModelFactory(requireActivity().application, repository)
+        val factory = PlayerViewModelFactory(requireActivity().application, playerRepository)
         playerViewModel = ViewModelProvider(this, factory).get(PlayerViewModel::class.java)
 
         // Observe the list of players
         playerViewModel.players.observe(viewLifecycleOwner) { players ->
-            if (players.isNullOrEmpty()) {
-                // No players, show "Add Player" button
-                binding.playerButton.text = "Add Player"
+            binding.playerButton.text = if (players.isNullOrEmpty()) {
+                "Add Player"
             } else {
-                // Players exist, show "Who is Playing"
-                binding.playerButton.text = "Who is Playing"
+                "Who is Playing"
             }
         }
 
@@ -104,18 +116,28 @@ class StartFragment : Fragment() {
             } else {
                 Log.d("StartFragment", "Players found, starting GameActivity")
                 val intent = Intent(requireContext(), GameActivity::class.java)
-                // Optionally clear the back stack or set necessary flags
                 startActivity(intent)
             }
         }
     }
 
     private fun resetAllData() {
-        Log.d("StartFragment", "Resetting all data")
+        Log.d("StartFragment", "Resetting all game data")
 
-        // Reset all data using the PlayerViewModel
-        playerViewModel.resetAllPlayers()
-        // Add additional reset methods if needed, like team data, scores, etc.
+        // Player-specific resets
+        val allPlayers = playerManager.getAllPlayers()
+        ScoreManager.resetPlayerScores(allPlayers)  // Reset all player scores
+        allPlayers.forEach { player ->
+            PenaltyManager.clearAllPenalties(player)  // Clear penalties for each player
+            PowerUpController.clearAllActivePowerUpsForPlayer(player)  // Clear power-ups
+            playerManager.savePlayer(player)  // Save updated player state
+        }
+        playerManager.clearPlayers()  // Clear all players from the game
+
+        // Team reset
+        teamManager.resetTeam()
+
+        Log.d("StartFragment", "All game data reset completed.")
     }
 
     override fun onDestroyView() {

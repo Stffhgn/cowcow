@@ -44,8 +44,8 @@ class WhoCalledItDialogFragment : DialogFragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is GameActivity && context.cowController is OnPlayerAndObjectSelectedListener) {
-            listener = context.cowController
+        if (context is GameActivity && context.cowCowController is OnPlayerAndObjectSelectedListener) {
+            listener = context.cowCowController
         } else {
             throw RuntimeException("CowCowController must implement OnPlayerAndObjectSelectedListener")
         }

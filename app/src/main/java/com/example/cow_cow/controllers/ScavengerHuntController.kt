@@ -1,15 +1,14 @@
 package com.example.cow_cow.controllers
 
 import android.content.Context
-import android.transition.TransitionManager
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.core.content.ContextCompat
+import androidx.core.view.children
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.Observer
+import androidx.lifecycle.LifecycleOwner
 import com.example.cow_cow.R
-import com.example.cow_cow.activity.GameActivity
 import com.example.cow_cow.enums.DifficultyLevel
 import com.example.cow_cow.gameFragments.WhoCalledItDialogFragment
 import com.example.cow_cow.interfaces.OnPlayerAndObjectSelectedListener
@@ -25,131 +24,114 @@ class ScavengerHuntController(
     private val activity: FragmentActivity,
     private val context: Context,
     private val flexboxContainer: FlexboxContainer,
-    private val gameActivity: GameActivity,
     private val playerManager: PlayerManager,
     private val scoreManager: ScoreManager,
-    private val scavengerHuntViewModel: ScavengerHuntViewModel // Changed
+    private val scavengerHuntViewModel: ScavengerHuntViewModel
 ) : OnPlayerAndObjectSelectedListener {
 
     private val TAG = "ScavengerHuntController"
 
-    /**
-     * Handles player selection from the dialog and processes the scavenger hunt event.
-     *
-     * @param playerId The ID of the selected player.
-     * @param objectType The name of the scavenger hunt item found.
-     */
-    override fun onPlayerSelected(playerId: String, objectType: String) {
-        Log.d(TAG, "Player selected: $playerId for item: $objectType")
-
-        // Retrieve the list of players
-        val players = playerManager.getAllPlayers()
-
-        // Find the selected player using their ID
-        players.find { it.id == playerId }?.let { selectedPlayer ->
-            processScavengerHuntItem(selectedPlayer, objectType)
-        } ?: Log.e(TAG, "Player not found with ID: $playerId")
+    init {
+        Log.d(TAG, "Initializing ScavengerHuntController.")
+        observeScavengerHuntItems()
     }
 
-    /**
-     * Process the scavenger hunt item found by the player.
-     * Rewards may include points, achievements, or power-ups.
-     *
-     * @param player The player who found the item.
-     * @param itemName The name of the scavenger hunt item.
-     */
-    private fun processScavengerHuntItem(player: Player, itemName: String) {
-        scavengerHuntViewModel.scavengerHuntItems.value?.find { it.name == itemName }?.let { item ->
-            // Mark the item as found for the player
-            scavengerHuntViewModel.markItemAsFound(item, player)
-            Log.d(TAG, "Player ${player.name} found item: ${item.name}")
-
-            // Randomly determine a reward (points, power-up)
-            val rewardType = (1..2).random()
-            when (rewardType) {
-                1 -> {
-                    val points = item.getPoints()
-                    val totalScore = scoreManager.addPointsToPlayer(player, points)
-                    Log.d(TAG, "Player ${player.name} earned $points points. Total score: $totalScore")
-                }
-                2 -> {
-                    // Implement power-up reward logic if needed
-                    Log.d(TAG, "Player ${player.name} received a power-up reward.")
-                }
+    // Observes the scavenger hunt items in the ViewModel
+    private fun observeScavengerHuntItems() {
+        scavengerHuntViewModel.scavengerHuntItems.observe(activity as LifecycleOwner) { items ->
+            if (items.isNullOrEmpty()) {
+                Log.w(TAG, "No scavenger hunt items available to display.")
+            } else {
+                Log.d(TAG, "Scavenger hunt items updated: ${items.size} items found.")
+                updateScavengerHuntButtons(items)
             }
-
-            // Update the UI to reflect the found item
-            loadScavengerHuntButtons()
-        } ?: Log.e(TAG, "Item $itemName not found in the scavenger hunt.")
-    }
-
-    /**
-     * Start and load scavenger hunt items into the view.
-     * Observes changes in the ViewModel to ensure the view stays updated.
-     */
-    fun loadScavengerHuntItems() {
-        // Observe the scavenger hunt items from the ViewModel
-        scavengerHuntViewModel.scavengerHuntItems.observe(activity, Observer { items ->
-            loadScavengerHuntButtons()
-            Log.d(TAG, "Loaded ${items.size} scavenger hunt items from the ViewModel.")
-        })
-    }
-
-    /**
-     * Load scavenger hunt buttons into the FlexboxContainer.
-     */
-    private fun loadScavengerHuntButtons() {
-        val items = scavengerHuntViewModel.scavengerHuntItems.value ?: emptyList()
-        TransitionManager.beginDelayedTransition(flexboxContainer)
-        flexboxContainer.removeAllViews()
-        items.forEach { item ->
-            val itemButton = createButton(item)
-            flexboxContainer.addView(itemButton)
         }
-        flexboxContainer.requestLayout()
-        Log.d(TAG, "Loaded ${items.size} scavenger hunt buttons.")
     }
 
-    /**
-     * Create a button for a scavenger hunt item.
-     */
-    private fun createButton(item: ScavengerHuntItem): Button {
+    override fun onPlayerSelected(playerId: String, objectType: String) {
+        Log.d(TAG, "Player selected with ID: $playerId for object type: $objectType")
+        val player = playerManager.getAllPlayers().find { it.id == playerId }
+        val item = scavengerHuntViewModel.scavengerHuntItems.value?.find { it.name == objectType }
+
+        if (player != null && item != null) {
+            Log.d(TAG, "Found player ${player.name} and item '${item.name}' - processing.")
+            processScavengerHuntItem(player, item)
+        } else {
+            Log.e(TAG, "Error: Player or item not found - Player: $player, Item: $item")
+        }
+    }
+
+    // Processes when an item is found
+    private fun processScavengerHuntItem(player: Player, item: ScavengerHuntItem) {
+        Log.d(TAG, "Marking '${item.name}' as found for player ${player.name}")
+        scavengerHuntViewModel.markItemAsFound(item, player)
+
+        val points = item.getPoints()
+        val updatedScore = scoreManager.addPointsToPlayer(player, points)
+
+        Log.d(TAG, "Awarded $points points to ${player.name}. New total score: $updatedScore")
+        updateScavengerHuntButtons(scavengerHuntViewModel.scavengerHuntItems.value ?: emptyList())
+    }
+
+    private fun updateScavengerHuntButtons(items: List<ScavengerHuntItem>) {
+        Log.d(TAG, "Updating scavenger hunt buttons with ${items.size} items.")
+
+        // Clear only scavenger hunt buttons by finding views tagged specifically for scavenger hunt
+        flexboxContainer.children.filter { it.tag == "scavengerHuntButton" }.forEach { flexboxContainer.removeView(it) }
+        items.forEach { item ->
+            val itemButton = createScavengerHuntButton(item)
+            flexboxContainer.addView(itemButton)
+            Log.d(TAG, "Button created for item '${item.name}' with isFound status: ${item.isFound}")
+        }
+
+        flexboxContainer.requestLayout()
+        flexboxContainer.invalidate()
+    }
+
+    private fun createScavengerHuntButton(item: ScavengerHuntItem): Button {
         return Button(context).apply {
             text = item.name
-            id = View.generateViewId()
-            tag = "scavengerHuntButton_${item.name}"
-
+            tag = "scavengerHuntButton"  // Tag to identify scavenger hunt buttons
             layoutParams = FlexboxLayout.LayoutParams(
                 FlexboxLayout.LayoutParams.WRAP_CONTENT,
                 FlexboxLayout.LayoutParams.WRAP_CONTENT
             ).apply {
                 setMargins(16, 16, 16, 16)
             }
-
-            // Set button background color based on difficulty level
-            val colorRes = when (item.difficultyLevel) {
-                DifficultyLevel.EASY -> R.color.easy_color
-                DifficultyLevel.MEDIUM -> R.color.medium_color
-                DifficultyLevel.HARD -> R.color.hard_color
-            }
-            setBackgroundColor(ContextCompat.getColor(context, colorRes))
-
+            setBackgroundColor(ContextCompat.getColor(context, getColorForDifficulty(item.difficultyLevel)))
+            isEnabled = !item.isFound
             setOnClickListener {
-                Log.d(TAG, "Scavenger hunt item clicked: ${item.name}")
+                Log.d(TAG, "Scavenger hunt item '${item.name}' button clicked.")
                 openWhoCalledItDialog(item)
             }
-
-            // Disable the button if the item is found
-            isEnabled = !item.isFound
         }
     }
 
-    /**
-     * Opens the "Who Called It" dialog, passing the list of players and the scavenger hunt item.
-     */
+    // Starts the scavenger hunt through the ViewModel
+    fun loadScavengerHuntItems() {
+        Log.d(TAG, "Requesting scavenger hunt items from ViewModel.")
+        scavengerHuntViewModel.startScavengerHunt()
+    }
+
+    // Opens the Who Called It dialog for the selected scavenger hunt item
     private fun openWhoCalledItDialog(item: ScavengerHuntItem) {
-        Log.d(TAG, "Opening Who Called It dialog for item: ${item.name}")
-        val dialog = WhoCalledItDialogFragment.newInstance(playerManager.getAllPlayers(), item.name)
-        dialog.show(activity.supportFragmentManager, WhoCalledItDialogFragment.TAG)
+        val players = playerManager.getAllPlayers()
+        if (players.isEmpty()) {
+            Log.e(TAG, "No players available for dialog opening.")
+            return
+        }
+
+        Log.d(TAG, "Opening Who Called It dialog for item '${item.name}'.")
+        WhoCalledItDialogFragment.newInstance(players, item.name)
+            .show(activity.supportFragmentManager, WhoCalledItDialogFragment.TAG)
+    }
+
+    // Maps item difficulty levels to colors for button background
+    private fun getColorForDifficulty(level: DifficultyLevel): Int {
+        return when (level) {
+            DifficultyLevel.EASY -> R.color.easy_color
+            DifficultyLevel.MEDIUM -> R.color.medium_color
+            DifficultyLevel.HARD -> R.color.hard_color
+        }
     }
 }

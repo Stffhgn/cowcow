@@ -1,96 +1,83 @@
 package com.example.cow_cow.viewModels
 
 import android.app.Application
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.ScavengerHuntItem
 import com.example.cow_cow.managers.ScavengerHuntManager
 import com.example.cow_cow.repositories.ScavengerHuntRepository
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class ScavengerHuntViewModel(
     application: Application,
-    private val players: List<Player>
+    private val players: List<Player>,
+    repository: ScavengerHuntRepository
 ) : AndroidViewModel(application) {
 
-    private val context: Context = getApplication<Application>().applicationContext
+    private val _scavengerHuntItems = MutableLiveData<List<ScavengerHuntItem>>()
+    val scavengerHuntItems: LiveData<List<ScavengerHuntItem>> get() = _scavengerHuntItems
 
-    // Initialize the repository with the application context
-    private val repository = ScavengerHuntRepository(context)
-
-    // LiveData for scavenger hunt items from the repository
-    val scavengerHuntItems: LiveData<List<ScavengerHuntItem>> = repository.scavengerHuntItems
-
-    // LiveData for status and error messages
     private val _statusMessage = MutableLiveData<String?>()
     val statusMessage: LiveData<String?> get() = _statusMessage
 
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
 
-    // Logging tag
     private val TAG = "ScavengerHuntViewModel"
 
     init {
+        Log.d(TAG, "Initializing ScavengerHuntViewModel with ${players.size} players.")
+        ScavengerHuntManager.initialize(repository)  // Initialize the manager with the repository
         startScavengerHunt()
     }
 
     /**
-     * Starts the scavenger hunt using the ScavengerHuntManager.
+     * Starts the scavenger hunt and updates the UI with active items.
      */
-    private fun startScavengerHunt() {
+    fun startScavengerHunt() {
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    ScavengerHuntManager.startScavengerHunt(players, context)
-                }
-                _statusMessage.value = "Scavenger hunt started successfully"
-                Log.d(TAG, "Scavenger hunt started.")
+                ScavengerHuntManager.startScavengerHunt(players)
+                _scavengerHuntItems.postValue(ScavengerHuntManager.getActiveScavengerHuntItems())
+                _statusMessage.postValue("Scavenger hunt started successfully.")
+                Log.d(TAG, "Scavenger hunt started with ${_scavengerHuntItems.value?.size ?: 0} items.")
             } catch (e: Exception) {
-                _errorMessage.value = "Unable to start scavenger hunt. Please try again."
+                _errorMessage.postValue("Unable to start scavenger hunt. Please try again.")
                 Log.e(TAG, "Error starting scavenger hunt: ${e.message}", e)
             }
         }
     }
 
     /**
-     * Marks a scavenger hunt item as found and updates the status message.
+     * Marks a scavenger hunt item as found by a player, updates the active items, and notifies UI.
      */
     fun markItemAsFound(item: ScavengerHuntItem, player: Player) {
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    ScavengerHuntManager.markItemAsFound(item, player, context)
+                ScavengerHuntManager.markItemAsFound(item, player)
+                _scavengerHuntItems.postValue(ScavengerHuntManager.getActiveScavengerHuntItems())
+                _statusMessage.postValue("${item.name} found by ${player.name}!")
+                Log.d(TAG, "Item '${item.name}' marked as found by '${player.name}'. Active items count: ${_scavengerHuntItems.value?.size ?: 0}")
+
+                // Check for hunt completion
+                if (ScavengerHuntManager.isHuntCompleted()) {
+                    _statusMessage.postValue("Scavenger hunt completed!")
+                    Log.d(TAG, "Scavenger hunt completed. All items found.")
                 }
-                _statusMessage.value = "${item.name} found by ${player.name}!"
-                Log.d(TAG, "${item.name} marked as found by ${player.name}.")
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to mark item as found. Please try again."
+                _errorMessage.postValue("Failed to mark item as found. Please try again.")
                 Log.e(TAG, "Error marking item as found: ${e.message}", e)
             }
         }
     }
 
     /**
-     * Checks if the scavenger hunt is completed.
-     *
-     * @return True if the hunt is completed, false otherwise.
-     */
-    fun isHuntCompleted(): Boolean {
-        val huntCompleted = ScavengerHuntManager.isHuntCompleted()
-        Log.d(TAG, "Scavenger hunt completed: $huntCompleted")
-        return huntCompleted
-    }
-
-    /**
-     * Clears error and status messages.
+     * Clears status and error messages.
      */
     fun clearMessages() {
-        _statusMessage.value = null
-        _errorMessage.value = null
+        Log.d(TAG, "Clearing status and error messages.")
+        _statusMessage.postValue(null)
+        _errorMessage.postValue(null)
     }
 }

@@ -40,10 +40,17 @@ class PlayerListViewModel(
      */
     fun loadPlayers() {
         Log.d(TAG, "Loading players from repository")
-        val context = getApplication<Application>().applicationContext  // Get the context from application
-        val playerList = playerRepository.getPlayers()  // Pass context to getPlayers function
-        _players.value = playerList
-        Log.d(TAG, "Loaded ${playerList.size} players.")
+
+        // Launch a coroutine to load players on a background thread
+        viewModelScope.launch {
+            val context = getApplication<Application>().applicationContext
+            val playerList = withContext(Dispatchers.IO) {
+                playerRepository.getPlayers()  // Fetch players in background
+            }
+
+            _players.postValue(playerList)  // Update LiveData on the main thread
+            Log.d(TAG, "Loaded ${playerList.size} players.")
+        }
     }
 
     /**
@@ -84,11 +91,9 @@ class PlayerListViewModel(
             // Retrieve the updated list of players from PlayerManager
             val updatedPlayers = playerManager.getAllPlayers()
 
-            withContext(Dispatchers.Main) {
-                // Update LiveData to force UI update
-                _players.value = updatedPlayers
-                Log.d(TAG, "Player added: ${player.name} - LiveData updated")
-            }
+            // Update LiveData with the new list on the main thread
+            _players.postValue(updatedPlayers)
+            Log.d(TAG, "Player added: ${player.name} - LiveData updated")
         }
     }
 

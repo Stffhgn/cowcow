@@ -26,14 +26,10 @@ class WhosPlayingFragment : Fragment() {
 
     private lateinit var viewModel: PlayerListViewModel
     private lateinit var adapter: PlayerAdapter
-    private lateinit var scoreManager: ScoreManager
     private var _binding: FragmentWhosPlayingBinding? = null
     private val binding get() = _binding!!
 
-    // Logging tag for debugging
     private val TAG = "WhosPlayingFragment"
-
-    // Interface to communicate with GameActivity
     private var listener: OnPlayerSelectedListener? = null
 
     override fun onAttach(context: Context) {
@@ -43,13 +39,13 @@ class WhosPlayingFragment : Fragment() {
         } else {
             throw RuntimeException("$context must implement OnPlayerSelectedListener")
         }
+        Log.d(TAG, "WhosPlayingFragment attached with listener.")
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        Log.d(TAG, "onCreateView: WhosPlayingFragment view is being created.")
         _binding = FragmentWhosPlayingBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -57,115 +53,100 @@ class WhosPlayingFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize the repository
         val repository = PlayerRepository(requireContext())
-
-        // Initialize ViewModel with PlayerListViewModelFactory
         val factory = PlayerListViewModelFactory(requireActivity().application, repository)
-        viewModel = ViewModelProvider(requireActivity(), factory).get(PlayerListViewModel::class.java)
+        viewModel = ViewModelProvider(this, factory).get(PlayerListViewModel::class.java)
 
-        // Log for ViewModel initialization
-        Log.d(TAG, "onViewCreated: PlayerListViewModel initialized.")
+        setupRecyclerView()
+        setupViewModelObservers()
+        setupButtonListeners()
 
-        // Set up RecyclerView and Adapter
+        Log.d(TAG, "ViewModel and UI components initialized.")
+    }
+
+    private fun setupRecyclerView() {
         adapter = PlayerAdapter(
-            isWhoCalledItContext = true, // or false depending on your context
-            onPlayerClick = { player -> onPlayerClick(player) }, // Pass the click handling lambda
-            scoreManager = scoreManager // Inject the ScoreManager instance if needed
+            isWhoCalledItContext = true,
+            onPlayerClick = { player -> onPlayerClick(player) },
+            scoreManager = ScoreManager
         )
-        binding.playerRecyclerView.adapter = adapter
-        binding.playerRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        binding.playerRecyclerView.apply {
+            adapter = this@WhosPlayingFragment.adapter
+            layoutManager = LinearLayoutManager(requireContext())
+        }
+        Log.d(TAG, "RecyclerView and PlayerAdapter set up.")
+    }
 
-        // Log RecyclerView setup
-        Log.d(TAG, "RecyclerView set up with PlayerAdapter.")
-
-        // Observe changes to the player list
+    private fun setupViewModelObservers() {
         viewModel.players.observe(viewLifecycleOwner) { players ->
             if (players.isNotEmpty()) {
-                binding.playerListTitle.text = "Players"  // Set the title back to "Players"
-                binding.playerRecyclerView.isVisible = true // Show RecyclerView
-                binding.playerListTitle.isVisible = true // Show title
-
-                adapter.submitList(players.toList()) // Update the adapter with the new player list
-                binding.startGameButton.isEnabled = true // Enable Start Game button
-                Log.d(TAG, "Player list updated. Number of players: ${players.size}")
+                binding.playerListTitle.text = getString(R.string.players)
+                binding.playerRecyclerView.isVisible = true
+                binding.startGameButton.isEnabled = true
+                adapter.submitList(players)
+                Log.d(TAG, "Players list updated: ${players.size} players displayed.")
             } else {
-                Log.d(TAG, "No players found to display.")
-                binding.playerListTitle.text = "No Players Available"  // Update the title when empty
-                binding.playerRecyclerView.isVisible = false // Hide RecyclerView
-                binding.startGameButton.isEnabled = false // Disable Start Game button
+                binding.playerListTitle.text = getString(R.string.no_players_available)
+                binding.playerRecyclerView.isVisible = false
+                binding.startGameButton.isEnabled = false
+                Log.d(TAG, "No players available.")
             }
         }
+    }
 
-        // Add Player Button Click Listener
+    private fun setupButtonListeners() {
         binding.addPlayerButton.setOnClickListener {
             val playerName = binding.playerNameInput.text.toString().trim()
             if (playerName.isNotEmpty()) {
-                Log.d(TAG, "Adding a new player with name: $playerName")
                 val playerId = PlayerIDGenerator.generatePlayerID()
                 val newPlayer = Player(id = playerId, name = playerName)
-
-                // Add the player using the ViewModel
                 viewModel.addPlayer(newPlayer)
-
-                // Clear the input field
+                adapter.notifyDataSetChanged()
                 binding.playerNameInput.text.clear()
-
-                // Reload players to reflect changes
-                viewModel.loadPlayers()
+                Log.d(TAG, "Player added with name: $playerName, ID: $playerId")
             } else {
-                Log.d(TAG, "Player name input is empty, not adding player.")
+                Log.d(TAG, "Player name input is empty. No player added.")
             }
         }
 
-        // Start Game Button Click Listener
         binding.startGameButton.setOnClickListener {
             Log.d(TAG, "Start Game button clicked.")
-            navigateToGameOrAddPlayer() // Ensure players are present before starting the game
+            navigateToGameOrAddPlayer()
         }
 
-        // Back Button Click Listener
         binding.backButton.setOnClickListener {
             Log.d(TAG, "Back button clicked.")
-            findNavController().navigateUp() // Navigate back in the navigation stack
+            findNavController().navigateUp()
         }
-
-        // Log ViewModel observer setup
-        Log.d(TAG, "ViewModel observer set up for players LiveData.")
     }
 
     private fun onPlayerClick(player: Player) {
         Log.d(TAG, "Player clicked: ${player.name}, ID: ${player.id}")
-
-        // Use the listener to communicate with GameActivity without requiring an objectType
         listener?.onPlayerSelected(player.id)
-
-        Log.d(TAG, "Navigating to PlayerStatsFragment with player: ${player.name}, ID: ${player.id}")
     }
 
-    // Function to handle starting the game if players are present
     private fun navigateToGameOrAddPlayer() {
         viewModel.players.value?.let { players ->
             if (players.isNotEmpty()) {
-                Log.d(TAG, "Players found, navigating to GameFragment.")
                 val action = WhosPlayingFragmentDirections.actionWhosPlayingFragmentToCowCowFragment()
                 findNavController().navigate(action)
+                Log.d(TAG, "Navigated to CowCowFragment with ${players.size} players.")
             } else {
-                Log.d(TAG, "No players found, unable to start the game.")
-                // Optional: Show a Toast message or alert dialog indicating no players are present
+                Log.d(TAG, "No players found. Unable to start the game.")
+                // Optional: show a Toast or dialog here
             }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume: Reloading players to update scores.")
-        viewModel.loadPlayers() // Reload player data to ensure the latest score updates
+        viewModel.loadPlayers()
+        Log.d(TAG, "Players reloaded in onResume to reflect any changes.")
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        Log.d(TAG, "onDestroyView: View destroyed and binding cleared.")
+        Log.d(TAG, "View binding cleared in onDestroyView.")
     }
 }
