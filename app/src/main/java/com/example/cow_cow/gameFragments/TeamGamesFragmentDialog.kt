@@ -13,6 +13,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.cow_cow.R
 import com.example.cow_cow.activity.GameActivity
 import com.example.cow_cow.adapters.GamesAdapter
+import com.example.cow_cow.controllers.RainbowCarController
+import com.example.cow_cow.controllers.ScavengerHuntController
+import com.example.cow_cow.repositories.ScavengerHuntRepository
+import com.example.cow_cow.uiStuff.FlexboxContainer
 
 class TeamGamesFragmentDialog : DialogFragment() {
 
@@ -48,16 +52,30 @@ class TeamGamesFragmentDialog : DialogFragment() {
         gamesRecyclerView.adapter = gamesAdapter
     }
 
-    // Handle game selection and replace fragment accordingly
+    // Handle game selection
     private fun onGameSelected(game: String) {
+        val gameActivity = activity as? GameActivity
+        if (gameActivity == null) {
+            Log.e(TAG_DIALOG, "GameActivity not found!")
+            Toast.makeText(context, "GameActivity not found", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         when (game) {
-            "Trivia" -> replaceFragment(TriviaFragment())
-            "Scavenger Hunt" -> replaceFragment(ScavengerHuntFragment())
-            "Rainbow Car" -> {
-                val rainbowCarFragment = RainbowCarFragment.newInstance()
-                replaceFragment(rainbowCarFragment)
+            "Trivia" -> {
+                replaceFragment(TriviaFragment())
             }
-            else -> Toast.makeText(context, "Unknown game selected", Toast.LENGTH_SHORT).show()
+            "Scavenger Hunt" -> {
+                gameActivity.loadScavengerHuntButtons()
+                    ?: Log.e(TAG_DIALOG, "Failed to load Scavenger Hunt UI.")
+            }
+            "Rainbow Car" -> {
+                gameActivity.loadRainbowCarButton()
+                    ?: Log.e(TAG_DIALOG, "Failed to load Rainbow Car UI.")
+            }
+            else -> {
+                Toast.makeText(context, "Unknown game selected", Toast.LENGTH_SHORT).show()
+            }
         }
 
         // Dismiss the dialog after game selection

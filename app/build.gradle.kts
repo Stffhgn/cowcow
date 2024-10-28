@@ -94,6 +94,9 @@ dependencies {
     // Debugging tools for Jetpack Compose
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.1")
 
+    // Flexbox Layout
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
+
     // Compose LiveData integration
     implementation("androidx.compose.runtime:runtime-livedata:1.5.1")
 

@@ -1,122 +1,135 @@
 package com.example.cow_cow.viewModels
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import android.util.Log
+import androidx.lifecycle.*
+import com.example.cow_cow.managers.PlayerManager
+import com.example.cow_cow.managers.ScoreManager
+import com.example.cow_cow.managers.TeamManager
 import com.example.cow_cow.models.Player
-import com.example.cow_cow.models.Team
-import com.example.cow_cow.repositories.TeamRepository
+import com.example.cow_cow.repositories.PlayerRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import android.util.Log
-import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.withContext
 
-class TeamViewModel(application: Application, private val repository: TeamRepository) :
-    AndroidViewModel(application) {
+class TeamViewModel(application: Application) : AndroidViewModel(application) {
 
     private val TAG = "TeamViewModel"
 
-    // LiveData for the current team
-    private val _team = MutableLiveData<Team>()
-    val team: LiveData<Team> get() = _team
+    // Managers
+    private val playerManager: PlayerManager
+    private val teamManager: TeamManager
+
+    // LiveData for the list of all players
+    private val _players = MutableLiveData<List<Player>>()
+    val players: LiveData<List<Player>> get() = _players
 
     // LiveData for the team score
     private val _teamScore = MutableLiveData<Int>()
     val teamScore: LiveData<Int> get() = _teamScore
 
     // LiveData for error handling
-    private val _error = MutableLiveData<String>()
-    val error: LiveData<String> get() = _error
+    private val _error = MutableLiveData<String?>()
+    val error: LiveData<String?> get() = _error
 
     // LiveData for success messages (useful for UI notifications)
-    private val _success = MutableLiveData<String>()
-    val success: LiveData<String> get() = _success
+    private val _success = MutableLiveData<String?>()
+    val success: LiveData<String?> get() = _success
 
     init {
-        loadTeam()
+        // Initialize managers
+        val context = getApplication<Application>().applicationContext
+        val playerRepository = PlayerRepository(context)
+        playerManager = PlayerManager(playerRepository)
+        teamManager = TeamManager(playerRepository)
+
+        loadPlayers()
     }
 
     /**
-     * Load the current team from the repository.
+     * Load all players from the PlayerManager.
      */
-    private fun loadTeam() {
+    private fun loadPlayers() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                Log.d(TAG, "Loading team from repository.")
-                val loadedTeam = repository.getTeam()
-                _team.postValue(loadedTeam)
+                Log.d(TAG, "Loading players from PlayerManager.")
+                val allPlayers = playerManager.getAllPlayers()
+                // Post the list of players to LiveData
+                _players.postValue(allPlayers)
+                // Update the team score
                 updateTeamScore()
             } catch (e: Exception) {
-                _error.postValue("Error loading team: ${e.message}")
-                Log.e(TAG, "Error loading team: ${e.message}")
+                _error.postValue("Error loading players: ${e.message}")
+                Log.e(TAG, "Error loading players: ${e.message}")
             }
         }
     }
 
     /**
-     * Add a player to the team and update the team score.
+     * Add a player to the team using the TeamManager.
      */
     fun addPlayerToTeam(player: Player) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 Log.d(TAG, "Adding player ${player.name} to the team.")
-                val currentTeam = _team.value ?: repository.getTeam()
-                if (!currentTeam.members.contains(player)) {
-                    currentTeam.addMember(player)
-                    repository.saveTeam() // Save the updated team (no argument passed)
-                    _team.postValue(currentTeam)
-                    updateTeamScore()
-                    _success.postValue("${player.name} has been added to the team.")
-                } else {
-                    _error.postValue("${player.name} is already in the team.")
-                    Log.w(TAG, "Player ${player.name} is already in the team.")
+                teamManager.addPlayerToTeam(player)
+                // Refresh the players list
+                loadPlayers()
+                withContext(Dispatchers.Main) {
+                    _success.value = "${player.name} has been added to the team."
                 }
             } catch (e: Exception) {
-                _error.postValue("Error adding player to team: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    _error.value = "Error adding player to team: ${e.message}"
+                }
                 Log.e(TAG, "Error adding player to team: ${e.message}")
             }
         }
     }
 
     /**
-     * Remove a player from the team and update the team score.
+     * Remove a player from the team using the TeamManager.
      */
     fun removePlayerFromTeam(player: Player) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 Log.d(TAG, "Removing player ${player.name} from the team.")
-                val currentTeam = _team.value ?: repository.getTeam()
-                if (currentTeam.members.contains(player)) {
-                    currentTeam.removeMember(player)
-                    repository.saveTeam() // Save the updated team (no argument passed)
-                    _team.postValue(currentTeam)
-                    updateTeamScore()
-                    _success.postValue("${player.name} has been removed from the team.")
-                } else {
-                    _error.postValue("${player.name} is not in the team.")
-                    Log.w(TAG, "Player ${player.name} is not in the team.")
+                teamManager.removePlayerFromTeam(player)
+                // Refresh the players list
+                loadPlayers()
+                withContext(Dispatchers.Main) {
+                    _success.value = "${player.name} has been removed from the team."
                 }
             } catch (e: Exception) {
-                _error.postValue("Error removing player from team: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    _error.value = "Error removing player from team: ${e.message}"
+                }
                 Log.e(TAG, "Error removing player from team: ${e.message}")
             }
         }
     }
 
     /**
-     * Update the total score of the team by summing up the individual player scores.
+     * Update the total score of the team by summing up the scores of all players on the team.
      */
     private fun updateTeamScore() {
-        _team.value?.let { team ->
-            val score = team.calculateTotalTeamScore()
-            _teamScore.postValue(score)
-            Log.d(TAG, "Updated team score: $score")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val team = teamManager.createOrGetTeam() // Get the Team object
+                val teamPlayers = team.members           // Access the list of players
+                val score = teamPlayers.sumOf { ScoreManager.calculatePlayerScore(it) }
+                _teamScore.postValue(score)
+                Log.d(TAG, "Updated team score: $score")
+            } catch (e: Exception) {
+                _error.postValue("Error updating team score: ${e.message}")
+                Log.e(TAG, "Error updating team score: ${e.message}")
+            }
         }
     }
 
+
     /**
-     * Clear any errors from the ViewModel (e.g., after showing an error to the user).
+     * Clear any errors from the ViewModel.
      */
     fun clearError() {
         _error.value = null
@@ -124,7 +137,7 @@ class TeamViewModel(application: Application, private val repository: TeamReposi
     }
 
     /**
-     * Clear success messages (to avoid repeated notifications).
+     * Clear success messages.
      */
     fun clearSuccessMessage() {
         _success.value = null
@@ -132,22 +145,22 @@ class TeamViewModel(application: Application, private val repository: TeamReposi
     }
 
     /**
-     * Reset the entire team by removing all players.
+     * Reset the entire team using the TeamManager.
      */
     fun resetTeam() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 Log.d(TAG, "Resetting the team.")
-                val newTeam = repository.getTeam().apply {
-                    members.clear()
-                    teamScore = 0
+                teamManager.resetTeam()
+                // Refresh the players list
+                loadPlayers()
+                withContext(Dispatchers.Main) {
+                    _success.value = "The team has been reset."
                 }
-                repository.saveTeam() // Save the updated (empty) team
-                _team.postValue(newTeam)
-                updateTeamScore()
-                _success.postValue("The team has been reset.")
             } catch (e: Exception) {
-                _error.postValue("Error resetting team: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    _error.value = "Error resetting team: ${e.message}"
+                }
                 Log.e(TAG, "Error resetting team: ${e.message}")
             }
         }

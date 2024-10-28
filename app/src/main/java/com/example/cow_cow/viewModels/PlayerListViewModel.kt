@@ -6,6 +6,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.cow_cow.enums.RankType
+import com.example.cow_cow.managers.PlayerManager
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +23,9 @@ class PlayerListViewModel(
     // LiveData to observe the list of players
     private val _players = MutableLiveData<List<Player>>()
     val players: LiveData<List<Player>> get() = _players
+
+    // Now you can instantiate PlayerManager
+    private val playerManager = PlayerManager(playerRepository)
 
     // Logging tag
     private val TAG = "PlayerListViewModel"
@@ -51,27 +57,32 @@ class PlayerListViewModel(
     }
 
     /**
-     * Sort players by score and update LiveData.
+     * Sort players by score and update LiveData using the ScoreManager for point calculation.
      */
     fun sortPlayersByScore() {
         Log.d(TAG, "Sorting players by total points")
-        _players.value = _players.value?.sortedByDescending { it.calculateTotalPoints() }
+
+        // Use the ScoreManager to calculate and sort the players' scores.
+        _players.value = _players.value?.sortedByDescending { player ->
+            ScoreManager.calculatePlayerScore(player)
+        }
+
         Log.d(TAG, "Players sorted by score.")
     }
 
+
     /**
-     * Add a new player to the list and notify the repository.
+     * Add a new player using the PlayerManager and update LiveData.
      */
     fun addPlayer(player: Player) {
         viewModelScope.launch(Dispatchers.IO) {
-            Log.d(TAG, "Adding player to repository: ${player.name}")
+            Log.d(TAG, "Adding player through PlayerManager: ${player.name}")
 
-            val updatedPlayers = _players.value?.toMutableList() ?: mutableListOf()
-            updatedPlayers.add(player)
+            // Use PlayerManager to add the player
+            playerManager.addPlayer(player)
 
-            // Save the updated list in the repository
-            val context = getApplication<Application>().applicationContext
-            playerRepository.savePlayers(updatedPlayers)
+            // Retrieve the updated list of players from PlayerManager
+            val updatedPlayers = playerManager.getAllPlayers()
 
             withContext(Dispatchers.Main) {
                 // Update LiveData to force UI update
@@ -91,36 +102,68 @@ class PlayerListViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>().applicationContext
             val player = getPlayerById(playerId)
+
             player?.let {
-                it.incrementGamesPlayed()
+                // Increment the games played count.
+                it.gamesPlayed += 1
+
+                // Update the player in the repository.
                 playerRepository.updatePlayer(it)
+
+                // Switch back to the main thread to update the UI.
                 withContext(Dispatchers.Main) {
-                    loadPlayers()  // Reload players to reflect changes
-                    Log.d(TAG, "Games played updated for player ID: $playerId")
+                    loadPlayers()  // Reload players to reflect changes.
+                    Log.d(TAG, "Games played updated for player ID: $playerId to ${it.gamesPlayed}")
                 }
             } ?: Log.e(TAG, "Player not found for ID: $playerId")
         }
     }
 
     /**
-     * Update the rank of a player and persist the change.
+     * Update the rank of a player based on their points and persist the change.
      *
      * @param playerId The ID of the player to update.
-     * @param newRank The new rank for the player.
      */
-    fun updatePlayerRank(playerId: String, newRank: String) {
-        Log.d(TAG, "Updating rank for player ID: $playerId to rank: $newRank")
+    fun updatePlayerRank(playerId: String) {
+        Log.d(TAG, "Updating rank for player ID: $playerId based on points.")
         viewModelScope.launch(Dispatchers.IO) {
-            val context = getApplication<Application>().applicationContext
             val player = getPlayerById(playerId)
+
             player?.let {
-                it.updateRank(newRank)
-                playerRepository.updatePlayer(it)
-                withContext(Dispatchers.Main) {
-                    loadPlayers()  // Reload players to reflect changes
-                    Log.d(TAG, "Player rank updated for player ID: $playerId")
+                // Use the ScoreManager to calculate the player's total points.
+                val totalPoints = ScoreManager.calculatePlayerScore(it)
+
+                // Calculate the new rank based on the total points.
+                val newRank = calculateRankBasedOnPoints(totalPoints)
+
+                // Update the player's rank if it has changed.
+                if (it.rank != newRank) {
+                    it.rank = newRank
+                    playerRepository.updatePlayer(it)
+
+                    withContext(Dispatchers.Main) {
+                        loadPlayers()  // Reload players to reflect changes.
+                        Log.d(TAG, "Player rank updated for player ID: $playerId to rank: ${it.rank}")
+                    }
+                } else {
+                    Log.d(TAG, "Player rank remains the same: ${it.rank}")
                 }
             } ?: Log.e(TAG, "Player not found for ID: $playerId")
+        }
+    }
+
+    /**
+     * Calculate the rank based on the player's total points.
+     *
+     * @param points The total points of the player.
+     * @return The RankType corresponding to the player's points.
+     */
+    private fun calculateRankBasedOnPoints(points: Int): RankType {
+        return when {
+            points <= 50 -> RankType.BEGINNER
+            points in 51..200 -> RankType.INTERMEDIATE
+            points in 201..500 -> RankType.ADVANCED
+            else -> RankType.EXPERT
         }
     }
 
@@ -147,7 +190,7 @@ class PlayerListViewModel(
 
             // Save updated players to repository
             val context = getApplication<Application>().applicationContext
-            playerRepository.savePlayers(updatedPlayers)
+            playerManager.savePlayers(updatedPlayers)
 
             // Update LiveData on the main thread
             withContext(Dispatchers.Main) {

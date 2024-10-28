@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.R
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentPlayerListBinding
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.utils.PlayerIDGenerator
@@ -61,21 +62,26 @@ class PlayerListFragment : Fragment() {
 
         Log.d(TAG, "onViewCreated: PlayerListViewModel initialized.")
 
-        // Initialize PlayerAdapter with a click listener
-        playerAdapter = PlayerAdapter { player ->
-            Log.d(TAG, "Player clicked: ${player.name}, ID: ${player.id}")
+// Initialize PlayerAdapter with a click listener and necessary parameters
+        playerAdapter = PlayerAdapter(
+            isWhoCalledItContext = false, // Adjust based on context; 'false' if not being used for 'WhoCalledIt'
+            onPlayerClick = { player ->
+                Log.d(TAG, "Player clicked: ${player.name}, ID: ${player.id}")
 
-            // Handle player click - navigate to PlayerStatsFragment with SafeArgs
-            val action = PlayerListFragmentDirections.actionPlayerListFragmentToPlayerStatsFragment(player.id)
+                // Handle player click - navigate to PlayerStatsFragment with SafeArgs
+                val action = PlayerListFragmentDirections.actionPlayerListFragmentToPlayerStatsFragment(player.id)
 
-            try {
-                Log.d(TAG, "Navigating to PlayerStatsFragment with player: ${player.name}, ID: ${player.id}")
-                // Perform the actual navigation
-                findNavController().navigate(action)
-            } catch (e: IllegalStateException) {
-                Log.e(TAG, "Navigation error: NavController not found. Error: ${e.message}")
-            }
-        }
+                try {
+                    Log.d(TAG, "Navigating to PlayerStatsFragment with player: ${player.name}, ID: ${player.id}")
+                    // Perform the actual navigation
+                    findNavController().navigate(action)
+                } catch (e: IllegalStateException) {
+                    Log.e(TAG, "Navigation error: NavController not found. Error: ${e.message}")
+                }
+            },
+            scoreManager = ScoreManager // Pass the ScoreManager instance
+        )
+
 
         // Set up RecyclerView for the player list
         binding.playerRecyclerView.apply {

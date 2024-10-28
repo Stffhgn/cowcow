@@ -3,6 +3,7 @@ package com.example.cow_cow.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.managers.TriviaManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.TriviaQuestion
@@ -11,6 +12,8 @@ class TriviaViewModel(private val triviaManager: TriviaManager, private val play
 
     private val _currentQuestion = MutableLiveData<TriviaQuestion?>()
     val currentQuestion: LiveData<TriviaQuestion?> get() = _currentQuestion
+
+    private val scoreManager = ScoreManager
 
     private val _score = MutableLiveData<Int>()
     val score: LiveData<Int> get() = _score
@@ -22,7 +25,7 @@ class TriviaViewModel(private val triviaManager: TriviaManager, private val play
     val triviaCompleted: LiveData<Boolean> get() = _triviaCompleted
 
     init {
-        _score.value = player.calculateTotalPoints()
+        _score.value = scoreManager.calculatePlayerScore(player)
         loadTriviaQuestions()
     }
 
@@ -54,7 +57,7 @@ class TriviaViewModel(private val triviaManager: TriviaManager, private val play
     fun submitAnswer(selectedAnswer: String) {
         val isCorrect = triviaManager.validateAnswer(player, selectedAnswer)
         _isAnswerCorrect.value = isCorrect
-        _score.value = player.calculateTotalPoints()
+        _score.value = scoreManager.calculatePlayerScore(player)
 
         // Load next question after validation
         loadNextQuestion()

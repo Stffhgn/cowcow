@@ -13,14 +13,14 @@
     <com.example.cow_cow.background.RollingHillsView
         android:id="@+id/rollingHillsView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"/>
 
     <!-- Rotating text view for game news -->
     <TextView
         android:id="@+id/gameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Game Text"
+        android:text="Game News"
         android:textSize="24sp"
         android:textStyle="bold"
         android:gravity="center"
@@ -30,18 +30,22 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"/>
 
-    <!-- NavHostFragment for navigation (connected to nav_graph) -->
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/nav_host_fragment"
-        android:name="androidx.navigation.fragment.NavHostFragment"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+    <!-- FlexboxLayout for CowCow buttons stacked vertically -->
+    <com.example.cow_cow.uiStuff.FlexboxContainer
+        android:id="@+id/game_button_container"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        android:minHeight="300dp"
+        android:background="#80FF0000"
+        android:padding="16dp"
+        android:gravity="center"
+        app:alignItems="center"
+        app:flexWrap="wrap"
+        app:justifyContent="space_evenly"
         app:layout_constraintTop_toBottomOf="@id/gameTextView"
-        app:layout_constraintBottom_toTopOf="@id/teamGamesButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:navGraph="@navigation/nav_graph"
-        app:defaultNavHost="true"/>
+        app:layout_constraintBottom_toTopOf="@id/teamGamesButton" />
 
     <!-- Team Games button spanning above the settings and who is playing buttons -->
     <Button
@@ -51,7 +55,7 @@
         android:text="Team Games"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/buttonContainer"
+        app:layout_constraintBottom_toTopOf="@id/buttonContainer"
         android:layout_marginBottom="16dp"
         android:layout_marginTop="16dp"/>
 

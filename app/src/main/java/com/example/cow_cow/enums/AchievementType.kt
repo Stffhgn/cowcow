@@ -15,12 +15,15 @@ enum class AchievementType {
     CHALLENGE,            // Achievements for completing specific challenges or quests
     CREATIVITY,           // Achievements for creating or designing custom content (if applicable)
     PERFECT_SCORE,        // Achievements for getting a perfect score or flawless performance
-    SCAVENGER_HUNT,       // Achievements for rocking out the scavenger hunt
+    SCAVENGER_HUNT,       // Achievements for excelling in scavenger hunts
     SPEEDRUN,             // Achievements for completing levels or games quickly (time attack)
     STRATEGY,             // Achievements for using strategy or tactics effectively in the game
-    DEDICATION,           // Achievements for coming back regularly (e.g., daily login rewards)
+    DEDICATION,           // Achievements for consistent engagement (e.g., daily login rewards)
     CUSTOM,               // Custom or unique achievements for player-created challenges
-    BADGE_COLLECTION,     // Achievements for collecting badges, which can represent various milestones
+    BADGE_COLLECTION,     // Achievements for collecting badges, representing various milestones
     LUCK_BASED,           // Achievements based on luck or randomness (e.g., getting rare items)
-    MULTIPLE_ROLES        // Achievements for mastering multiple roles or game modes
+    MULTIPLE_ROLES,       // Achievements for mastering multiple roles or game modes
+    ITEM_MASTER,          // Achievements for finding a specific number of scavenger hunt items
+    POINT_MILESTONE,      // Achievements for reaching certain point thresholds (e.g., 1000 points)
+    POWER_UP_MASTER       // Achievements for using a variety of power-ups
 }

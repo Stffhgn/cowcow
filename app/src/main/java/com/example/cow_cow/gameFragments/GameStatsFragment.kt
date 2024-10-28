@@ -9,17 +9,17 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.cow_cow.databinding.FragmentGameStatsBinding
-import com.example.cow_cow.models.Game
-import com.example.cow_cow.repositories.GameRepository
-import com.example.cow_cow.viewModels.GameStatsViewModel
-import com.example.cow_cow.viewModels.GameStatsViewModelFactory
+import com.example.cow_cow.models.Player
+import com.example.cow_cow.repositories.PlayerRepository
+import com.example.cow_cow.viewModels.PlayerStatsViewModel
+import com.example.cow_cow.viewModels.PlayerStatsViewModelFactory
 
 class GameStatsFragment : Fragment() {
 
     private var _binding: FragmentGameStatsBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var gameStatsViewModel: GameStatsViewModel
+    private lateinit var playerStatsViewModel: PlayerStatsViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,49 +34,60 @@ class GameStatsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.d("GameStatsFragment", "onViewCreated called")
 
-        // Initialize GameRepository and GameStatsViewModelFactory
-        val gameRepository = GameRepository(requireContext())
-        val factory = GameStatsViewModelFactory(requireActivity().application, gameRepository)
+        // Initialize PlayerRepository and PlayerStatsViewModelFactory
+        val playerRepository = PlayerRepository(requireContext())
+        val factory = PlayerStatsViewModelFactory(
+            requireActivity().application,
+            playerRepository,
+            playerId = "some_player_id" // Replace with actual player ID logic
+        )
 
-        // Initialize GameStatsViewModel using ViewModelProvider and factory
-        gameStatsViewModel = ViewModelProvider(this, factory).get(GameStatsViewModel::class.java)
-        Log.d("GameStatsFragment", "GameStatsViewModel initialized")
+        // Initialize PlayerStatsViewModel using ViewModelProvider and factory
+        playerStatsViewModel = ViewModelProvider(this, factory).get(PlayerStatsViewModel::class.java)
+        Log.d("GameStatsFragment", "PlayerStatsViewModel initialized")
 
         // Show loading indicator while data is being fetched
         binding.progressBar.visibility = View.VISIBLE
         Log.d("GameStatsFragment", "Loading indicator shown")
 
-        // Observe LiveData to update UI with game data
-        gameStatsViewModel.game.observe(viewLifecycleOwner) { game ->
+        // Observe LiveData to update UI with player data
+        playerStatsViewModel.player.observe(viewLifecycleOwner) { player ->
             binding.progressBar.visibility = View.GONE // Hide loading indicator
-            if (game != null) {
-                bindGameData(game)
+            if (player != null) {
+                bindPlayerData(player)
             } else {
-                displayError("Game data not found")
+                displayError("Player data not found")
             }
         }
 
-        // Handle errors from ViewModel
-        gameStatsViewModel.errorMessage.observe(viewLifecycleOwner) { error ->
+        /* Handle errors from ViewModel
+        playerStatsViewModel.errorMessage.observe(viewLifecycleOwner) { error ->
             error?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
                 Log.e("GameStatsFragment", "Error: $it")
             }
-        }
+        }*/
     }
 
-    private fun bindGameData(game: Game) {
-        Log.d("GameStatsFragment", "Binding game data to UI")
+    private fun bindPlayerData(player: Player) {
+        Log.d("GameStatsFragment", "Binding player data to UI")
 
-        // Reset error view
+        /* Reset error view
         binding.errorTextView.visibility = View.GONE
 
-        // Update the UI with game data
-        binding.totalPlayersTextView.text = "Total Players: ${game.players.size}"
-        binding.totalRoundsTextView.text = "Total Rounds: ${game.round}/${game.totalRounds}"
-        binding.elapsedTimeTextView.text = "Elapsed Time: ${game.elapsedTime} ms"
-        binding.gameModeTextView.text = "Game Mode: ${game.gameMode.name}"
-        binding.gameStatusTextView.text = "Game Status: ${game.status.name}"
+        // Update the UI with player data
+        binding.playerNameTextView.text = player.name
+        binding.totalScoreTextView.text = "Total Score: ${player.basePoints}"
+        binding.cowStatTextView.text = player.cowCount.toString()
+        binding.churchStatTextView.text = player.churchCount.toString()
+        binding.waterTowerStatTextView.text = player.waterTowerCount.toString()
+        binding.winStreakTextView.text = "Win Streak: ${player.winStreak}"
+        binding.penaltiesTextView.text = "Penalties: ${player.penaltyPoints}"
+        binding.bonusPointsTextView.text = "Bonus Points: ${player.bonusPoints}"
+        binding.rankTextView.text = "Rank: ${player.rank}"
+ Add more fields as needed based on the player's attributes
+
+         */
     }
 
     private fun displayError(message: String) {

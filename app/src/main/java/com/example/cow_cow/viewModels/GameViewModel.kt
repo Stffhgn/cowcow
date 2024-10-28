@@ -42,6 +42,7 @@ class GameViewModel(
 
     // Similarly, instantiate GameManager with required dependencies
     private val gameManager = GameManager(playerManager)
+    private val teamManager = TeamManager(playerRepository)
 
     // ---- Managers ----
     private val scavengerHuntManager = ScavengerHuntManager
@@ -102,9 +103,11 @@ class GameViewModel(
      */
     fun savePlayers() {
         Log.d(TAG, "Saving players to repository.")
-        val context = getApplication<Application>().applicationContext
-        _players.value?.let { playerList ->
-            PlayerRepository(context).savePlayers(playerList)
+
+        // Save each player individually using the existing playerRepository
+        _players.value?.forEach { player ->
+            playerRepository.savePlayer(player)
+            Log.d(TAG, "Player ${player.name} saved to repository.")
         }
     }
 
@@ -116,7 +119,7 @@ class GameViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _team.value?.let { team ->
-                    teamRepository.saveTeam() // Save the current team
+                    teamRepository.saveTeam() // Pass the team to saveTeam()
                     Log.d(TAG, "Team saved successfully.")
                 }
             } catch (e: Exception) {
@@ -132,6 +135,17 @@ class GameViewModel(
         Log.d(TAG, "Starting game in $gameMode mode.")
         gameManager.startGame(gameMode, durationMillis)
     }
+
+        /**
+         * Adds a team to the ViewModel.
+         *
+         * @param team The team to add.
+         */
+        fun addTeam(team: Team) {
+            _team.value = team
+            Log.d("GameViewModel", "Team added to ViewModel: ${team.name} with ${team.members.size} members.")
+        }
+
 
     /**
      * Stop the current game.
@@ -180,6 +194,22 @@ class GameViewModel(
     }
 
     /**
+     * Remove the current team from the repository and reset its state.
+     */
+    fun removeTeam() {
+        Log.d(TAG, "Removing Team")
+
+        val currentTeam = _team.value
+        currentTeam?.let {
+            teamManager.resetTeam()  // Reset the team using the TeamManager
+            _team.value = null  // Update the view model state to reflect that there is no team
+            saveTeam()  // Update persistence to save changes
+
+            Log.d(TAG, "Team ${it.name} has been removed successfully.")
+        } ?: Log.e(TAG, "No team found to remove.")
+    }
+
+    /**
      * Update a player's data and save changes.
      */
     fun updatePlayer(player: Player) {
@@ -191,12 +221,6 @@ class GameViewModel(
     }
 
 // ---- Scavenger Hunt Management ----
-
-    fun initializeScavengerHunt(player: Player, scavengerHuntRepository: ScavengerHuntRepository, difficulty: String? = null) {
-        val context = getApplication<Application>().applicationContext
-        Log.d(TAG, "Initializing scavenger hunt for player: ${player.name} with difficulty: ${difficulty ?: "Default"}")
-        scavengerHuntManager.startScavengerHunt(player, scavengerHuntRepository, context, difficulty)
-    }
 
     // ---- Game Actions ----
 

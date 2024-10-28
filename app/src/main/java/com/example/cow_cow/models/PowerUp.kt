@@ -4,15 +4,19 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
 import com.example.cow_cow.enums.PowerUpType
+import com.example.cow_cow.enums.PowerUpRarity
+import com.example.cow_cow.managers.PowerUpManager
 
 // Data class representing a power-up's state
 data class PowerUp(
     val type: PowerUpType,          // Type of power-up (based on the enum PowerUpType)
-    var isActive: Boolean,          // Whether the power-up is currently active
+    var isActive: Boolean = false,  // Whether the power-up is currently active
     var duration: Long = 0L,        // Duration for which the power-up is active (in milliseconds)
     val effectValue: Int = 0,       // Effect value, if applicable (like points or speed boost)
     val startTime: Long = System.currentTimeMillis(),  // When the power-up was activated
-    val level: Int = 1              // Optional: level of power-up for scaling effects
+    val level: Int = 1,             // Optional: level of power-up for scaling effects
+    var isHeld: Boolean = false,    // Indicates if the power-up is held and not yet activated
+    val rarity: PowerUpRarity = PowerUpRarity.COMMON  // Rarity of the power-up (e.g., COMMON, RARE, LEGENDARY)
 ) : Parcelable {
 
     // Function to check if the power-up has expired (based on the duration)
@@ -21,52 +25,23 @@ data class PowerUp(
         return currentTime >= startTime + duration
     }
 
-    // Function to apply the power-up effect to a player
-    fun applyPowerUp(player: Player) {
-        if (!isActive) {
-            Log.d("PowerUp", "Power-up $type is not active.")
-            return
-        }
-
-        Log.d("PowerUp", "Applying power-up $type to player ${player.name}.")
-        when (type) {
-            PowerUpType.DOUBLE_POINTS -> {
-                player.basePoints *= 2
-                Log.d("PowerUp", "Double Points applied to ${player.name}.")
-            }
-            PowerUpType.SCORE_MULTIPLIER -> {
-                player.basePoints *= 5
-                Log.d("PowerUp", "Score Multiplier applied: 5x points for ${player.name}.")
-            }
-            PowerUpType.BONUS_POINTS -> {
-                player.addBonusPoints(effectValue)
-                Log.d("PowerUp", "Bonus Points applied: ${effectValue} bonus points added for ${player.name}.")
-            }
-            PowerUpType.EXTRA_TIME -> {
-                player.timePlayed += effectValue.toLong()
-                Log.d("PowerUp", "Extra Time applied: ${effectValue}ms added for ${player.name}.")
-            }
-            PowerUpType.IMMUNITY -> {
-                player.isSilenced = false
-                Log.d("PowerUp", "Immunity applied: ${player.name} is no longer silenced.")
-            }
-            else -> {
-                Log.w("PowerUp", "Unknown or unimplemented power-up type: $type")
-                // Handle custom or unimplemented power-ups
-            }
+    // Function to activate the power-up using the PowerUpManager
+    fun activate(player: Player) {
+        if (isHeld) {
+            isHeld = false
+            isActive = true
+            Log.d("PowerUp", "Power-up $type activated for player ${player.name}.")
+            PowerUpManager.applyPowerUpEffect(player, this)
+        } else {
+            Log.d("PowerUp", "Power-up $type cannot be activated as it is not held.")
         }
     }
 
-    // Function to deactivate the power-up
-    fun deactivatePowerUp(player: Player) {
+    // Function to deactivate the power-up using the PowerUpManager
+    fun deactivate(player: Player) {
         isActive = false
         Log.d("PowerUp", "Deactivating power-up $type for player ${player.name}.")
-        when (type) {
-            // Add cases if you need to handle specific deactivation logic for power-ups
-            else -> {
-                Log.d("PowerUp", "No deactivation logic needed for $type.")
-            }
-        }
+        PowerUpManager.deactivatePowerUp(player, this)
     }
 
     // Parcelable implementation for passing PowerUp objects between activities/fragments
@@ -76,7 +51,9 @@ data class PowerUp(
         duration = parcel.readLong(),
         effectValue = parcel.readInt(),
         startTime = parcel.readLong(),
-        level = parcel.readInt()
+        level = parcel.readInt(),
+        isHeld = parcel.readByte() != 0.toByte(),
+        rarity = PowerUpRarity.valueOf(parcel.readString() ?: PowerUpRarity.COMMON.name)
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -86,6 +63,8 @@ data class PowerUp(
         parcel.writeInt(effectValue)
         parcel.writeLong(startTime)
         parcel.writeInt(level)
+        parcel.writeByte(if (isHeld) 1 else 0)
+        parcel.writeString(rarity.name)
     }
 
     override fun describeContents(): Int = 0

@@ -11,15 +11,16 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cow_cow.R
+import com.example.cow_cow.controllers.PlayerController
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.viewModels.LeaderboardViewModel
 
 class LeaderboardFragment : Fragment() {
 
     private val leaderboardViewModel: LeaderboardViewModel by viewModels()
-
     private lateinit var leaderboardRecyclerView: RecyclerView
     private lateinit var leaderboardAdapter: LeaderboardAdapter
+    private lateinit var playerController: PlayerController
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -31,8 +32,12 @@ class LeaderboardFragment : Fragment() {
         leaderboardRecyclerView = view.findViewById(R.id.leaderboardRecyclerView)
         leaderboardRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        // Initialize PlayerController with the list of players from the ViewModel
+        val players = leaderboardViewModel.leaderboard.value ?: emptyList()
+        playerController = PlayerController(players.toMutableList())
+
         // Initialize RecyclerView adapter
-        leaderboardAdapter = LeaderboardAdapter(emptyList())
+        leaderboardAdapter = LeaderboardAdapter(players)
         leaderboardRecyclerView.adapter = leaderboardAdapter
 
         // Observe leaderboard data from ViewModel
@@ -65,8 +70,9 @@ class LeaderboardFragment : Fragment() {
 
         override fun onBindViewHolder(holder: LeaderboardViewHolder, position: Int) {
             val player = players[position]
+            val totalPoints = playerController.calculateTotalPoints(player)
             holder.playerNameTextView.text = player.name
-            holder.playerScoreTextView.text = player.calculateTotalPoints().toString()
+            holder.playerScoreTextView.text = totalPoints.toString()
         }
 
         override fun getItemCount(): Int = players.size
@@ -76,6 +82,7 @@ class LeaderboardFragment : Fragment() {
          */
         fun updateLeaderboard(newPlayers: List<Player>) {
             players = newPlayers
+            playerController = PlayerController(players.toMutableList()) // Update the controller with the new player list
             notifyDataSetChanged()
         }
     }

@@ -26,14 +26,11 @@ class PenaltyViewModel : ViewModel() {
     // Logging tag for debugging
     private val TAG = "PenaltyViewModel"
 
-    // ---- Initialization ----
-
     init {
-        _penalties.value = emptyList()  // Initialize with no penalties
+        // Initialize with no penalties
+        _penalties.value = emptyList()
         Log.d(TAG, "PenaltyViewModel initialized with no penalties.")
     }
-
-    // ---- Penalty Management ----
 
     /**
      * Apply a penalty to a player and update LiveData.
@@ -46,21 +43,18 @@ class PenaltyViewModel : ViewModel() {
         Log.d(TAG, "Applying penalty $type to player ${player.name} with duration $duration.")
 
         val penalty = Penalty(
-            id = Penalty.generatePenaltyId(player.id, type).toString(),  // Convert the ID to String
-            name = type.name,                                 // Use the name of the PenaltyType
-            pointsDeducted = calculatePenaltyPoints(type),    // Calculate points based on the actual penalty type
-            penaltyType = type,                               // Assign the penalty type
-            isActive = true,                                  // Mark the penalty as active
-            duration = duration                               // Set the penalty duration
+            id = Penalty.generatePenaltyId(player.id, type).toString(),
+            name = type.name,
+            pointsDeducted = calculatePenaltyPoints(type),
+            penaltyType = type,
+            isActive = true,
+            duration = duration
         )
 
         // Apply the penalty to the player
-        penalty.applyPenalty(player)
+        penaltyManager.applyPenalty(player, penalty)
+        updatePenaltiesLiveData()
         Log.d(TAG, "Penalty applied: ${penalty.name} with ${penalty.pointsDeducted} points deducted.")
-
-        // Update the penalties and status
-        _penalties.value = penaltyManager.getActivePenalties()
-        _penaltyStatus.value = penaltyManager.isPlayerPenalized(player)
     }
 
     /**
@@ -71,19 +65,14 @@ class PenaltyViewModel : ViewModel() {
      */
     fun removePenalty(player: Player, penalty: Penalty) {
         Log.d(TAG, "Removing penalty ${penalty.name} from player ${player.name}.")
-
-        penaltyManager.removePenalty(player, penalty)  // Ensure the logic in PenaltyManager works
-        _penalties.value = penaltyManager.getActivePenalties()  // Update LiveData with remaining penalties
-        _penaltyStatus.value = penaltyManager.isPlayerPenalized(player)  // Update player's penalty status
-
-        Log.d(TAG, "Penalty removed. Active penalties updated. Is player penalized: ${_penaltyStatus.value}")
+        penaltyManager.removePenalty(player, penalty)
+        updatePenaltiesLiveData()
     }
 
     /**
      * Check if a specific player has an active penalty.
      *
      * @param player The player to check.
-     * @return LiveData<Boolean> indicating whether the player is penalized.
      */
     fun checkIfPlayerIsPenalized(player: Player) {
         Log.d(TAG, "Checking if player ${player.name} is penalized.")
@@ -98,15 +87,17 @@ class PenaltyViewModel : ViewModel() {
      */
     fun clearPenaltiesForPlayer(player: Player) {
         Log.d(TAG, "Clearing all penalties for player ${player.name}.")
-
-        penaltyManager.clearPlayerPenalties(player)  // Ensure this method clears penalties correctly
-        _penalties.value = penaltyManager.getActivePenalties()  // Update LiveData with the new state
-        _penaltyStatus.value = penaltyManager.isPlayerPenalized(player)  // Update player's penalty status
-
-        Log.d(TAG, "All penalties cleared. Is player penalized: ${_penaltyStatus.value}")
+        penaltyManager.clearAllPenalties(player)
+        updatePenaltiesLiveData()
     }
 
-    // ---- Utility Functions ----
+    /**
+     * Update LiveData for penalties and penalty status.
+     */
+    private fun updatePenaltiesLiveData() {
+        _penalties.value = penaltyManager.getActivePenalties()
+        Log.d(TAG, "Updated penalties list with ${_penalties.value?.size ?: 0} active penalties.")
+    }
 
     /**
      * Get the list of active penalties.

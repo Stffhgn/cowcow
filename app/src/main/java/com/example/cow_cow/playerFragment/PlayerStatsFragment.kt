@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.navArgs
 import com.example.cow_cow.R
 import com.example.cow_cow.databinding.FragmentPlayerStatsBinding
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.viewModels.PlayerStatsViewModel
@@ -28,9 +29,7 @@ class PlayerStatsFragment : Fragment(R.layout.fragment_player_stats) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentPlayerStatsBinding.bind(view)
-
         super.onViewCreated(view, savedInstanceState)
-
 
         // Retrieve the playerId from the arguments
         playerId = args.playerID
@@ -46,7 +45,6 @@ class PlayerStatsFragment : Fragment(R.layout.fragment_player_stats) {
 
         // Create the PlayerViewModelFactory
         val playerFactory = PlayerViewModelFactory(application, repository)
-        // Obtain the PlayerViewModel using the factory
         playerViewModel = ViewModelProvider(this, playerFactory).get(PlayerViewModel::class.java)
 
         // Observe the players LiveData
@@ -62,42 +60,26 @@ class PlayerStatsFragment : Fragment(R.layout.fragment_player_stats) {
 
         // Observe player data
         playerStatsViewModel.player.observe(viewLifecycleOwner) { player ->
-            binding.playerNameTextView.text = "Name: ${player.name}"
-            binding.totalScoreTextView.text = "Total Score: ${player.calculateTotalPoints()}"
-            binding.cowStatTextView.text = "Cows Spotted: ${player.cowCount}"
-            binding.churchStatTextView.text = "Churches Spotted: ${player.churchCount}"
-            binding.waterTowerStatTextView.text = "Water Towers Spotted: ${player.waterTowerCount}"
-            binding.isOnTeamTextView.text = "Is On Team: ${player.isOnTeam}"
-            binding.isCurrentPlayerTextView.text = "Is Current Player: ${player.isCurrentPlayer}"
-            binding.basePointsTextView.text = "Base Points: ${player.basePoints}"
-            binding.penaltyPointsTextView.text = "Penalty Points: ${player.penaltyPoints}"
-            binding.bonusPointsTextView.text = "Bonus Points: ${player.bonusPoints}"
-            binding.penaltiesTextView.text = "Penalties: ${player.penalties.size}"
-            binding.achievementsTextView.text = "Achievements: ${player.achievements.size}"
-            binding.customRulesTextView.text = "Custom Rules: ${player.customRules.size}"
-            binding.activePowerUpsTextView.text = "Active Power-Ups: ${player.activePowerUps.size}"
-            binding.timePlayedTextView.text = "Time Played: ${player.timePlayed} ms"
-            binding.distanceTraveledTextView.text = "Distance Traveled: ${player.distanceTraveled} m"
-            binding.teamIdTextView.text = "Team ID: ${player.teamId ?: "None"}"
-            binding.isSilencedTextView.text = "Is Silenced: ${player.isSilenced}"
-            binding.isPowerUpActiveTextView.text = "Is Power-Up Active: ${player.isPowerUpActive}"
-            binding.timeSpentTextView.text = "Time Spent: ${player.timeSpent} ms"
-            binding.winStreakTextView.text = "Win Streak: ${player.winStreak}"
-            binding.objectivesCompletedTextView.text = "Objectives Completed: ${player.objectivesCompleted}"
-            binding.notificationsEnabledTextView.text = "Notifications Enabled: ${player.notificationsEnabled}"
-            binding.gamesPlayedTextView.text = "Games Played: ${player.gamesPlayed}"
-            binding.rankTextView.text = "Rank: ${player.rank.name}"
-            binding.objectsCalledTextView.text = "Objects Called: ${player.objectsCalled.size}"
+            bindPlayerData(player)
         }
     }
 
     private fun bindPlayerData(player: Player) {
-        // Update the UI with player data
-        binding.playerNameTextView.text = player.name
-        binding.totalScoreTextView.text = "Total Score: ${player.calculateTotalPoints()}"
-        binding.cowStatTextView.text = player.cowCount.toString()
-        binding.churchStatTextView.text = player.churchCount.toString()
-        binding.waterTowerStatTextView.text = player.waterTowerCount.toString()
+        // Update the UI elements with player data using the binding
+        binding.apply {
+            playerNameTextView.text = getString(R.string.player_name, player.name)
+            totalScoreTextView.text = getString(
+                R.string.total_score,
+                ScoreManager.calculatePlayerScore(player)
+            )
+            cowStatTextView.text = getString(R.string.cows_spotted, player.cowCount)
+            churchStatTextView.text = getString(R.string.churches_spotted, player.churchCount)
+            waterTowerStatTextView.text = getString(R.string.water_towers_spotted, player.waterTowerCount)
+            bonusPointsTextView.text = getString(R.string.bonus_points, player.bonusPoints)
+            activePowerUpsTextView.text = getString(R.string.active_power_ups, player.activePowerUps.size)
+            gamesPlayedTextView.text = getString(R.string.games_played, player.gamesPlayed)
+            rankTextView.text = getString(R.string.rank, player.rank.name)
+        }
     }
 
     private fun displayError(message: String) {
@@ -112,6 +94,5 @@ class PlayerStatsFragment : Fragment(R.layout.fragment_player_stats) {
         super.onDestroyView()
         _binding = null
         Log.d("PlayerStatsFragment", "Navigating back to WhosPlayingDialogFragment")
-
     }
 }

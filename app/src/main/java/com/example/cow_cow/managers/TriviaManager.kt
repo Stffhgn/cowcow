@@ -1,5 +1,6 @@
 package com.example.cow_cow.managers
 
+import android.util.Log
 import com.example.cow_cow.models.TriviaQuestion
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.TriviaRepository
@@ -12,10 +13,11 @@ class TriviaManager(private val repository: TriviaRepository) {
     private var totalIncorrectAnswers: Int = 0
     private var playerProgress: MutableMap<Player, Int> = mutableMapOf() // Track each player's progress
     private var gameActive: Boolean = false
+    private val TAG = "TriviaManager"
 
     init {
         // Load questions from the repository at initialization
-        triviaQuestions = TriviaRepository().loadTriviaQuestions()
+        triviaQuestions = repository.loadTriviaQuestions()
     }
 
     /**
@@ -69,15 +71,32 @@ class TriviaManager(private val repository: TriviaRepository) {
 
     /**
      * Validate the answer and update player's score and progress.
+     * Tracks total correct and incorrect answers.
      */
     fun validateAnswer(player: Player, selectedAnswer: String): Boolean {
-        val currentQuestion = getCurrentQuestion()
+        val currentQuestion = triviaQuestions.getOrNull(currentQuestionIndex - 1)
         return if (currentQuestion?.correctAnswer == selectedAnswer) {
-            player.addBonusPoints(currentQuestion.points)
+            // Correct answer
+            player.basePoints += currentQuestion.points  // Update the player's score
+            totalCorrectAnswers++
+            incrementPlayerProgress(player)
+            Log.d(TAG, "Player ${player.name} answered correctly and earned ${currentQuestion.points} points. Total base points: ${player.basePoints}")
             true
         } else {
+            // Incorrect answer
+            totalIncorrectAnswers++
+            incrementPlayerProgress(player)
+            Log.d(TAG, "Player ${player.name} answered incorrectly. No points awarded.")
             false
         }
+    }
+
+    /**
+     * Increment the player's progress in the game.
+     */
+    private fun incrementPlayerProgress(player: Player) {
+        val progress = playerProgress.getOrDefault(player, 0) + 1
+        playerProgress[player] = progress
     }
 
     /**
@@ -129,5 +148,6 @@ class TriviaManager(private val repository: TriviaRepository) {
         totalIncorrectAnswers = 0
         gameActive = true
         playerProgress.clear()
+        Log.d(TAG, "Trivia game reset.")
     }
 }

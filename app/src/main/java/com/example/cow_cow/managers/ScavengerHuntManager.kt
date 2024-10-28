@@ -5,44 +5,45 @@ import android.util.Log
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.ScavengerHuntItem
 import com.example.cow_cow.repositories.ScavengerHuntRepository
+import com.example.cow_cow.utils.ScavengerHuntItemGenerator
+import com.example.cow_cow.enums.AchievementType
 
 object ScavengerHuntManager {
 
     private val activeScavengerHuntItems = mutableListOf<ScavengerHuntItem>()
     private var huntCompleted: Boolean = false
-
     private const val TAG = "ScavengerHuntManager"
 
     /**
-     * Starts a new scavenger hunt by loading items from the repository.
-     * Can filter items based on difficulty, location, etc.
+     * Starts a new scavenger hunt by generating items one at a time until 5 items are active.
      *
-     * @param player The player participating in the scavenger hunt.
-     * @param scavengerHuntRepository Repository to fetch scavenger hunt items from.
-     * @param difficulty Optional difficulty filter (e.g., "Easy", "Hard").
+     * @param player The player for whom the scavenger hunt is generated.
+     * @param context The context required for generating scavenger hunt items.
      */
-    fun startScavengerHunt(player: Player, scavengerHuntRepository: ScavengerHuntRepository, context: Context, difficulty: String? = null) {
-        Log.d(TAG, "Starting scavenger hunt for player: ${player.name}, difficulty: $difficulty")
-
-        // Clear previous hunt data and reset completion status
+    fun startScavengerHunt(players: List<Player>, context: Context) {
         activeScavengerHuntItems.clear()
         huntCompleted = false
 
-        // Load scavenger hunt items based on difficulty or other conditions
-        val allItems = scavengerHuntRepository.getScavengerHuntItems(context)
-        val filteredItems = allItems.filter { item -> difficulty == null || item.difficultyLevel.name == difficulty }
+        // Generate the initial set of up to 5 scavenger hunt items.
+        repeat(5) {
+            // Optionally, you could pick a random player for each item generation or adjust logic as needed.
+            val player = players.random() // Example: picking a random player each time
+            addNewScavengerHuntItem(player) // Removed the context parameter
+        }
+        Log.d(TAG, "Scavenger hunt started with ${activeScavengerHuntItems.size} items for ${players.size} players.")
 
-        activeScavengerHuntItems.addAll(filteredItems)
-        Log.d(TAG, "${activeScavengerHuntItems.size} items loaded for the scavenger hunt.")
+        // Notify the UI that items have been loaded.
+        updateScavengerHuntView()
     }
-
     /**
-     * Checks off a scavenger hunt item as found by the player.
+     * Marks a scavenger hunt item as found by the player.
+     * Replaces the found item with a new one.
      *
      * @param item The scavenger hunt item that was found.
      * @param player The player who found the item.
+     * @param context The context required for generating new items.
      */
-    fun markItemAsFound(item: ScavengerHuntItem, player: Player) {
+    fun markItemAsFound(item: ScavengerHuntItem, player: Player, context: Context) {
         Log.d(TAG, "Marking item '${item.name}' as found by player ${player.name}.")
 
         val foundItem = activeScavengerHuntItems.find { it.name == item.name }
@@ -52,51 +53,94 @@ object ScavengerHuntManager {
 
             // Award points for finding the item
             val pointsAwarded = it.getPoints()
-            player.addBasePoints(pointsAwarded)
+            ScoreManager.addPointsToPlayer(player, pointsAwarded)
             Log.d(TAG, "Player ${player.name} awarded $pointsAwarded points for finding item '${item.name}'.")
-        } ?: Log.w(TAG, "Item '${item.name}' not found in active scavenger hunt items.")
 
-        // Check if the hunt is completed
-        if (activeScavengerHuntItems.all { it.isFound }) {
-            huntCompleted = true
-            onHuntCompleted(player)
+            // Replace the found item with a new one
+            activeScavengerHuntItems.remove(it)
+            addNewScavengerHuntItem(player)
+
+            // Save the updated active items
+            saveActiveItemsToRepository(player,context)
+
+            // Notify the UI that the list has changed
+            updateScavengerHuntView()
+
+            // Check if the hunt is completed
+            if (isHuntCompleted()) {
+                onHuntCompleted(player)
+            }
+        } ?: Log.w(TAG, "Item '${item.name}' not found in active scavenger hunt items.")
+    }
+
+    /**
+     * Generates a new scavenger hunt item and adds it to the list of active items.
+     * Keeps only the most recent 5 items.
+     *
+     * @param player The player for whom the item is being generated.
+     * @param context The context required for generating the item.
+     */
+    private fun addNewScavengerHuntItem(player: Player) {
+        // Generate a new scavenger hunt item using the player's context.
+        val newItem = ScavengerHuntItemGenerator.generateScavengerHuntItem(player)
+
+        // Add the new item to the list.
+        activeScavengerHuntItems.add(newItem)
+
+        // Log the addition for debugging.
+        Log.d(TAG, "Generated a new scavenger hunt item: '${newItem.name}' for player: ${player.name}")
+
+        // Ensure the list size does not exceed 5 items.
+        if (activeScavengerHuntItems.size > 5) {
+            activeScavengerHuntItems.removeAt(0)
         }
     }
 
     /**
-     * Handles the event when a scavenger hunt is completed.
-     *
-     * @param player The player who completed the scavenger hunt.
+     * Updates the view with the current list of active scavenger hunt items.
+     * Implement this according to your UI framework (e.g., RecyclerView).
      */
-    fun onHuntCompleted(player: Player) {
-        Log.d(TAG, "Scavenger hunt completed by player: ${player.name}. Awarding bonus points.")
-
-        // Award bonus points for completing the scavenger hunt
-        player.addBonusPoints(100)  // Example of bonus for completing the scavenger hunt
-        Log.d(TAG, "Player ${player.name} awarded 100 bonus points for completing the scavenger hunt.")
-        // Additional logic, like unlocking achievements or special rewards, can go here
+    private fun updateScavengerHuntView() {
+        // This method should notify the UI that the list of active items has changed.
+        // For example, if using a RecyclerView adapter, call:
+        // scavengerHuntAdapter.submitList(activeScavengerHuntItems.toList())
     }
 
     /**
-     * Returns the current progress of the scavenger hunt.
+     * Saves the updated list of active scavenger hunt items to the repository for a specific player.
      *
-     * @return A percentage value representing the progress (0-100%).
+     * @param player The player for whom the scavenger hunt items are being saved.
+     * @param context The context required for accessing the repository.
      */
-    fun getHuntProgress(): Double {
-        val totalItems = activeScavengerHuntItems.size
-        val foundItems = activeScavengerHuntItems.count { it.isFound }
-        val progress = if (totalItems > 0) (foundItems.toDouble() / totalItems) * 100 else 0.0
-        Log.d(TAG, "Scavenger hunt progress: $progress% ($foundItems/$totalItems items found)")
-        return progress
+    private fun saveActiveItemsToRepository(player: Player, context: Context) {
+        val repository = ScavengerHuntRepository(context)
+        repository.saveScavengerHuntItems(player, activeScavengerHuntItems)
+        Log.d(TAG, "Saved updated scavenger hunt items for player ${player.name} to the repository.")
     }
 
     /**
-     * Stops the scavenger hunt and clears active items.
+     * Handles the event when the scavenger hunt is completed.
+     * Awards a special achievement to the team and distributes rewards.
+     *
+     * @param player The player who triggered the completion.
      */
-    fun stopScavengerHunt() {
-        Log.d(TAG, "Stopping scavenger hunt. Clearing all active items.")
-        activeScavengerHuntItems.clear()
-        huntCompleted = false
+    private fun onHuntCompleted(player: Player) {
+        Log.d(TAG, "Scavenger hunt completed by the team.")
+
+        // Award bonus points and track achievement progress for all players
+        val players = PlayerManager.getAllPlayers()
+        val bonusPoints = 100
+
+        players.forEach { teamPlayer ->
+            // Award bonus points
+            ScoreManager.addPointsToPlayer(teamPlayer, bonusPoints)
+            Log.d(TAG, "Player ${teamPlayer.name} awarded $bonusPoints bonus points for completing the scavenger hunt.")
+
+            // Track progress towards the Scavenger Hunt Master achievement
+            AchievementManager.trackProgress(teamPlayer, AchievementType.SCAVENGER_HUNT, 1)
+        }
+
+        Log.d(TAG, "Scavenger hunt completed. All team members rewarded and progress tracked.")
     }
 
     /**
@@ -110,11 +154,12 @@ object ScavengerHuntManager {
     }
 
     /**
-     * Retrieves whether the scavenger hunt is completed.
+     * Checks if the scavenger hunt is completed.
      *
-     * @return True if the scavenger hunt is completed, false otherwise.
+     * @return True if all items are found, false otherwise.
      */
     fun isHuntCompleted(): Boolean {
+        huntCompleted = activeScavengerHuntItems.all { it.isFound }
         Log.d(TAG, "Scavenger hunt completed status: $huntCompleted")
         return huntCompleted
     }

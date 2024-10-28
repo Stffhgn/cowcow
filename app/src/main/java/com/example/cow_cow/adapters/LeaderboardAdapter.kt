@@ -5,16 +5,21 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cow_cow.databinding.ItemLeaderboardBinding
 import com.example.cow_cow.models.Player
+import com.example.cow_cow.managers.ScoreManager
 
 class LeaderboardAdapter(
-    private var players: List<Player>
+    private var players: List<Player>,
+    private val scoreManager: ScoreManager
 ) : RecyclerView.Adapter<LeaderboardAdapter.LeaderboardViewHolder>() {
 
     inner class LeaderboardViewHolder(private val binding: ItemLeaderboardBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(player: Player, rank: Int) {
             binding.playerRankTextView.text = "#$rank"
             binding.playerNameTextView.text = player.name
-            binding.playerScoreTextView.text = "Score: ${player.calculateTotalPoints()}"
+
+            // Calculate the player's total points using the ScoreManager
+            val totalPoints = scoreManager.calculatePlayerScore(player)
+            binding.playerScoreTextView.text = "Score: $totalPoints"
         }
     }
 

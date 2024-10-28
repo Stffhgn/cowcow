@@ -7,10 +7,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.cow_cow.R
 import com.example.cow_cow.databinding.DialogPlayerStatsBinding
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.viewModels.PlayerStatsViewModel
@@ -85,10 +87,18 @@ class PlayerStatsDialogFragment : DialogFragment() {
 
         // Set up Delete button
         binding.deletePlayerButton.setOnClickListener {
-            Log.d(TAG, "Deleting player with ID: $playerId")
-            playerViewModel.removePlayerById(playerId)
-            dismiss() // Close the dialog after deleting the player
+            val playerName = binding.playerNameTextView.text.toString()
+            Log.d(TAG, "Deleting player with name: $playerName")
+
+            if (playerName.isNotBlank()) {
+                playerViewModel.removePlayerByName(playerName)
+                Toast.makeText(requireContext(), "Player $playerName deleted", Toast.LENGTH_SHORT).show()
+                dismiss() // Close the dialog after deleting the player
+            } else {
+                Toast.makeText(requireContext(), "Player name cannot be empty", Toast.LENGTH_SHORT).show()
+            }
         }
+
 
         // Set up Okay button
         binding.okayButton.setOnClickListener {
@@ -108,15 +118,21 @@ class PlayerStatsDialogFragment : DialogFragment() {
 
 
     private fun bindPlayerData(player: Player) {
-        // Update the UI with player data
-        binding.playerNameTextView.text = "Name: ${player.name}"
-        binding.totalScoreTextView.text = "Total Score: ${player.calculateTotalPoints()}"
-        binding.cowStatTextView.text = "Cows Spotted: ${player.cowCount}"
-        binding.churchStatTextView.text = "Churches Spotted: ${player.churchCount}"
-        binding.waterTowerStatTextView.text = "Water Towers Spotted: ${player.waterTowerCount}"
-        binding.isOnTeamTextView.text = "Is On Team: ${player.isOnTeam}"
-        binding.isCurrentPlayerTextView.text = "Is Current Player: ${player.isCurrentPlayer}"
+        // Update the UI elements with player data using the binding
+        binding.apply {
+            playerNameTextView.text = player.name // Display the player's name
+            totalScoreTextView.text = getString(
+                R.string.total_score,
+                ScoreManager.calculatePlayerScore(player) // Pass the player object to calculate the score
+            )
+            cowStatTextView.text = getString(R.string.cows_spotted, player.cowCount)
+            churchStatTextView.text = getString(R.string.churches_spotted, player.churchCount)
+            waterTowerStatTextView.text = getString(R.string.water_towers_spotted, player.waterTowerCount)
+            isOnTeamTextView.text = getString(R.string.is_on_team, player.isOnTeam.toString())
+            isCurrentPlayerTextView.text = getString(R.string.is_current_player, player.isCurrentPlayer.toString())
+        }
     }
+
 
     private fun displayError(message: String) {
         Log.d(TAG, "Displaying error message: $message")

@@ -7,10 +7,26 @@ import com.example.cow_cow.models.Team
 import com.example.cow_cow.repositories.PlayerRepository
 
 class PlayerManager(private val playerRepository: PlayerRepository) {
+    companion object {
+        private val players = mutableListOf<Player>()
+
+        /**
+         * Get a list of all players.
+         *
+         * @return A list of all players currently in the game.
+         */
+        fun getAllPlayers(): List<Player> {
+            return players
+        }
+
+        // Other companion methods...
+    }
 
     private val players: MutableList<Player> = mutableListOf()
     private val teams: MutableList<Team> = mutableListOf()
     private val TAG = "PlayerManager"
+
+
 
     /**
      * Add a new player to the game.
@@ -18,10 +34,8 @@ class PlayerManager(private val playerRepository: PlayerRepository) {
      * @param player The player object to be added.
      */
     fun addPlayer(player: Player) {
-        if (!players.contains(player)) {
-            players.add(player)
-            Log.d(TAG, "Player added: \${player.name}")
-        }
+        playerRepository.addPlayer(player)
+        Log.d(TAG, "Player added via PlayerManager: ${player.name}")
     }
 
     /**
@@ -31,36 +45,53 @@ class PlayerManager(private val playerRepository: PlayerRepository) {
      * @param rule The rule to apply.
      */
     fun applyCustomRuleToPlayer(player: Player, rule: CustomRule) {
-        Log.d(TAG, "Applying custom rule to player: \${player.name}, Rule: \${rule.name}")
+        Log.d(TAG, "Applying custom rule to player: ${player.name}, Rule: ${rule.ruleName}")
 
         if (!player.customRules.contains(rule)) {
             player.customRules.add(rule)
-            Log.d(TAG, "Rule '\${rule.name}' successfully applied to \${player.name}")
+            Log.d(TAG, "Rule '${rule.ruleName}' successfully applied to ${player.name}")
         } else {
-            Log.d(TAG, "Rule '\${rule.name}' is already applied to \${player.name}")
+            Log.d(TAG, "Rule '${rule.ruleName}' is already applied to ${player.name}")
         }
     }
 
+
     /**
-     * Calculate the total points for the player.
+     * Add points to a player's score.
+     *
+     * @param player The player receiving points.
+     * @param points The number of points to add.
+     */
+    fun addPointsToPlayer(player: Player, points: Int) {
+        player.basePoints += points
+        Log.d(TAG, "Added $points points to player ${player.name}. Total base points: ${player.basePoints}")
+
+        // Recalculate the player's total points (including penalties, bonuses, etc.)
+        calculatePlayerPoints(player)
+
+        // Update the player in the repository if needed
+        updatePlayer(player)
+    }
+
+    /**
+     * Calculate the total points for the player using the ScoreManager.
      *
      * @param player The player whose points are being calculated.
      */
     fun calculatePlayerPoints(player: Player) {
-        val totalPoints = player.calculateTotalPoints()
+        // Use ScoreManager to calculate the player's score.
+        val totalPoints = ScoreManager.calculatePlayerScore(player)
         player.basePoints = totalPoints
-        Log.d(TAG, "Calculated total points for player \${player.name}: \$totalPoints")
+        Log.d(TAG, "Calculated total points for player ${player.name}: $totalPoints")
     }
 
-    /**
-     * Remove a player from the game.
-     *
-     * @param playerId The ID of the player to be removed.
-     */
+    //*
+
     fun removePlayer(playerId: String) {
-        players.find { it.id == playerId }?.let {
-            players.remove(it)
-            Log.d(TAG, "Player removed: \${it.name}")
+        val player = playerRepository.getPlayers().find { it.id == playerId }
+        player?.let {
+            playerRepository.removePlayerById(player.id)
+            Log.d(TAG, "Player removed via PlayerManager: ${it.name}")
         }
     }
 
@@ -80,7 +111,23 @@ class PlayerManager(private val playerRepository: PlayerRepository) {
      * @return A list of all players currently in the game.
      */
     fun getAllPlayers(): List<Player> {
-        return players
+        return playerRepository.getPlayers()
+    }
+    // Save a single player
+    fun savePlayer(player: Player) {
+        playerRepository.savePlayer(player)
+    }
+
+    /**
+     * Retrieves all players who are on the team.
+     *
+     * @return A list of players who are on the team.
+     */
+    fun getTeamPlayers(): List<Player> {
+        // Get all players
+        val allPlayers = getAllPlayers()
+        // Filter players who are on the team
+        return allPlayers.filter { it.isOnTeam }
     }
 
     /**
@@ -149,14 +196,7 @@ class PlayerManager(private val playerRepository: PlayerRepository) {
         }
     }
 
-    /**
-     * Get a list of all teams.
-     *
-     * @return A list of all teams currently in the game.
-     */
-    fun getAllTeams(): List<Team> {
-        return teams
-    }
+
 
     /**
      * Clear all teams.
@@ -203,6 +243,18 @@ class PlayerManager(private val playerRepository: PlayerRepository) {
         }
         teams.addAll(teamsToCreate)
         Log.d(TAG, "Players have been randomly assigned to \$teamCount teams.")
+    }
+
+    /**
+     * Saves a list of players by iterating through each and using the repository.
+     *
+     * @param players The list of players to save.
+     */
+    fun savePlayers(players: List<Player>) {
+        players.forEach { player ->
+            playerRepository.savePlayer(player)
+        }
+        Log.d("PlayerManager", "All players saved to SharedPreferences.")
     }
 
     /**

@@ -13,35 +13,6 @@ object ScoreManager {
     private const val TAG = "ScoreManager"
 
     /**
-     * Handle score calculation when a player makes a game event call (like Cow, Church, etc.)
-     * This function will calculate the new score and return it.
-     *
-     * @param player The player making the call.
-     * @param objectType The type of object being called (e.g., "Cow", "Church").
-     * @return The updated total score for the player.
-     */
-    fun calculatePlayerScoreAfterEvent(player: Player, objectType: String): Int {
-        // Base points based on object type
-        var basePoints = when (objectType) {
-            "Cow" -> 1
-            "Church" -> 2
-            "Water Tower" -> 3
-            else -> 0
-        }
-
-        Log.d(TAG, "Base points for $objectType: $basePoints")
-
-        // Update player's base points
-        player.addBasePoints(basePoints)
-
-        // Calculate the player's total score
-        val totalScore = calculatePlayerScore(player)
-        Log.d(TAG, "Total score for ${player.name} after calling $objectType: $totalScore")
-
-        return totalScore
-    }
-
-    /**
      * Calculate total score for a single player, factoring in base points, bonuses, penalties,
      * and active power-ups.
      *
@@ -52,16 +23,23 @@ object ScoreManager {
         var totalPoints = player.basePoints + player.bonusPoints
         Log.d(TAG, "Calculating score for ${player.name}: Base points = ${player.basePoints}, Bonus points = ${player.bonusPoints}")
 
-        // Subtract penalties
+        // Subtract penalties from the total points
         totalPoints -= player.penaltyPoints
         Log.d(TAG, "Penalty points for ${player.name}: ${player.penaltyPoints}. Total after penalty = $totalPoints")
 
-        // Apply power-up effects
+        // Apply any active power-up effects
         player.activePowerUps.filter { it.isActive }.forEach { powerUp ->
             totalPoints = applyPowerUpToScore(totalPoints, powerUp)
             Log.d(TAG, "Power-up ${powerUp.type} applied for ${player.name}. Total points = $totalPoints")
         }
 
+        // Ensure that the total points do not go below zero
+        if (totalPoints < 0) {
+            totalPoints = 0
+            Log.d(TAG, "Total points adjusted to zero for ${player.name} due to negative balance.")
+        }
+
+        Log.d(TAG, "Final score for ${player.name}: $totalPoints")
         return totalPoints
     }
 
@@ -74,8 +52,8 @@ object ScoreManager {
     fun addPointsToPlayer(player: Player, points: Int) {
         Log.d(TAG, "Adding $points points to player: ${player.name}")
 
-        // Add the points to the player's base score
-        player.addBasePoints(points)
+        // Directly add the points to the player's base score
+        player.basePoints += points
 
         // Log the updated score
         val updatedScore = calculatePlayerScore(player)
@@ -83,28 +61,35 @@ object ScoreManager {
     }
 
     /**
-     * Apply a power-up's effect to the score.
+     * Applies the effect of a power-up to the player's score.
      *
      * @param currentScore The current score before applying the power-up.
-     * @param powerUp The power-up that affects the score.
-     * @return The updated score after applying the power-up.
+     * @param powerUp The active power-up to apply.
+     * @return The new score after applying the power-up effect.
      */
     private fun applyPowerUpToScore(currentScore: Int, powerUp: PowerUp): Int {
-        return when (powerUp.type) {
+        var adjustedScore = currentScore
+        when (powerUp.type) {
             PowerUpType.DOUBLE_POINTS -> {
-                Log.d(TAG, "Applying DOUBLE_POINTS power-up.")
-                currentScore * 2
+                adjustedScore *= 2
+                Log.d(TAG, "Double Points power-up applied. New score: $adjustedScore")
+            }
+            PowerUpType.SCORE_MULTIPLIER -> {
+                adjustedScore *= powerUp.effectValue
+                Log.d(TAG, "Score Multiplier (${powerUp.effectValue}x) applied. New score: $adjustedScore")
             }
             PowerUpType.BONUS_POINTS -> {
-                Log.d(TAG, "Applying BONUS_POINTS power-up with value: ${powerUp.effectValue}.")
-                currentScore + powerUp.effectValue
+                adjustedScore += powerUp.effectValue
+                Log.d(TAG, "Bonus Points applied: +${powerUp.effectValue}. New score: $adjustedScore")
             }
+            // Handle other power-up effects here if needed.
             else -> {
-                Log.d(TAG, "No applicable power-up effect.")
-                currentScore
+                Log.d(TAG, "No specific score effect for power-up: ${powerUp.type}.")
             }
         }
+        return adjustedScore
     }
+
 
     /**
      * Apply a penalty to a player, adjusting their score accordingly.
@@ -145,8 +130,6 @@ object ScoreManager {
         }
     }
 
-
-
     /**
      * Calculate the total score for a team by summing up all player scores.
      *
@@ -167,9 +150,10 @@ object ScoreManager {
     fun distributePointsToTeam(team: Team, pointsToDistribute: Int) {
         val pointsPerPlayer = pointsToDistribute / team.members.size
         Log.d(TAG, "Distributing $pointsToDistribute points across ${team.members.size} players.")
+
         team.members.forEach { player ->
-            player.addBasePoints(pointsPerPlayer)
-            Log.d(TAG, "${pointsPerPlayer} points added to ${player.name}.")
+            ScoreManager.addPointsToPlayer(player, pointsPerPlayer)
+            Log.d(TAG, "$pointsPerPlayer points added to ${player.name}.")
         }
     }
 

@@ -44,7 +44,7 @@ class PowerUpRepository {
     /**
      * Save the list of power-ups to SharedPreferences and update LiveData.
      */
-    fun savePowerUps(powerUps: List<PowerUp>, context: Context) {
+    private fun savePowerUps(powerUps: List<PowerUp>, context: Context) {
         val prefs = getSharedPreferences(context)
         val editor = prefs.edit()
         val json = gson.toJson(powerUps)
@@ -56,58 +56,44 @@ class PowerUpRepository {
     }
 
     /**
-     * Add a new power-up to the list.
+     * Add a new power-up to the list and save it.
      */
-    fun addPowerUp(powerUp: PowerUp, context: Context) {
+    fun addPowerUp(context: Context, powerUp: PowerUp) {
         val powerUps = getPowerUps(context).toMutableList()
         powerUps.add(powerUp)
         savePowerUps(powerUps, context)
     }
 
     /**
-     * Remove a power-up from the list.
+     * Remove a power-up from the list and save the updated list.
      */
-    fun removePowerUp(powerUp: PowerUp, context: Context) {
+    fun removePowerUp(context: Context, powerUp: PowerUp) {
         val powerUps = getPowerUps(context).toMutableList()
         powerUps.remove(powerUp)
         savePowerUps(powerUps, context)
     }
 
     /**
-     * Clear all power-ups (used for reset purposes).
+     * Activate a power-up by setting its isActive flag to true.
      */
-    fun clearPowerUps(context: Context) {
-        savePowerUps(emptyList(), context)
-    }
-
-    /**
-     * Initialize default power-ups (can be called on app startup or reset).
-     */
-    fun initializeDefaultPowerUps(context: Context) {
-        val defaultPowerUps = listOf(
-            PowerUp(type = PowerUpType.DOUBLE_POINTS, isActive = false, effectValue = 2),
-            PowerUp(type = PowerUpType.IMMUNITY, isActive = false),
-            //PowerUp(type = PowerUpType.SPEED_BOOST, isActive = false, effectValue = 10),
-            PowerUp(type = PowerUpType.EXTRA_TIME, isActive = false, effectValue = 30)
-        )
-        savePowerUps(defaultPowerUps, context)
-    }
-
-    /**
-     * Get a power-up by type.
-     */
-    fun getPowerUpByType(context: Context, type: PowerUpType): PowerUp? {
-        return getPowerUps(context).find { it.type == type }
-    }
-
-    /**
-     * Activate a power-up (set isActive to true).
-     */
-    fun activatePowerUp(context: Context, type: PowerUpType) {
+    fun activatePowerUp(context: Context, type: PowerUpType, duration: Long) {
         val powerUps = getPowerUps(context).toMutableList()
         val index = powerUps.indexOfFirst { it.type == type }
         if (index != -1) {
-            val updatedPowerUp = powerUps[index].copy(isActive = true)
+            val updatedPowerUp = powerUps[index].copy(isActive = true, duration = System.currentTimeMillis() + duration)
+            powerUps[index] = updatedPowerUp
+            savePowerUps(powerUps, context)
+        }
+    }
+
+    /**
+     * Deactivate a specific power-up by setting its isActive flag to false.
+     */
+    fun deactivatePowerUp(context: Context, type: PowerUpType) {
+        val powerUps = getPowerUps(context).toMutableList()
+        val index = powerUps.indexOfFirst { it.type == type }
+        if (index != -1) {
+            val updatedPowerUp = powerUps[index].copy(isActive = false)
             powerUps[index] = updatedPowerUp
             savePowerUps(powerUps, context)
         }
@@ -117,7 +103,40 @@ class PowerUpRepository {
      * Deactivate all power-ups (set isActive to false for all).
      */
     fun deactivateAllPowerUps(context: Context) {
-        val powerUps = getPowerUps(context).toMutableList().map { it.copy(isActive = false) }
+        val powerUps = getPowerUps(context).map { it.copy(isActive = false) }
         savePowerUps(powerUps, context)
+    }
+
+    /**
+     * Clear all power-ups (useful for game reset).
+     */
+    fun clearPowerUps(context: Context) {
+        savePowerUps(emptyList(), context)
+    }
+
+    /**
+     * Initialize default power-ups for a new game or reset.
+     */
+    fun initializeDefaultPowerUps(context: Context) {
+        val defaultPowerUps = listOf(
+            PowerUp(type = PowerUpType.DOUBLE_POINTS, isActive = false, effectValue = 2),
+            PowerUp(type = PowerUpType.IMMUNITY, isActive = false),
+            PowerUp(type = PowerUpType.EXTRA_TIME, isActive = false, effectValue = 30)
+        )
+        savePowerUps(defaultPowerUps, context)
+    }
+
+    /**
+     * Get a specific power-up by its type.
+     */
+    fun getPowerUpByType(context: Context, type: PowerUpType): PowerUp? {
+        return getPowerUps(context).find { it.type == type }
+    }
+
+    /**
+     * Retrieve all active power-ups.
+     */
+    fun getActivePowerUps(context: Context): List<PowerUp> {
+        return getPowerUps(context).filter { it.isActive }
     }
 }

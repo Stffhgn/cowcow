@@ -33,15 +33,18 @@ class AchievementsFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 CowCowTheme {
-                    AchievementsScreen()
+                    // Pass the observed achievements to the AchievementsScreen
+                    AchievementsScreen(
+                        achievementViewModel = achievementViewModel
+                    )
                 }
             }
         }
     }
 
     @Composable
-    fun AchievementsScreen() {
-        val achievements by achievementViewModel.achievements.observeAsState(emptyList())
+    fun AchievementsScreen(achievementViewModel: AchievementViewModel) {
+        val achievements by achievementViewModel.unlockedAchievements.observeAsState(emptyList())
         val isLoading by achievementViewModel.isLoading.observeAsState(false)
         val errorMessage by achievementViewModel.errorMessage.observeAsState("")
 

@@ -23,6 +23,31 @@ class TeamRepository(private val context: Context) {
     }
 
     /**
+     * Adds a new team to the repository by saving it to SharedPreferences.
+     *
+     * @param newTeam The team to add to the repository.
+     */
+    fun addTeam(newTeam: Team) {
+        // Assign new team to the repository's team variable
+        team = newTeam
+        saveTeam()  // Save team to SharedPreferences
+        Log.d("TeamRepository", "New team added: ${newTeam.name} with members: ${newTeam.members.size}")
+    }
+
+    /**
+     * Remove the current team from the repository by deleting it from SharedPreferences.
+     */
+    fun removeTeam() {
+        val prefs = getSharedPreferences()
+        val editor = prefs.edit()
+        editor.remove(TEAM_KEY)
+        editor.apply()  // Commit the changes
+
+        team = null  // Reset the team to null
+        Log.d("TeamRepository", "Team removed from SharedPreferences")
+    }
+
+    /**
      * Load the single team from SharedPreferences.
      */
     fun loadTeam() {

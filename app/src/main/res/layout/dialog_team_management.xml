@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:flexbox="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
@@ -19,48 +20,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="16dp" />
 
-    <!-- Players on Team List Header -->
-    <TextView
-        android:id="@+id/onTeamHeader"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Players on Team"
-        android:textSize="18sp"
-        android:textStyle="bold"
+    <!-- FlexboxLayout for Players List -->
+    <com.google.android.flexbox.FlexboxLayout
+        android:id="@+id/playerFlexbox"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/teamManagementHeader"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginBottom="8dp" />
-
-    <!-- RecyclerView for Players on Team -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/onTeamRecyclerView"
-        android:layout_width="0dp"
-        android:layout_height="200dp"
-        app:layout_constraintTop_toBottomOf="@id/onTeamHeader"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp" />
-
-    <!-- Players not on Team List Header -->
-    <TextView
-        android:id="@+id/notOnTeamHeader"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Players Not on Team"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/onTeamRecyclerView"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginBottom="8dp" />
-
-    <!-- RecyclerView for Players not on Team -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/notOnTeamRecyclerView"
-        android:layout_width="0dp"
-        android:layout_height="200dp"
-        app:layout_constraintTop_toBottomOf="@id/notOnTeamHeader"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/saveTeamButton"
+        flexbox:alignItems="flex_start"
+        flexbox:flexWrap="wrap"
+        flexbox:justifyContent="space_between"
         android:layout_marginBottom="16dp" />
 
     <!-- Empty State TextView (for when no players are available) -->
@@ -71,7 +42,7 @@
         android:text="No players available"
         android:textSize="16sp"
         android:gravity="center"
-        app:layout_constraintTop_toBottomOf="@id/notOnTeamRecyclerView"
+        app:layout_constraintTop_toBottomOf="@id/teamManagementHeader"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:visibility="gone" />

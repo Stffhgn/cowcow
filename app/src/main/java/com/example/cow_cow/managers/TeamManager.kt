@@ -1,31 +1,25 @@
 package com.example.cow_cow.managers
 
+import android.util.Log
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Team
+import com.example.cow_cow.repositories.PlayerRepository
 
-object TeamManager {
+class TeamManager(private val playerRepository: PlayerRepository) {
 
+    private val TAG = "TeamManager"
     private var team: Team? = null  // Single instance of the team
 
     /**
-     * Create a new team.
+     * Create a new team or retrieve the existing one.
      *
-     * @param teamName Name of the team.
-     * @return Newly created Team object.
+     * @param teamName Name of the team (used if creating a new team).
+     * @return The existing or newly created Team object.
      */
-    fun createTeam(teamName: String): Team {
-        team = Team(id = "1", name = teamName, members = mutableListOf())
-        return team!!
-    }
-
-    /**
-     * Get the current team. If the team doesn't exist, create a default one.
-     *
-     * @return The current team.
-     */
-    fun getTeam(): Team {
+    fun createOrGetTeam(teamName: String = "Default Team"): Team {
         if (team == null) {
-            team = Team(id = "1", name = "Default Team", members = mutableListOf())
+            team = Team(id = "1", name = teamName, members = mutableListOf())
+            Log.d(TAG, "Created new team with name: $teamName")
         }
         return team!!
     }
@@ -36,12 +30,14 @@ object TeamManager {
      * @param player The player to be added to the team.
      */
     fun addPlayerToTeam(player: Player) {
-        team?.let {
-            if (!it.members.contains(player)) {
-                it.addMember(player)
-                player.isOnTeam = true // Update the isOnTeam property
-                updateTeamScore()
-            }
+        val currentTeam = createOrGetTeam()
+        if (!currentTeam.members.contains(player)) {
+            currentTeam.addMember(player)
+            player.isOnTeam = true
+            updateTeamScore()
+            Log.d(TAG, "Player ${player.name} added to team: ${currentTeam.name}")
+        } else {
+            Log.d(TAG, "Player ${player.name} is already in the team.")
         }
     }
 
@@ -51,12 +47,14 @@ object TeamManager {
      * @param player The player to be removed.
      */
     fun removePlayerFromTeam(player: Player) {
-        team?.let {
-            if (it.members.contains(player)) {
-                it.removeMember(player)
-                player.isOnTeam = false // Update the isOnTeam property
-                updateTeamScore()
-            }
+        val currentTeam = createOrGetTeam()
+        if (currentTeam.members.contains(player)) {
+            currentTeam.removeMember(player)
+            player.isOnTeam = false
+            updateTeamScore()
+            Log.d(TAG, "Player ${player.name} removed from team: ${currentTeam.name}")
+        } else {
+            Log.d(TAG, "Player ${player.name} is not in the team.")
         }
     }
 
@@ -65,24 +63,27 @@ object TeamManager {
      */
     fun updateTeamScore() {
         team?.let {
-            it.teamScore = it.members.sumOf { player -> player.calculateTotalPoints() }
+            it.teamScore = it.members.sumOf { player -> ScoreManager.calculatePlayerScore(player) }
+            Log.d(TAG, "Updated team score: ${it.teamScore}")
         }
     }
 
     /**
-     * Distribute points evenly across team members.
+     * Distribute points evenly across team members using ScoreManager.
      *
      * @param points The total points to be distributed.
      */
     fun distributeTeamPoints(points: Int) {
-        team?.let {
-            if (it.members.isNotEmpty()) {
-                val pointsPerPlayer = points / it.members.size
-                it.members.forEach { player ->
-                    player.basePoints += pointsPerPlayer
-                }
-                updateTeamScore()
+        val currentTeam = createOrGetTeam()
+        if (currentTeam.members.isNotEmpty()) {
+            val pointsPerPlayer = points / currentTeam.members.size
+            Log.d(TAG, "Distributing $points points among ${currentTeam.members.size} players ($pointsPerPlayer points each).")
+            currentTeam.members.forEach { player ->
+                ScoreManager.addPointsToPlayer(player, pointsPerPlayer)
             }
+            updateTeamScore()
+        } else {
+            Log.d(TAG, "No players in the team to distribute points.")
         }
     }
 
@@ -93,6 +94,7 @@ object TeamManager {
         team?.let {
             it.members.clear()
             it.teamScore = 0
+            Log.d(TAG, "Team ${it.name} has been reset.")
         }
     }
 

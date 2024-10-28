@@ -3,10 +3,11 @@ package com.example.cow_cow.models
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
+import com.example.cow_cow.utils.TeamUtils
 
 data class Team(
     var id: String,                                 // Unique identifier for the team
-    var name: String,                            // Name of the team
+    var name: String = TeamUtils.generateRandomTeamName(),                            // Name of the team
     var members: MutableList<Player> = mutableListOf(),  // List of team members (players)
     var teamScore: Int = 0,                      // Total team score
     var teamBonuses: MutableList<TeamBonus> = mutableListOf(),  // List of active team bonuses

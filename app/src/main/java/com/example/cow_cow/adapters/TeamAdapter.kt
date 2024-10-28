@@ -4,19 +4,24 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cow_cow.databinding.ItemPlayerBinding
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 
 class TeamAdapter(
     private var teamPlayers: MutableList<Player>,
+    private val scoreManager: ScoreManager, // Injected ScoreManager for score calculations
     private val onPlayerClick: ((Player) -> Unit)? = null // Optional lambda for player click actions
 ) : RecyclerView.Adapter<TeamAdapter.TeamViewHolder>() {
 
     inner class TeamViewHolder(private val binding: ItemPlayerBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(player: Player) {
             binding.playerNameTextView.text = player.name
-            binding.playerScoreTextView.text = "Score: ${player.calculateTotalPoints()}"
 
-            // Handling player clicks if the lambda is provided
+            // Calculate total points using the ScoreManager
+            val totalPoints = scoreManager.calculatePlayerScore(player)
+            binding.playerScoreTextView.text = "Score: $totalPoints"
+
+            // Handle player clicks if the lambda is provided
             binding.root.setOnClickListener {
                 onPlayerClick?.invoke(player)
             }

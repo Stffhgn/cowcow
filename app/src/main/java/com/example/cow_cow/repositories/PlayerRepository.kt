@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.cow_cow.models.*
+import com.example.cow_cow.utils.DataUtils.savePlayers
 import com.example.cow_cow.utils.PlayerIDGenerator
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -56,21 +57,37 @@ class PlayerRepository(private val context: Context) {
     }
 
     /**
-     * Saves the list of players to SharedPreferences.
+     * Saves a single player to SharedPreferences.
+     *
+     * @param player The player to save.
      */
-    fun savePlayers(players: List<Player>) {
-        Log.d("PlayerRepository", "Saving players to SharedPreferences.")
+    fun savePlayer(player: Player) {
+        Log.d("PlayerRepository", "Saving player ${player.name} to SharedPreferences.")
+
+        // Retrieve the existing list of players
         val prefs = getSharedPreferences()
+        val playersJson = prefs.getString(PLAYERS_KEY, "[]")
+        val players = gson.fromJson(playersJson, Array<Player>::class.java).toMutableList()
+
+        // Check if the player already exists and update or add the new one
+        val existingPlayerIndex = players.indexOfFirst { it.id == player.id }
+        if (existingPlayerIndex != -1) {
+            players[existingPlayerIndex] = player
+            Log.d("PlayerRepository", "Updated player ${player.name}.")
+        } else {
+            players.add(player)
+            Log.d("PlayerRepository", "Added new player ${player.name}.")
+        }
+
+        // Save the updated list back to SharedPreferences
         val editor = prefs.edit()
         val json = gson.toJson(players)
         editor.putString(PLAYERS_KEY, json)
         editor.apply()
-        Log.d("PlayerRepository", "Players saved to SharedPreferences: ${players.size} players")
 
-        // Update the LiveData after saving the players
+        // Update the LiveData to notify observers
         _playersLiveData.postValue(players)
-        Log.d("PlayerRepository", "playersLiveData updated with ${players.size} players.")
-
+        Log.d("PlayerRepository", "Player ${player.name} saved to SharedPreferences.")
     }
 
     /**
@@ -88,16 +105,14 @@ class PlayerRepository(private val context: Context) {
             }
 
             players.add(player)
-            savePlayers(players)
-            withContext(Dispatchers.Main) {
-                _playersLiveData.value = players
-            }
-            Log.d("PlayerRepository", "New player added with ID: ${player.id}")
+
+            // Save the updated list of players to SharedPreferences
+            savePlayer(player)  // Call the method that saves a single player
         }
     }
 
     /**
-     * Updates a specific player and saves the updated list to SharedPreferences.
+     * Updates a specific player and saves the changes.
      */
     fun updatePlayer(player: Player) {
         Log.d("PlayerRepository", "Updating player with ID: ${player.id}.")
@@ -106,11 +121,7 @@ class PlayerRepository(private val context: Context) {
             val index = players.indexOfFirst { it.id == player.id }
             if (index != -1) {
                 players[index] = player
-                savePlayers(players)
-                withContext(Dispatchers.Main) {
-                    _playersLiveData.value = players // Update LiveData on main thread
-                }
-                Log.d("PlayerRepository", "Player with ID: ${player.id} updated successfully.")
+                savePlayer(player) // Save the updated player instead of the entire list
             } else {
                 Log.e("PlayerRepository", "Player with ID: ${player.id} not found.")
             }
@@ -123,10 +134,8 @@ class PlayerRepository(private val context: Context) {
     fun refreshPlayers() {
         Log.d("PlayerRepository", "Refreshing player list.")
         CoroutineScope(Dispatchers.IO).launch {
-            val updatedPlayers = getPlayers() // Fetch updated players from SharedPreferences
-            withContext(Dispatchers.Main) {
-                _playersLiveData.value = updatedPlayers // Update LiveData on the main thread
-            }
+            val updatedPlayers = getPlayers()
+            _playersLiveData.postValue(updatedPlayers)
             Log.d("PlayerRepository", "Player list refreshed with ${updatedPlayers.size} players.")
         }
     }
@@ -139,7 +148,10 @@ class PlayerRepository(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val players = getPlayers().toMutableList()
             val updatedPlayers = players.filter { it.id != playerId }
-            savePlayers(updatedPlayers)
+
+            // Save each player individually after removal
+            updatedPlayers.forEach { savePlayer(it) }
+
             withContext(Dispatchers.Main) {
                 _playersLiveData.value = updatedPlayers
             }
@@ -153,20 +165,34 @@ class PlayerRepository(private val context: Context) {
     fun updatePlayerName(playerId: String, newName: String) {
         Log.d("PlayerRepository", "Updating name for player ID: $playerId.")
         CoroutineScope(Dispatchers.IO).launch {
-            val players = getPlayers().toMutableList()
-            val index = players.indexOfFirst { it.id == playerId }
-            if (index != -1) {
-                players[index] = players[index].copy(name = newName)
-                savePlayers(players)
-                withContext(Dispatchers.Main) {
-                    _playersLiveData.value = players
+            try {
+                val player = getPlayerById(playerId)
+                if (player != null) {
+                    // Update the player's name using the copy method
+                    val updatedPlayer = player.copy(name = newName)
+
+                    // Save the updated player
+                    savePlayer(updatedPlayer)
+
+                    // Refresh the LiveData with the updated player list
+                    val updatedPlayers = getPlayers().toMutableList()
+                    val index = updatedPlayers.indexOfFirst { it.id == playerId }
+                    if (index != -1) {
+                        updatedPlayers[index] = updatedPlayer
+                        withContext(Dispatchers.Main) {
+                            _playersLiveData.value = updatedPlayers
+                            Log.d("PlayerRepository", "Player name updated to $newName for player ID: $playerId.")
+                        }
+                    }
+                } else {
+                    Log.e("PlayerRepository", "Player with ID: $playerId not found.")
                 }
-                Log.d("PlayerRepository", "Player name updated to $newName for player ID: $playerId.")
-            } else {
-                Log.e("PlayerRepository", "Player with ID: $playerId not found.")
+            } catch (e: Exception) {
+                Log.e("PlayerRepository", "Error updating player name: ${e.message}", e)
             }
         }
     }
+
 
     /**
      * Retrieves player-specific settings from SharedPreferences.
@@ -191,12 +217,9 @@ class PlayerRepository(private val context: Context) {
         Log.d("PlayerRepository", "Saving settings for player ID: $playerId.")
         val sharedPreferences = getSharedPreferences()
         val editor = sharedPreferences.edit()
-
-        // Convert settings to JSON format and save in SharedPreferences
         val settingsJson = gson.toJson(settings)
         editor.putString("player_settings_$playerId", settingsJson)
         editor.apply()
-
         Log.d("PlayerRepository", "Settings saved successfully for player ID: $playerId.")
     }
 
@@ -293,7 +316,46 @@ class PlayerRepository(private val context: Context) {
         }
     }
 
-    // Additional methods can be adjusted similarly...
+    /**
+     * Fetches player achievements.
+     */
+    fun getPlayerAchievements(playerId: String): List<Achievement> {
+        val sharedPreferences = getSharedPreferences()
+        val json = sharedPreferences.getString("player_achievements_$playerId", null)
+        return if (json != null) {
+            gson.fromJson(json, object : TypeToken<List<Achievement>>() {}.type)
+        } else {
+            emptyList()
+        }
+    }
+
+    /**
+     * Logs the GPS location where an item was found.
+     */
+    fun logGpsLocation(playerId: String, latitude: Double, longitude: Double) {
+        Log.d("PlayerRepository", "Logging GPS location for player ID: $playerId at ($latitude, $longitude).")
+        // Implement the logic to save or update GPS data associated with the player
+    }
+
+    /**
+     * Uses a held power-up for a player.
+     */
+    fun usePowerUp(playerId: String, powerUp: PowerUp) {
+        Log.d("PlayerRepository", "Using power-up for player ID: $playerId.")
+        val player = getPlayerById(playerId) // Fetch the player by ID
+
+        player?.let {
+            if (it.heldPowerUps.contains(powerUp)) {
+                it.heldPowerUps.remove(powerUp) // Remove the used power-up
+                // Apply power-up effects if necessary
+                savePlayer(it) // Save the updated player back to SharedPreferences
+                Log.d("PlayerRepository", "Power-up used and saved for player ID: $playerId.")
+            } else {
+                Log.w("PlayerRepository", "Player ID: $playerId does not hold the specified power-up.")
+            }
+        } ?: Log.e("PlayerRepository", "Player with ID: $playerId not found.")
+    }
+
 
     // Set current player (can be called when the user logs in or session starts)
     fun setCurrentPlayer(player: Player) {

@@ -6,5 +6,6 @@ enum class RuleEffectType {
     SILENCE_PLAYER,          // Prevent a player from making calls (for a time)
     CUSTOM_PENALTY,          // Apply a custom penalty (e.g., cannot participate for 1 round)
     DOUBLE_POINTS,           // Double the points gained for a period
+    POWER_UP_REWARD,         // Double points for now
 
 }

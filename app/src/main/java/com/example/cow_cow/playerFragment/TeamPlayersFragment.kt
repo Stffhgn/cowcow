@@ -5,17 +5,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.adapters.TeamAdapter
 import com.example.cow_cow.databinding.FragmentTeamPlayersBinding
-import com.example.cow_cow.viewModels.TeamViewModel
 import com.example.cow_cow.models.Player
+import com.example.cow_cow.viewModels.TeamViewModel
+import com.example.cow_cow.managers.ScoreManager
 
 class TeamPlayersFragment : Fragment() {
 
-    private lateinit var binding: FragmentTeamPlayersBinding
+    private var _binding: FragmentTeamPlayersBinding? = null
+    private val binding get() = _binding!!
     private lateinit var teamViewModel: TeamViewModel
     private lateinit var teamAdapter: TeamAdapter
 
@@ -23,7 +24,7 @@ class TeamPlayersFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentTeamPlayersBinding.inflate(inflater, container, false)
+        _binding = FragmentTeamPlayersBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -33,15 +34,14 @@ class TeamPlayersFragment : Fragment() {
         // Initialize ViewModel
         teamViewModel = ViewModelProvider(requireActivity()).get(TeamViewModel::class.java)
 
-        // Setup RecyclerView and Adapter
+        // Setup RecyclerView and Adapter with a score manager
         setupRecyclerView()
 
-        // Observe team players from ViewModel and update UI
-        teamViewModel.team.observe(viewLifecycleOwner, Observer { team ->
-            team?.let {
-                teamAdapter.updateData(it.members.toMutableList())
-            }
-        })
+        // Observe players and filter for those on the team
+        teamViewModel.players.observe(viewLifecycleOwner) { players ->
+            val teamMembers = players.filter { it.isOnTeam }
+            teamAdapter.updateData(teamMembers.toMutableList())
+        }
 
         // Add Player Button logic
         binding.addPlayerButton.setOnClickListener {
@@ -51,10 +51,12 @@ class TeamPlayersFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        teamAdapter = TeamAdapter(mutableListOf(), onPlayerClick = { player ->
-            // Handle player click (e.g., show stats or options)
-            showPlayerOptionsDialog(player)
-        })
+        val scoreManager = ScoreManager // Replace with actual instance if needed
+        teamAdapter = TeamAdapter(
+            mutableListOf(),
+            onPlayerClick = { player -> showPlayerOptionsDialog(player) },
+            scoreManager = scoreManager // Pass the score manager as required
+        )
 
         binding.teamPlayersRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
@@ -70,5 +72,10 @@ class TeamPlayersFragment : Fragment() {
     private fun showPlayerOptionsDialog(player: Player) {
         // Logic to show player options (e.g., remove from team, view stats)
         // You could implement a dialog here for player actions
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

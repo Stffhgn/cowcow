@@ -68,12 +68,17 @@ class PlayerSettingsFragment : Fragment() {
             val selectedPlayer = playerViewModel.selectedPlayer.value
 
             if (newPlayerName.isNotBlank() && selectedPlayer != null) {
-                playerViewModel.updatePlayerName(selectedPlayer.id, newPlayerName)
+                // Create a copy of the player with the updated name
+                val updatedPlayer = selectedPlayer.copy(name = newPlayerName)
+
+                // Call the ViewModel's updatePlayer method with the updated player
+                playerViewModel.updatePlayer(updatedPlayer)
                 Toast.makeText(requireContext(), "Player name updated", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(requireContext(), "Player name cannot be empty", Toast.LENGTH_SHORT).show()
             }
         }
+
 
         // Listener for sound switch
         binding.soundSwitch.setOnCheckedChangeListener { _, isChecked ->

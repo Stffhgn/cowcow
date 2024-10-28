@@ -12,6 +12,7 @@ import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentTeamManagementBinding
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
+import com.example.cow_cow.utils.DataUtils
 import com.example.cow_cow.viewModels.PlayerViewModel
 import com.example.cow_cow.viewModels.PlayerViewModelFactory
 
@@ -68,31 +69,41 @@ class TeamManagementFragment : Fragment() {
             }
         }
 
-        // Save team button functionality
+// Save team button functionality
         binding.saveTeamButton.setOnClickListener {
-            playerViewModel.saveTeam()
+            // Call the saveTeam function from DataUtils
+            DataUtils.saveTeam(requireContext())
             Toast.makeText(requireContext(), "Team saved successfully!", Toast.LENGTH_SHORT).show()
         }
+
     }
 
     // Function to initialize RecyclerViews
     private fun setupRecyclerViews() {
-        availablePlayerAdapter = PlayerAdapter { player ->
-            playerViewModel.addPlayerToTeam(player)
-        }
+        val scoreManager = com.example.cow_cow.managers.ScoreManager // Ensure this is correctly referenced
 
-        teamPlayerAdapter = PlayerAdapter { player ->
-            playerViewModel.removePlayerFromTeam(player)
-        }
+        availablePlayerAdapter = PlayerAdapter(
+            isWhoCalledItContext = false,
+            onPlayerClick = { player -> playerViewModel.addPlayerToTeam(player) },
+            scoreManager = scoreManager
+        )
+
+        teamPlayerAdapter = PlayerAdapter(
+            isWhoCalledItContext = true,
+            onPlayerClick = { player -> playerViewModel.removePlayerFromTeam(player) },
+            scoreManager = scoreManager
+        )
 
         binding.availablePlayersRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = availablePlayerAdapter
+            setHasFixedSize(true)
         }
 
         binding.teamPlayersRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = teamPlayerAdapter
+            setHasFixedSize(true)
         }
     }
 

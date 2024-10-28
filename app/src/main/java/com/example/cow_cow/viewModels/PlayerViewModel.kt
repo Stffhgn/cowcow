@@ -3,8 +3,9 @@ package com.example.cow_cow.viewModels
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.*
-import com.example.cow_cow.models.Player
-import com.example.cow_cow.models.PlayerSettings
+import com.example.cow_cow.managers.PenaltyManager
+import com.example.cow_cow.managers.PlayerManager
+import com.example.cow_cow.models.*
 import com.example.cow_cow.repositories.PlayerRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,6 +25,9 @@ class PlayerViewModel(
 
     // LiveData for Players from Repository
     val players: LiveData<List<Player>> = repository.playersLiveData
+
+    // Initialize playerManager using the repository
+    private val playerManager = PlayerManager(repository)
 
     // LiveData for Team Players
     private val _teamPlayers = MutableLiveData<List<Player>>()
@@ -45,6 +49,18 @@ class PlayerViewModel(
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
 
+    // LiveData for Player Achievements
+    private val _playerAchievements = MutableLiveData<List<Achievement>>()
+    val playerAchievements: LiveData<List<Achievement>> get() = _playerAchievements
+
+    // LiveData for Held Power-Ups
+    private val _heldPowerUps = MutableLiveData<List<PowerUp>>()
+    val heldPowerUps: LiveData<List<PowerUp>> get() = _heldPowerUps
+
+    // LiveData for Active Penalties
+    private val _activePenalties = MutableLiveData<List<Penalty>>()
+    val activePenalties: LiveData<List<Penalty>> get() = _activePenalties
+
     // Initialize loading of players and team
     init {
         loadPlayers()
@@ -52,10 +68,13 @@ class PlayerViewModel(
     }
 
     /**
-     * Set the selected player
+     * Set the selected player and load their achievements, held power-ups, and active penalties.
      */
     fun setSelectedPlayer(player: Player) {
         _selectedPlayer.value = player
+        loadPlayerAchievements(player)
+        loadHeldPowerUps(player)
+        loadActivePenalties(player)
     }
 
     /**
@@ -66,7 +85,7 @@ class PlayerViewModel(
         _loading.value = true // Start loading
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                repository.getPlayers() // Ensure repository loads data if necessary
+                repository.getPlayers()
                 Log.d(TAG, "Players loaded successfully.")
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading players: ${e.message}", e)
@@ -101,7 +120,7 @@ class PlayerViewModel(
         _loading.value = true // Start loading
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                repository.updatePlayer(player)
+                repository.updatePlayer(player) // Update the player in the repository
                 Log.d(TAG, "Player updated successfully: ${player.name}")
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating player: ${e.message}", e)
@@ -112,130 +131,82 @@ class PlayerViewModel(
         }
     }
 
+
     /**
-     * Remove a player by ID and update the repository
+     * Load player-specific achievements from the repository
      */
-    fun removePlayerById(playerId: String) {
-        Log.d(TAG, "Removing player with ID: $playerId")
+    private fun loadPlayerAchievements(player: Player) {
+        Log.d(TAG, "Loading achievements for player: ${player.name}")
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                repository.removePlayerById(playerId)
-                Log.d(TAG, "Player removed with ID: $playerId")
-                _statusMessage.postValue("Player removed.")
+                val achievements = repository.getPlayerAchievements(player.id)
+                _playerAchievements.postValue(achievements)
+                Log.d(TAG, "Loaded ${achievements.size} achievements for player: ${player.name}")
             } catch (e: Exception) {
-                Log.e(TAG, "Error removing player: ${e.message}", e)
-                _errorMessage.postValue("Error removing player: ${e.message}")
+                Log.e(TAG, "Error loading achievements: ${e.message}", e)
+                _errorMessage.postValue("Error loading achievements: ${e.message}")
             }
         }
     }
 
     /**
-     * Update player name and save to repository
+     * Load held power-ups for the selected player
      */
-    fun updatePlayerName(playerId: String, newName: String) {
-        Log.d(TAG, "Updating player name to: $newName")
+    private fun loadHeldPowerUps(player: Player) {
+        Log.d(TAG, "Loading held power-ups for player: ${player.name}")
+        _heldPowerUps.value = player.heldPowerUps
+    }
+
+    /**
+     * Load active penalties for the selected player
+     */
+    private fun loadActivePenalties(player: Player) {
+        Log.d(TAG, "Loading active penalties for player: ${player.name}")
+        _activePenalties.value = player.penalties.filter { it.isActive }
+    }
+
+    /**
+     * Use a held power-up for the selected player and update the repository
+     */
+    fun useHeldPowerUp(player: Player, powerUp: PowerUp) {
+        Log.d(TAG, "Using power-up '${powerUp.type}' for player: ${player.name}")
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                repository.updatePlayerName(playerId, newName)
-                Log.d(TAG, "Player name updated to $newName")
-                _statusMessage.postValue("Player name updated to $newName")
+                repository.usePowerUp(player.id, powerUp)
+                loadHeldPowerUps(player) // Refresh the list of held power-ups
+                Log.d(TAG, "Power-up '${powerUp.type}' used successfully.")
+                _statusMessage.postValue("Power-up '${powerUp.type}' used successfully.")
             } catch (e: Exception) {
-                Log.e(TAG, "Error updating player name: ${e.message}", e)
-                _errorMessage.postValue("Error updating player name: ${e.message}")
+                Log.e(TAG, "Error using power-up: ${e.message}", e)
+                _errorMessage.postValue("Error using power-up: ${e.message}")
             }
         }
     }
 
     /**
-     * Get player by ID
+     * Apply a penalty to a player
      */
-    fun getPlayerById(id: String): LiveData<Player?> {
-        val playerLiveData = MutableLiveData<Player?>()
-        playerLiveData.value = players.value?.find { it.id == id }
-        return playerLiveData
-    }
-
-    /**
-     * Load player-specific settings from repository
-     */
-    private fun loadPlayerSettings() {
-        Log.d(TAG, "Loading player settings.")
+    fun applyPenalty(player: Player, penalty: Penalty) {
+        Log.d(TAG, "Requesting to apply penalty '${penalty.name}' to player: ${player.name}")
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val settingsMap = mutableMapOf<String, PlayerSettings>()
-                players.value?.forEach { player ->
-                    val playerSettings = repository.getPlayerSettings(player.id)
-                    settingsMap[player.id] = playerSettings
-                }
-                _playerSettings.postValue(settingsMap) // Update LiveData safely
-                Log.d(TAG, "Player settings loaded successfully.")
+                // Use PlayerController or PenaltyManager to apply the penalty
+                PenaltyManager.applyPenalty(player, penalty)
+                repository.updatePlayer(player) // Update the player's state in the repository
+                _statusMessage.postValue("Penalty '${penalty.name}' applied to ${player.name}.")
+                Log.d(TAG, "Penalty '${penalty.name}' applied successfully to ${player.name}.")
             } catch (e: Exception) {
-                Log.e(TAG, "Error loading player settings: ${e.message}", e)
-                _errorMessage.postValue("Error loading player settings: ${e.message}")
+                Log.e(TAG, "Error applying penalty: ${e.message}", e)
+                _errorMessage.postValue("Error applying penalty: ${e.message}")
             }
         }
     }
 
     /**
-     * Update player settings and save to repository
+     * Clear the current error message
      */
-    fun updatePlayerSettings(player: Player, settings: PlayerSettings) {
-        Log.d(TAG, "Updating settings for player: ${player.name}")
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                repository.savePlayerSettings(player.id, settings)
-                withContext(Dispatchers.Main) {
-                    val updatedSettingsMap = _playerSettings.value?.toMutableMap() ?: mutableMapOf()
-                    updatedSettingsMap[player.id] = settings
-                    _playerSettings.value = updatedSettingsMap
-                    _statusMessage.postValue("${player.name}'s settings updated.")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error updating player settings: ${e.message}", e)
-                _errorMessage.postValue("Error updating player settings: ${e.message}")
-            }
-        }
-    }
-    /**
-     * Refresh player list from the repository.
-     */
-    fun refreshPlayers() {
-        repository.refreshPlayers() // Trigger LiveData update in repository
-    }
-
-    /**
-     * Load team from repository
-     */
-    private fun loadTeam() {
-        Log.d(TAG, "Loading team from repository.")
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val savedTeam = repository.getTeam()
-                _teamPlayers.postValue(savedTeam) // Update LiveData safely
-                Log.d(TAG, "Team loaded successfully.")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading team: ${e.message}", e)
-                _errorMessage.postValue("Error loading team: ${e.message}")
-            }
-        }
-    }
-
-    /**
-     * Save team to repository
-     */
-    fun saveTeam() {
-        Log.d(TAG, "Saving team to repository.")
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _teamPlayers.value?.let { teamPlayers ->
-                    repository.saveTeam(teamPlayers)
-                    Log.d(TAG, "Team saved successfully.")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error saving team: ${e.message}", e)
-                _errorMessage.postValue("Error saving team: ${e.message}")
-            }
-        }
+    fun clearError() {
+        _errorMessage.value = null
     }
 
     /**
@@ -258,6 +229,29 @@ class PlayerViewModel(
     }
 
     /**
+     * Load team players using the PlayerManager, filtering by those marked as being on the team.
+     */
+    private fun loadTeam() {
+        Log.d(TAG, "Loading team players.")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Retrieve players who are on the team using PlayerManager.
+                val allPlayers = playerManager.getAllPlayers()
+                val teamPlayers = allPlayers.filter { it.isOnTeam }
+
+                // Update the LiveData with the filtered team players.
+                _teamPlayers.postValue(teamPlayers)
+                Log.d(TAG, "Team players loaded: ${teamPlayers.size} players.")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading team players: ${e.message}", e)
+                _errorMessage.postValue("Error loading team players: ${e.message}")
+            }
+        }
+    }
+
+
+
+    /**
      * Remove a player from the team
      */
     fun removePlayerFromTeam(player: Player) {
@@ -277,10 +271,29 @@ class PlayerViewModel(
     }
 
     /**
-     * Check if player is in the team
+     * Remove a player by their name.
      */
-    fun isPlayerInTeam(player: Player): Boolean {
-        return teamPlayers.value?.contains(player) ?: false
+    fun removePlayerByName(playerName: String) {
+        Log.d(TAG, "Removing player with name: $playerName")
+        _loading.value = true // Start loading
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val player = repository.getPlayers().find { it.name == playerName }
+                if (player != null) {
+                    repository.removePlayerById(player.name)
+                    Log.d(TAG, "Player removed successfully: $playerName")
+                    _statusMessage.postValue("Player $playerName removed successfully.")
+                } else {
+                    Log.w(TAG, "Player with name $playerName not found.")
+                    _errorMessage.postValue("Player with name $playerName not found.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error removing player: ${e.message}", e)
+                _errorMessage.postValue("Error removing player: ${e.message}")
+            } finally {
+                _loading.postValue(false) // Stop loading
+            }
+        }
     }
 
     /**
@@ -298,12 +311,5 @@ class PlayerViewModel(
                 _errorMessage.postValue("Error resetting players: ${e.message}")
             }
         }
-    }
-
-    /**
-     * Clear the current error message
-     */
-    fun clearError() {
-        _errorMessage.value = null
     }
 }

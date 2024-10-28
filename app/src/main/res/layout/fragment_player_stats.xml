@@ -18,7 +18,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Error message TextView -->
+    <!-- Error message TextView for displaying any loading or data errors -->
     <TextView
         android:id="@+id/errorTextView"
         android:layout_width="wrap_content"
@@ -48,7 +48,7 @@
             android:orientation="vertical"
             android:gravity="center_horizontal">
 
-            <!-- Avatar Image View -->
+            <!-- Avatar Image View (Can be replaced with player's image if available) -->
             <ImageView
                 android:id="@+id/avatarImageView"
                 android:layout_width="100dp"
@@ -57,7 +57,7 @@
                 android:src="@drawable/ic_launcher_round"
                 android:contentDescription="@string/avatar_image" />
 
-            <!-- Player name TextView -->
+            <!-- Display player's name -->
             <TextView
                 android:id="@+id/playerNameTextView"
                 android:layout_width="wrap_content"
@@ -67,7 +67,7 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Stats container for cows, churches, water towers -->
+            <!-- Stats container for displaying player's stats (Cows, Churches, Water Towers) -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -93,6 +93,10 @@
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cows" />
                 </LinearLayout>
 
                 <!-- Church stats -->
@@ -115,7 +119,11 @@
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
-                 </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Churches" />
+                </LinearLayout>
 
                 <!-- Water tower stats -->
                 <LinearLayout
@@ -137,10 +145,14 @@
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Water Towers" />
                 </LinearLayout>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Additional stats or information for the player can go here -->
+            <!-- Additional stats or player information displayed below -->
             <TextView
                 android:id="@+id/totalScoreTextView"
                 android:layout_width="wrap_content"
@@ -165,89 +177,11 @@
                 android:textSize="18sp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Other player attributes in a vertical list -->
             <TextView
                 android:id="@+id/bonusPointsTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Bonus Points: 0"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/achievementsTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Achievements: 0"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/customRulesTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Custom Rules: 0"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/activePowerUpsTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Active Power-Ups: 0"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/timePlayedTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Time Played: 0 ms"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/distanceTraveledTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Distance Traveled: 0 m"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/teamIdTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Team ID: None"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/isSilencedTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Is Silenced: false"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/isPowerUpActiveTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Is Power-Up Active: false"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/timeSpentTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Time Spent: 0 ms"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/objectivesCompletedTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Objectives Completed: 0"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/notificationsEnabledTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Notifications Enabled: true"
                 android:layout_marginTop="8dp" />
 
             <TextView
@@ -257,6 +191,7 @@
                 android:text="Games Played: 0"
                 android:layout_marginTop="8dp" />
 
+            <!-- Additional TextViews for other player attributes like active power-ups, rank, etc. -->
             <TextView
                 android:id="@+id/rankTextView"
                 android:layout_width="wrap_content"
@@ -265,41 +200,12 @@
                 android:layout_marginTop="8dp" />
 
             <TextView
-                android:id="@+id/objectsCalledTextView"
+                android:id="@+id/activePowerUpsTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Objects Called: 0"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/isOnTeamTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Is On Team: false"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/isCurrentPlayerTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Is Current Player: false"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/basePointsTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Base Points: 0"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:id="@+id/penaltyPointsTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Penalty Points: 0"
+                android:text="Active Power-Ups: 0"
                 android:layout_marginTop="8dp" />
 
         </LinearLayout>
     </ScrollView>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

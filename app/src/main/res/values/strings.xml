@@ -45,6 +45,22 @@
     <!-- Rainbow Car -->
     <string name="find_car_in_color">Find a car in this color: %1$s</string>
 
+    <!-- Player Score -->
+    <string name="player_score">Score: %d</string>
+
+    <!-- Player Stats -->
+    <string name="cows_spotted">Cows Spotted: %1$d</string>
+    <string name="churches_spotted">Churches Spotted: %1$d</string>
+    <string name="water_towers_spotted">Water Towers Spotted: %1$d</string>
+    <string name="is_on_team">Is On Team: %1$s</string>
+    <string name="is_current_player">Is Current Player: %1$s</string>
+    <string name="player_name">Name: %1$s</string>
+    <string name="bonus_points">Bonus Points: %1$d</string>
+    <string name="active_power_ups">Active Power-Ups: %1$d</string>
+    <string name="games_played">Games Played: %1$d</string>
+    <string name="rank">Rank: %1$s</string>
+
+
     <!-- Difficulty Levels -->
     <string-array name="difficulty_levels">
         <item>Easy</item>

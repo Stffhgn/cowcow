@@ -3,11 +3,11 @@ package com.example.cow_cow.viewModels
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.cow_cow.managers.PowerUpManager
+import android.util.Log
+import com.example.cow_cow.controllers.PowerUpController
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.PowerUp
 import com.example.cow_cow.enums.PowerUpType
-import android.util.Log
 
 class PowerUpViewModel : ViewModel() {
 
@@ -23,11 +23,12 @@ class PowerUpViewModel : ViewModel() {
     private val _isPowerUpActive = MutableLiveData<Boolean>()
     val isPowerUpActive: LiveData<Boolean> get() = _isPowerUpActive
 
-    // Reference to the PowerUpManager to handle power-up logic
-    private val powerUpManager = PowerUpManager
-
     // Logging tag for debugging
     private val TAG = "PowerUpViewModel"
+
+    init {
+        Log.d(TAG, "PowerUpViewModel initialized.")
+    }
 
     /**
      * Initialize the power-ups for the specified player.
@@ -36,12 +37,7 @@ class PowerUpViewModel : ViewModel() {
      */
     fun initializePowerUps(player: Player) {
         Log.d(TAG, "Initializing power-ups for player: ${player.name}")
-        val availablePowerUps = powerUpManager.getAvailablePowerUps(player)
-        _availablePowerUps.value = availablePowerUps
-
-        val activePowerUps = powerUpManager.getActivePowerUps(player)
-        _activePowerUps.value = activePowerUps
-        Log.d(TAG, "Power-ups initialized. Available: ${availablePowerUps.size}, Active: ${activePowerUps.size}")
+        updatePowerUpState(player)
     }
 
     /**
@@ -49,10 +45,11 @@ class PowerUpViewModel : ViewModel() {
      *
      * @param player The player activating the power-up.
      * @param powerUpType The type of power-up being activated.
+     * @param duration The duration for which the power-up is active.
      */
-    fun activatePowerUp(player: Player, powerUpType: PowerUpType) {
-        Log.d(TAG, "Activating power-up ${powerUpType.name} for player: ${player.name}")
-        powerUpManager.activatePowerUp(player, powerUpType, duration = 60000L) // Example duration of 60 seconds
+    fun activatePowerUp(player: Player, powerUpType: PowerUpType, duration: Long = 60000L) {
+        Log.d(TAG, "Activating power-up ${powerUpType.name} for player: ${player.name} with duration: ${duration}ms")
+        PowerUpController.activatePowerUp(player, powerUpType, duration)
         updatePowerUpState(player)
     }
 
@@ -64,7 +61,7 @@ class PowerUpViewModel : ViewModel() {
      */
     fun deactivatePowerUp(player: Player, powerUpType: PowerUpType) {
         Log.d(TAG, "Deactivating power-up ${powerUpType.name} for player: ${player.name}")
-        powerUpManager.deactivatePowerUp(player, powerUpType)
+        PowerUpController.deactivatePowerUpForPlayer(player, powerUpType)
         updatePowerUpState(player)
     }
 
@@ -74,10 +71,15 @@ class PowerUpViewModel : ViewModel() {
      * @param player The player whose power-up state is being updated.
      */
     private fun updatePowerUpState(player: Player) {
-        _activePowerUps.value = powerUpManager.getActivePowerUps(player)
-        _availablePowerUps.value = powerUpManager.getAvailablePowerUps(player)
-        _isPowerUpActive.value = powerUpManager.isPowerUpActive(player, PowerUpType.DOUBLE_POINTS)
-        Log.d(TAG, "Updated power-up state for player: ${player.name}")
+        // Update LiveData values for active and available power-ups
+        _activePowerUps.value = PowerUpController.getActivePowerUpsForPlayer(player)
+        _availablePowerUps.value = player.heldPowerUps.filter { !it.isActive }
+
+        // Check if a specific power-up is active (e.g., DOUBLE_POINTS)
+        _isPowerUpActive.value = _activePowerUps.value?.any { it.type == PowerUpType.DOUBLE_POINTS } == true
+
+        // Log the updated state
+        Log.d(TAG, "Updated power-up state for player: ${player.name}. Active: ${_activePowerUps.value?.size}, Available: ${_availablePowerUps.value?.size}")
     }
 
     /**
@@ -88,7 +90,7 @@ class PowerUpViewModel : ViewModel() {
      * @return True if the power-up is active, false otherwise.
      */
     fun isSpecificPowerUpActive(player: Player, powerUpType: PowerUpType): Boolean {
-        val isActive = powerUpManager.isPowerUpActive(player, powerUpType)
+        val isActive = player.activePowerUps.any { it.type == powerUpType && it.isActive && !it.hasExpired(System.currentTimeMillis()) }
         Log.d(TAG, "Power-up ${powerUpType.name} active for player: ${player.name} -> $isActive")
         return isActive
     }
@@ -101,7 +103,17 @@ class PowerUpViewModel : ViewModel() {
      */
     fun handlePowerUpExpiration(player: Player, powerUpType: PowerUpType) {
         Log.d(TAG, "Handling power-up expiration for ${powerUpType.name} for player: ${player.name}")
-        powerUpManager.deactivatePowerUp(player, powerUpType)
+        deactivatePowerUp(player, powerUpType)
+    }
+
+    /**
+     * Clear all active power-ups for a player.
+     *
+     * @param player The player whose active power-ups will be cleared.
+     */
+    fun clearAllActivePowerUps(player: Player) {
+        Log.d(TAG, "Clearing all active power-ups for player: ${player.name}")
+        PowerUpController.clearAllActivePowerUpsForPlayer(player)
         updatePowerUpState(player)
     }
 }

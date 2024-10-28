@@ -1,10 +1,13 @@
 package com.example.cow_cow.viewModels
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.cow_cow.managers.PlayerManager
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 import kotlinx.coroutines.Dispatchers
@@ -13,8 +16,12 @@ import kotlinx.coroutines.withContext
 
 class ScoreViewModel(application: Application) : AndroidViewModel(application) {
 
-    // Initialize playerRepository using the application context
-    private val playerRepository: PlayerRepository = PlayerRepository(application.applicationContext)
+    // Initialize managers
+    private val context: Context = getApplication<Application>().applicationContext
+    private val playerRepository = PlayerRepository(context)
+
+    private val playerManager = PlayerManager(playerRepository)
+    private val scoreManager: ScoreManager = ScoreManager
 
     // LiveData to hold individual player scores
     private val _playerScores = MutableLiveData<Map<Player, Int>>()
@@ -42,88 +49,116 @@ class ScoreViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Load player scores from the repository or local storage
+     * Load player scores using the ScoreManager
      */
     private fun loadPlayerScores() {
         viewModelScope.launch {
             try {
                 val players = withContext(Dispatchers.IO) {
-                    playerRepository.getPlayers()
+                    playerManager.getAllPlayers()
                 }
-                val scores = players.associateWith { it.calculateTotalPoints() }
-                _playerScores.value = scores
-                _statusMessage.value = "Player scores loaded successfully"
+                val scores = players.associateWith { scoreManager.calculatePlayerScore(it) }
+                _playerScores.postValue(scores)
+                _statusMessage.postValue("Player scores loaded successfully")
             } catch (e: Exception) {
-                _statusMessage.value = "Failed to load player scores: ${e.message}"
+                _statusMessage.postValue("Failed to load player scores: ${e.message}")
             }
         }
     }
 
     /**
-     * Calculate team score based on all team members' scores
+     * Calculate team score based on all team members' scores using the ScoreManager
      */
     fun calculateTeamScore() {
         viewModelScope.launch {
             try {
-                val team = withContext(Dispatchers.IO) {
-                    playerRepository.getTeam()
+                val teamPlayers = withContext(Dispatchers.IO) {
+                    playerManager.getTeamPlayers()
                 }
-                val totalTeamScore = team.sumOf { it.calculateTotalPoints() }
-                _teamScore.value = totalTeamScore
-                _statusMessage.value = "Team score calculated successfully"
+                val totalTeamScore = teamPlayers.sumOf { scoreManager.calculatePlayerScore(it) }
+                _teamScore.postValue(totalTeamScore)
+                _statusMessage.postValue("Team score calculated successfully")
             } catch (e: Exception) {
-                _statusMessage.value = "Failed to calculate team score: ${e.message}"
+                _statusMessage.postValue("Failed to calculate team score: ${e.message}")
             }
         }
     }
 
     /**
-     * Update an individual player's score and refresh LiveData
+     * Update an individual player's score and refresh LiveData using the ScoreManager
      */
     fun updatePlayerScore(player: Player, additionalPoints: Int) {
-        val updatedPlayers = _playerScores.value?.toMutableMap() ?: mutableMapOf()
-        updatedPlayers[player] = (updatedPlayers[player] ?: 0) + additionalPoints
+        viewModelScope.launch {
+            try {
+                // Update score and save player on IO dispatcher
+                withContext(Dispatchers.IO) {
+                    scoreManager.addPointsToPlayer(player, additionalPoints)
+                    playerManager.savePlayer(player)  // Corrected method call
+                }
 
-        _playerScores.value = updatedPlayers
-        savePlayers(updatedPlayers.keys.toList())  // Save the updated players to the repository
-
-        _statusMessage.value = "${player.name}'s score updated by $additionalPoints points"
+                // Update LiveData on the main thread
+                withContext(Dispatchers.Main) {
+                    val updatedScores = _playerScores.value?.toMutableMap() ?: mutableMapOf()
+                    val newScore = scoreManager.calculatePlayerScore(player)
+                    updatedScores[player] = newScore  // Use player.id as key
+                    _playerScores.value = updatedScores
+                    _statusMessage.value = "${player.name}'s score updated by $additionalPoints points"
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _statusMessage.value = "Failed to update player score: ${e.message}"
+                }
+            }
+        }
     }
 
     /**
      * Calculate and store high scores (top players)
      */
     fun loadHighScores() {
-        _highScores.value = _playerScores.value?.keys
-            ?.sortedByDescending { it.calculateTotalPoints() }
-            ?.take(5) // Top 5 players with highest scores
-    }
-
-    /**
-     * Save players to repository after updating scores
-     */
-    private fun savePlayers(players: List<Player>) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             try {
-                val context = getApplication<Application>().applicationContext
-                playerRepository.savePlayers(players)
-                _statusMessage.postValue("Player scores saved successfully")
+                val players = withContext(Dispatchers.IO) {
+                    playerManager.getAllPlayers()
+                }
+                val sortedPlayers =
+                    players.sortedByDescending { scoreManager.calculatePlayerScore(it) }
+                _highScores.postValue(sortedPlayers.take(5))
             } catch (e: Exception) {
-                _statusMessage.postValue("Failed to save player scores: ${e.message}")
+                _statusMessage.postValue("Failed to load high scores: ${e.message}")
             }
         }
     }
 
     /**
-     * Reset scores for all players and team (useful for restarting the game)
+     * Reset scores for all players and the team using the ScoreManager.
      */
     fun resetScores() {
-        _playerScores.value?.keys?.forEach { player ->
-            player.basePoints = 0
-            player.penaltyPoints = 0
-            player.bonusPoints = 0
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Retrieve all players
+                val players = playerManager.getAllPlayers()
+
+                // Reset the scores using the ScoreManager
+                scoreManager.resetPlayerScores(players)
+
+                // Save the updated player scores in the repository
+                playerManager.savePlayers(players)
+
+                // Refresh the scores on the main thread
+                withContext(Dispatchers.Main) {
+                    loadPlayerScores()
+                    calculateTeamScore()
+                    _statusMessage.value = "All player and team scores reset"
+                }
+            } catch (e: Exception) {
+                // Post error message if resetting fails
+                withContext(Dispatchers.Main) {
+                    _statusMessage.value = "Failed to reset scores: ${e.message}"
+                }
+            }
         }
-        _teamScore.value = 0
-        _statusMessage.value = "All player and team scores reset"
     }
 }
+
+

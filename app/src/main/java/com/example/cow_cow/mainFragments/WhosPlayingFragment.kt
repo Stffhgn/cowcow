@@ -15,6 +15,7 @@ import com.example.cow_cow.R
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentWhosPlayingBinding
 import com.example.cow_cow.interfaces.OnPlayerSelectedListener
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.utils.PlayerIDGenerator
@@ -25,6 +26,7 @@ class WhosPlayingFragment : Fragment() {
 
     private lateinit var viewModel: PlayerListViewModel
     private lateinit var adapter: PlayerAdapter
+    private lateinit var scoreManager: ScoreManager
     private var _binding: FragmentWhosPlayingBinding? = null
     private val binding get() = _binding!!
 
@@ -66,7 +68,11 @@ class WhosPlayingFragment : Fragment() {
         Log.d(TAG, "onViewCreated: PlayerListViewModel initialized.")
 
         // Set up RecyclerView and Adapter
-        adapter = PlayerAdapter { player -> onPlayerClick(player) } // Pass the onPlayerClick lambda
+        adapter = PlayerAdapter(
+            isWhoCalledItContext = true, // or false depending on your context
+            onPlayerClick = { player -> onPlayerClick(player) }, // Pass the click handling lambda
+            scoreManager = scoreManager // Inject the ScoreManager instance if needed
+        )
         binding.playerRecyclerView.adapter = adapter
         binding.playerRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
