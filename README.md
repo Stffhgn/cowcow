@@ -1,4 +1,3 @@
-Cow Cow Game
 Cow Cow is an engaging driving game designed to make road trips more interactive and fun. Players earn points by spotting objects like cows, churches, and water towers while driving. The game supports both solo and team play, allowing players to manage teams, track scores, and view their progress.
 
 Features
