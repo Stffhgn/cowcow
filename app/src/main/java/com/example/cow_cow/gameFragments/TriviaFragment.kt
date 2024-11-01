@@ -9,12 +9,13 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.cow_cow.R
 import com.example.cow_cow.databinding.FragmentTriviaBinding
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.managers.TriviaManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.TriviaQuestion
 import com.example.cow_cow.repositories.TriviaRepository
-import com.example.cow_cow.viewmodel.TriviaViewModel
-import com.example.cow_cow.viewmodel.TriviaViewModelFactory
+import com.example.cow_cow.viewModels.TriviaViewModel
+import com.example.cow_cow.viewModels.TriviaViewModelFactory
 
 class TriviaFragment : Fragment() {
 
@@ -24,6 +25,7 @@ class TriviaFragment : Fragment() {
     private lateinit var triviaViewModel: TriviaViewModel
     private lateinit var triviaManager: TriviaManager
     private lateinit var player: Player
+    private lateinit var scoreManager: ScoreManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,7 +48,7 @@ class TriviaFragment : Fragment() {
         player = Player(playerId, playerName)
 
         // Create ViewModel using the factory
-        val factory = TriviaViewModelFactory(triviaManager, player)
+        val factory = TriviaViewModelFactory(triviaManager, player, scoreManager)
         triviaViewModel = ViewModelProvider(this, factory).get(TriviaViewModel::class.java)
 
         // Observe ViewModel data

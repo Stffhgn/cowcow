@@ -11,7 +11,8 @@ import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.CustomRuleRepository
 
 class CustomRuleViewModel(
-    private val customRuleRepository: CustomRuleRepository
+    private val customRuleRepository: CustomRuleRepository,
+    private val customRuleManager: CustomRuleManager
 ) : ViewModel() {
 
     private val TAG = "CustomRuleViewModel"
@@ -124,7 +125,7 @@ class CustomRuleViewModel(
         Log.d(TAG, "Applying rule to player: ${player.name}")
 
         player.customRule?.let { rule ->
-            CustomRuleManager.applyCustomRule(player, rule)
+            customRuleManager.applyCustomRule(player, rule)
             Log.d(TAG, "Applied rule: ${rule.ruleName} to player: ${player.name}")
         } ?: Log.d(TAG, "No custom rule found for player: ${player.name}")
     }

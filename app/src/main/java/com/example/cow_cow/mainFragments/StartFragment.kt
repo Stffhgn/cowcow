@@ -30,6 +30,8 @@ class StartFragment : Fragment() {
     private lateinit var playerManager: PlayerManager
     private lateinit var teamManager: TeamManager
     private lateinit var triviaManager: TriviaManager
+    private lateinit var penaltyManager: PenaltyManager
+    private lateinit var scoreManager: ScoreManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -42,17 +44,16 @@ class StartFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize the repositories
+        // Initialize the repositories and managers in the correct order
         val playerRepository = PlayerRepository(requireContext())
-        val triviaRepository = TriviaRepository()
-
-        // Initialize manager instances that require repositories
         playerManager = PlayerManager(playerRepository)
-        teamManager = TeamManager(playerRepository)
-        triviaManager = TriviaManager(triviaRepository)
+        scoreManager = ScoreManager(playerManager)
+        teamManager = TeamManager(playerRepository, scoreManager)
+        penaltyManager = PenaltyManager(playerManager)
+        triviaManager = TriviaManager(TriviaRepository())
 
         // Create ViewModel using the custom factory
-        val factory = PlayerViewModelFactory(requireActivity().application, playerRepository)
+        val factory = PlayerViewModelFactory(requireActivity().application, playerRepository, playerManager, penaltyManager)
         playerViewModel = ViewModelProvider(this, factory).get(PlayerViewModel::class.java)
 
         // Observe the list of players
@@ -71,7 +72,6 @@ class StartFragment : Fragment() {
     // Set up button click listeners
     private fun setupButtons() {
         binding.apply {
-
             // Start Game Button
             startGameButton.setOnClickListener {
                 navigateToGameOrAddPlayer()
@@ -124,17 +124,15 @@ class StartFragment : Fragment() {
     private fun resetAllData() {
         Log.d("StartFragment", "Resetting all game data")
 
-        // Player-specific resets
-        val allPlayers = playerManager.getAllPlayers()
-        ScoreManager.resetPlayerScores(allPlayers)  // Reset all player scores
-        allPlayers.forEach { player ->
-            PenaltyManager.clearAllPenalties(player)  // Clear penalties for each player
-            PowerUpController.clearAllActivePowerUpsForPlayer(player)  // Clear power-ups
-            playerManager.savePlayer(player)  // Save updated player state
+        // Clear penalties and power-ups for each player and save their updated state
+        playerManager.getAllPlayers().forEach { player ->
+            penaltyManager.clearAllPenalties(player) // Clear penalties for each player
+            PowerUpController.clearAllActivePowerUpsForPlayer(player) // Clear power-ups
+            playerManager.savePlayer(player) // Save updated player state
         }
-        playerManager.clearPlayers()  // Clear all players from the game
+        playerManager.resetAllPlayerStats() // Reset all player stats
 
-        // Team reset
+        // Reset team data
         teamManager.resetTeam()
 
         Log.d("StartFragment", "All game data reset completed.")

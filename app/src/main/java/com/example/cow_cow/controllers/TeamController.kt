@@ -17,6 +17,7 @@ class TeamController(
     private val teamRepository: TeamRepository,
     private val playerManager: PlayerManager,
     private val teamManager: TeamManager,
+    private val teamUtils: TeamUtils
 ) {
     private var currentTeam: Team? = null
 
@@ -48,7 +49,7 @@ class TeamController(
     private fun createNewTeam(): Team {
         val newTeam = Team(
             id = PlayerIDGenerator.generatePlayerID(),
-            name = TeamUtils.generateRandomTeamName()
+            name = teamUtils.generateRandomTeamName()
         )
 
         // Save to repository and update the game view model

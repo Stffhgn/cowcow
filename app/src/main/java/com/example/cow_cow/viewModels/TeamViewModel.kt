@@ -8,6 +8,7 @@ import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.managers.TeamManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
+import com.google.android.material.color.utilities.Score
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -17,8 +18,9 @@ class TeamViewModel(application: Application) : AndroidViewModel(application) {
     private val TAG = "TeamViewModel"
 
     // Managers
-    private val playerManager: PlayerManager
-    private val teamManager: TeamManager
+    private lateinit var playerManager: PlayerManager
+    private lateinit var teamManager: TeamManager
+    private lateinit var scoreManager: ScoreManager
 
     // LiveData for the list of all players
     private val _players = MutableLiveData<List<Player>>()
@@ -41,8 +43,6 @@ class TeamViewModel(application: Application) : AndroidViewModel(application) {
         val context = getApplication<Application>().applicationContext
         val playerRepository = PlayerRepository(context)
         playerManager = PlayerManager(playerRepository)
-        teamManager = TeamManager(playerRepository)
-
         loadPlayers()
     }
 
@@ -117,7 +117,7 @@ class TeamViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val team = teamManager.createOrGetTeam() // Get the Team object
                 val teamPlayers = team.members           // Access the list of players
-                val score = teamPlayers.sumOf { ScoreManager.calculatePlayerScore(it) }
+                val score = teamPlayers.sumOf { scoreManager.calculatePlayerScore(it) }
                 _teamScore.postValue(score)
                 Log.d(TAG, "Updated team score: $score")
             } catch (e: Exception) {

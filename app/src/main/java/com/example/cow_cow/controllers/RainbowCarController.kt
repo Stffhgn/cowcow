@@ -7,17 +7,16 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import com.example.cow_cow.R
-import com.example.cow_cow.managers.PlayerManager
-import com.example.cow_cow.managers.ScoreManager
+import com.example.cow_cow.handlers.WhoCalledItHandler
 import com.example.cow_cow.uiStuff.FlexboxContainer
 import com.google.android.flexbox.FlexboxLayout
 
 class RainbowCarController(
     private val context: Context,
     private val buttonContainer: FlexboxContainer,
-    private val playerManager: PlayerManager,
-    private val scoreManager: ScoreManager
+    private val whoCalledItHandler: WhoCalledItHandler
 ) {
 
     private val rainbowColors = listOf(
@@ -41,19 +40,19 @@ class RainbowCarController(
      * Logs all team players in the game.
      */
     private fun logTeamPlayers() {
-        val teamPlayers = playerManager.getAllPlayers().filter { it.isOnTeam }
+        val teamPlayers = whoCalledItHandler.players.filter { it.isOnTeam }
         Log.d(TAG, "Total Players on the team: ${teamPlayers.size}")
         teamPlayers.forEach { player -> Log.d(TAG, "Player ${player.name} is on the team") }
     }
 
     /**
-     * Loads and displays the RainbowCar button with the current color in the sequence.
+     * Loads and displays the Rainbow Car button with the current color in the sequence.
      */
     fun loadRainbowCarButtons() {
         clearRainbowCarButton()
         TransitionManager.beginDelayedTransition(buttonContainer)
 
-        val colorRes = rainbowColors[currentColorIndex]
+        val colorRes = rainbowColors.getOrNull(currentColorIndex) ?: return
         val colorName = getColorName(colorRes)
         val colorButton = createButton(colorName, colorRes)
 
@@ -89,7 +88,7 @@ class RainbowCarController(
 
             setOnClickListener {
                 Log.d(TAG, "$colorName button clicked")
-                handleColorSelection()
+                handleColorSelection(colorName)
             }
         }
     }
@@ -97,7 +96,13 @@ class RainbowCarController(
     /**
      * Handles the player's selection of the current color button and advances to the next color.
      */
-    private fun handleColorSelection() {
+    private fun handleColorSelection(colorName: String) {
+        // Send the selected color and point value to WhoCalledItHandler
+        val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
+        fragmentManager?.let {
+            whoCalledItHandler.handleColorCall(it, colorName)
+        }
+
         if (currentColorIndex < rainbowColors.size - 1) {
             currentColorIndex++
             loadRainbowCarButtons()
@@ -123,16 +128,16 @@ class RainbowCarController(
     }
 
     /**
-     * Handles the end of the Rainbow Car game by awarding points and resetting the game state.
+     * Handles the end of the Rainbow Car game by resetting the game state.
      */
     private fun handleGameCompletion() {
         Log.d(TAG, "Rainbow Car game completed.")
         clearRainbowCarButton()
-        updateGameStateAfterCompletion()
+        currentColorIndex = 0
     }
 
     /**
-     * Clears the current RainbowCar button from the container.
+     * Clears the current Rainbow Car button from the container.
      */
     fun clearRainbowCarButton() {
         val rainbowCarButton = buttonContainer.findViewWithTag<View>("rainbowCarButton")
@@ -141,19 +146,6 @@ class RainbowCarController(
             Log.d(TAG, "Rainbow Car button removed from the FlexboxContainer.")
         } else {
             Log.d(TAG, "No Rainbow Car button found to remove.")
-        }
-    }
-
-    /**
-     * Resets the game state and awards points to all players on completion.
-     */
-    private fun updateGameStateAfterCompletion() {
-        currentColorIndex = 0
-
-        playerManager.getAllPlayers().forEach { player ->
-            val points = 10  // Award points for game completion
-            val totalScore = scoreManager.addPointsToPlayer(player, points)
-            Log.d(TAG, "[RainbowCarController] Player ${player.name} awarded $points points for Rainbow Car. Total score: $totalScore")
         }
     }
 }

@@ -21,7 +21,7 @@ class ScoreViewModel(application: Application) : AndroidViewModel(application) {
     private val playerRepository = PlayerRepository(context)
 
     private val playerManager = PlayerManager(playerRepository)
-    private val scoreManager: ScoreManager = ScoreManager
+    private val scoreManager: ScoreManager = ScoreManager(playerManager)
 
     // LiveData to hold individual player scores
     private val _playerScores = MutableLiveData<Map<Player, Int>>()
@@ -133,17 +133,20 @@ class ScoreViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Reset scores for all players and the team using the ScoreManager.
      */
+    /**
+     * Reset scores for all players and the team using the ScoreManager.
+     */
     fun resetScores() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // Retrieve all players
                 val players = playerManager.getAllPlayers()
 
-                // Reset the scores using the ScoreManager
-                scoreManager.resetPlayerScores(players)
-
-                // Save the updated player scores in the repository
-                playerManager.savePlayers(players)
+                // Reset each player's score and save them individually
+                players.forEach { player ->
+                    scoreManager.resetPlayerScores(player) // Reset score for each player
+                    playerManager.savePlayer(player) // Save the updated player
+                }
 
                 // Refresh the scores on the main thread
                 withContext(Dispatchers.Main) {

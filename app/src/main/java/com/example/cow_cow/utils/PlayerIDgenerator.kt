@@ -1,5 +1,3 @@
-// PlayerIDGenerator.kt
-
 package com.example.cow_cow.utils
 
 import java.util.UUID

@@ -6,10 +6,13 @@ import android.os.Parcelable
 import android.util.Log
 import com.example.cow_cow.enums.GameMode
 import com.example.cow_cow.enums.GameStatus
+import com.example.cow_cow.managers.CustomRuleManager
 import com.example.cow_cow.managers.GameManager
 import com.example.cow_cow.managers.PlayerManager
 import com.example.cow_cow.managers.PowerUpManager
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.repositories.PlayerRepository
+import com.example.cow_cow.utils.GameUtils
 
 data class Game(
     var players: MutableList<Player> = mutableListOf(),  // List of players participating in the game
@@ -102,13 +105,14 @@ data class Game(
     }
 
     // Function to assign custom rules to players
-    fun assignCustomRulesToPlayers(context: Context) {
+    fun assignCustomRulesToPlayers(context: Context, customRuleManager: CustomRuleManager) {
         Log.d("Game", "Assigning custom rules to players for game mode: $gameMode")
 
-        // Create or obtain instances of required managers
         val playerRepository = PlayerRepository(context)
         val playerManager = PlayerManager(playerRepository)
-        val gameManager = GameManager(playerManager)
+        val scoreManager = ScoreManager(playerManager)
+        val gameUtils = GameUtils(scoreManager)
+        val gameManager = GameManager(playerManager, customRuleManager, gameUtils)
 
         // Call the method on the instance
         gameManager.applyCustomRulesForGame(context, gameMode)

@@ -141,6 +141,7 @@ object PowerUpController {
     /**
      * Grants a specific power-up to all players.
      *
+     * @param playerManager An instance of PlayerManager to retrieve all players.
      * @param powerUpType The type of power-up to grant.
      * @param effectValue Optional: The value associated with the power-up effect.
      * @param duration Optional: The duration of the power-up (in milliseconds).
@@ -148,6 +149,7 @@ object PowerUpController {
      * @param rarity Optional: The rarity of the power-up.
      */
     fun grantPowerUpToAllPlayers(
+        playerManager: PlayerManager,
         powerUpType: PowerUpType,
         effectValue: Int = 0,
         duration: Long = 0L,
@@ -155,11 +157,12 @@ object PowerUpController {
         rarity: PowerUpRarity = PowerUpRarity.COMMON
     ) {
         Log.d(TAG, "Granting power-up $powerUpType to all players")
-        val allPlayers = PlayerManager.getAllPlayers()
+        val allPlayers = playerManager.getAllPlayers()
         allPlayers.forEach { player ->
             grantPowerUpToPlayer(player, powerUpType, effectValue, duration, level, rarity)
         }
     }
+
 
     /**
      * Clears all active power-ups for a specific player.

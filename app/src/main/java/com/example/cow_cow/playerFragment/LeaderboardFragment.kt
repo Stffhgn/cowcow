@@ -11,7 +11,7 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cow_cow.R
-import com.example.cow_cow.controllers.PlayerController
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.viewModels.LeaderboardViewModel
 
@@ -20,7 +20,7 @@ class LeaderboardFragment : Fragment() {
     private val leaderboardViewModel: LeaderboardViewModel by viewModels()
     private lateinit var leaderboardRecyclerView: RecyclerView
     private lateinit var leaderboardAdapter: LeaderboardAdapter
-    private lateinit var playerController: PlayerController
+    private lateinit var scoreManager: ScoreManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,15 +32,11 @@ class LeaderboardFragment : Fragment() {
         leaderboardRecyclerView = view.findViewById(R.id.leaderboardRecyclerView)
         leaderboardRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // Initialize PlayerController with the list of players from the ViewModel
-        val players = leaderboardViewModel.leaderboard.value ?: emptyList()
-        playerController = PlayerController(players.toMutableList())
-
-        // Initialize RecyclerView adapter
-        leaderboardAdapter = LeaderboardAdapter(players)
+        // Initialize RecyclerView adapter with an empty list initially
+        leaderboardAdapter = LeaderboardAdapter(emptyList())
         leaderboardRecyclerView.adapter = leaderboardAdapter
 
-        // Observe leaderboard data from ViewModel
+        // Observe leaderboard data from ViewModel and update the adapter
         leaderboardViewModel.leaderboard.observe(viewLifecycleOwner, Observer { leaderboard ->
             leaderboardAdapter.updateLeaderboard(leaderboard)
         })
@@ -70,7 +66,7 @@ class LeaderboardFragment : Fragment() {
 
         override fun onBindViewHolder(holder: LeaderboardViewHolder, position: Int) {
             val player = players[position]
-            val totalPoints = playerController.calculateTotalPoints(player)
+            val totalPoints = scoreManager.calculatePlayerScore(player)  // Using ScoreManager for score calculation
             holder.playerNameTextView.text = player.name
             holder.playerScoreTextView.text = totalPoints.toString()
         }
@@ -82,7 +78,6 @@ class LeaderboardFragment : Fragment() {
          */
         fun updateLeaderboard(newPlayers: List<Player>) {
             players = newPlayers
-            playerController = PlayerController(players.toMutableList()) // Update the controller with the new player list
             notifyDataSetChanged()
         }
     }

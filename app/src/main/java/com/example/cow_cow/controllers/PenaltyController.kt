@@ -7,7 +7,7 @@ import com.example.cow_cow.models.Penalty
 import com.example.cow_cow.enums.PenaltyType
 import java.util.*
 
-class PenaltyController {
+class PenaltyController(private val penaltyManager: PenaltyManager) { // Inject PenaltyManager instance
 
     private val TAG = "PenaltyController"
 
@@ -24,15 +24,14 @@ class PenaltyController {
             "missed_call" -> createPenalty("Missed Call", PenaltyType.POINT_DEDUCTION, 10)
             "overstepped_turn" -> createPenalty("Turn Violation", PenaltyType.SILENCED, 0, 5000L)
             "false_call" -> createPenalty("False Call", PenaltyType.POINT_DEDUCTION, 5)
-            // Add more event-specific penalties as needed.
             else -> {
                 Log.w(TAG, "No penalty defined for event: $event")
                 return
             }
         }
 
-        // Apply the penalty using the PenaltyManager.
-        PenaltyManager.applyPenalty(player, penalty)
+        // Apply the penalty using the PenaltyManager instance.
+        penaltyManager.applyPenalty(player, penalty)
     }
 
     /**
@@ -66,7 +65,7 @@ class PenaltyController {
      */
     fun checkAndDeactivateExpiredPenalties(player: Player) {
         val currentTime = System.currentTimeMillis()
-        PenaltyManager.checkAndDeactivateExpiredPenalties(player, currentTime)
+        penaltyManager.checkAndDeactivateExpiredPenalties(player, currentTime)
     }
 
     /**
@@ -76,7 +75,7 @@ class PenaltyController {
      * @param penalty The penalty to remove.
      */
     fun removePenalty(player: Player, penalty: Penalty) {
-        PenaltyManager.removePenalty(player, penalty)
+        penaltyManager.removePenalty(player, penalty)
     }
 
     /**
@@ -85,7 +84,7 @@ class PenaltyController {
      * @param player The player whose penalties are cleared.
      */
     fun clearAllPenalties(player: Player) {
-        PenaltyManager.clearAllPenalties(player)
+        penaltyManager.clearAllPenalties(player)
     }
 
     /**
@@ -95,6 +94,6 @@ class PenaltyController {
      * @return Boolean indicating if the player has active penalties.
      */
     fun isPlayerPenalized(player: Player): Boolean {
-        return PenaltyManager.isPlayerPenalized(player)
+        return penaltyManager.isPlayerPenalized(player)
     }
 }

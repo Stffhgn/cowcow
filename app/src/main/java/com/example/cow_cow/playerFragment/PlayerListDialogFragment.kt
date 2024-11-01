@@ -17,6 +17,7 @@ import com.example.cow_cow.viewModels.PlayerListViewModel
 import com.example.cow_cow.viewModels.PlayerListViewModelFactory
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.interfaces.OnPlayerAndObjectSelectedListener
+import com.example.cow_cow.managers.PlayerManager
 import com.example.cow_cow.managers.ScoreManager
 
 class PlayerListDialogFragment : DialogFragment() {
@@ -74,6 +75,7 @@ class PlayerListDialogFragment : DialogFragment() {
 
         // Initialize ViewModel using PlayerListViewModelFactory
         val playerRepository = PlayerRepository(requireActivity().applicationContext)
+        val playerManager = PlayerManager(playerRepository)
         val factory = PlayerListViewModelFactory(requireActivity().application, playerRepository)
         playerListViewModel = ViewModelProvider(requireActivity(), factory).get(PlayerListViewModel::class.java)
 
@@ -81,7 +83,7 @@ class PlayerListDialogFragment : DialogFragment() {
         playerAdapter = PlayerAdapter(
             isWhoCalledItContext = true,
             onPlayerClick = { player -> onPlayerClick(player) },
-            scoreManager = ScoreManager
+            scoreManager = ScoreManager(playerManager)
         )
 
         // Set up RecyclerView

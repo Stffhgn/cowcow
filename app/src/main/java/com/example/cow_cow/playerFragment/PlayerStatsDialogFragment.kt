@@ -1,6 +1,5 @@
 package com.example.cow_cow.playerFragment
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,6 +11,8 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.cow_cow.R
 import com.example.cow_cow.databinding.DialogPlayerStatsBinding
+import com.example.cow_cow.managers.PenaltyManager
+import com.example.cow_cow.managers.PlayerManager
 import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
@@ -28,6 +29,8 @@ class PlayerStatsDialogFragment : DialogFragment() {
     private lateinit var playerStatsViewModel: PlayerStatsViewModel
     private lateinit var playerViewModel: PlayerViewModel
     private lateinit var playerId: String
+    private lateinit var scoreManager: ScoreManager
+    private lateinit var penaltyManager: PenaltyManager
 
     companion object {
         const val TAG = "PlayerStatsDialogFragment"
@@ -52,26 +55,24 @@ class PlayerStatsDialogFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Retrieve the playerId from the arguments
         playerId = arguments?.getString("playerID") ?: throw IllegalArgumentException("Player ID required")
         Log.d(TAG, "Received playerId: $playerId")
 
-        // Initialize the PlayerRepository
         val application = requireActivity().application
-        val repository = PlayerRepository(application)
+        val playerRepository = PlayerRepository(application)
+        val playerManager = PlayerManager(playerRepository)
+        scoreManager = ScoreManager(playerManager)
 
-        // Set up ViewModel with PlayerStatsViewModelFactory
-        val statsFactory = PlayerStatsViewModelFactory(application, repository, playerId)
+        // Initialize ViewModel with PlayerStatsViewModelFactory
+        val statsFactory = PlayerStatsViewModelFactory(application, playerRepository, playerId)
         playerStatsViewModel = ViewModelProvider(this, statsFactory).get(PlayerStatsViewModel::class.java)
 
-        // Create the PlayerViewModelFactory
-        val playerFactory = PlayerViewModelFactory(application, repository)
-        // Obtain the PlayerViewModel using the factory
+        // Create PlayerViewModel with the factory
+        val playerFactory = PlayerViewModelFactory(application, playerRepository, playerManager, penaltyManager)
         playerViewModel = ViewModelProvider(this, playerFactory).get(PlayerViewModel::class.java)
 
-        // Observe the players LiveData
+        // Observe player data updates
         playerViewModel.players.observe(viewLifecycleOwner) { players ->
-            Log.d(TAG, "players LiveData updated. Number of players: ${players.size}")
             val player = players.find { it.id == playerId }
             if (player != null) {
                 bindPlayerData(player)
@@ -80,35 +81,27 @@ class PlayerStatsDialogFragment : DialogFragment() {
             }
         }
 
-        // Observe player data
         playerStatsViewModel.player.observe(viewLifecycleOwner) { player ->
             bindPlayerData(player)
         }
 
-        // Set up Delete button
+        // Set up button actions
         binding.deletePlayerButton.setOnClickListener {
             val playerName = binding.playerNameTextView.text.toString()
-            Log.d(TAG, "Deleting player with name: $playerName")
-
             if (playerName.isNotBlank()) {
                 playerViewModel.removePlayerByName(playerName)
                 Toast.makeText(requireContext(), "Player $playerName deleted", Toast.LENGTH_SHORT).show()
-                dismiss() // Close the dialog after deleting the player
+                dismiss()
             } else {
                 Toast.makeText(requireContext(), "Player name cannot be empty", Toast.LENGTH_SHORT).show()
             }
         }
 
-
-        // Set up Okay button
-        binding.okayButton.setOnClickListener {
-            dismiss() // Simply close the dialog
-        }
+        binding.okayButton.setOnClickListener { dismiss() }
     }
 
     override fun onStart() {
         super.onStart()
-        // Set the dialog to take up the majority of the screen space
         dialog?.window?.setLayout(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.WRAP_CONTENT
@@ -116,14 +109,12 @@ class PlayerStatsDialogFragment : DialogFragment() {
         dialog?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
     }
 
-
     private fun bindPlayerData(player: Player) {
-        // Update the UI elements with player data using the binding
         binding.apply {
-            playerNameTextView.text = player.name // Display the player's name
+            playerNameTextView.text = player.name
             totalScoreTextView.text = getString(
                 R.string.total_score,
-                ScoreManager.calculatePlayerScore(player) // Pass the player object to calculate the score
+                scoreManager.calculatePlayerScore(player)
             )
             cowStatTextView.text = getString(R.string.cows_spotted, player.cowCount)
             churchStatTextView.text = getString(R.string.churches_spotted, player.churchCount)
@@ -133,18 +124,13 @@ class PlayerStatsDialogFragment : DialogFragment() {
         }
     }
 
-
     private fun displayError(message: String) {
-        Log.d(TAG, "Displaying error message: $message")
-        // Hide progress bar and show error text
-        /*binding.progressBar.visibility = View.GONE
-        binding.errorTextView.visibility = View.VISIBLE
-        binding.errorTextView.text = message*/
+        Log.e(TAG, "Error: $message")
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        Log.d(TAG, "PlayerStatsDialogFragment view destroyed")
     }
 }

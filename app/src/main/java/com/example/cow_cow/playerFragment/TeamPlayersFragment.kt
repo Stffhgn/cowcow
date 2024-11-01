@@ -9,9 +9,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.adapters.TeamAdapter
 import com.example.cow_cow.databinding.FragmentTeamPlayersBinding
+import com.example.cow_cow.managers.PlayerManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.viewModels.TeamViewModel
 import com.example.cow_cow.managers.ScoreManager
+import com.example.cow_cow.repositories.PlayerRepository
 
 class TeamPlayersFragment : Fragment() {
 
@@ -51,7 +53,9 @@ class TeamPlayersFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        val scoreManager = ScoreManager // Replace with actual instance if needed
+        val playerRepository = PlayerRepository(requireContext())
+        val playerManager = PlayerManager(playerRepository)
+        val scoreManager = ScoreManager(playerManager) // Replace with actual instance if needed
         teamAdapter = TeamAdapter(
             mutableListOf(),
             onPlayerClick = { player -> showPlayerOptionsDialog(player) },

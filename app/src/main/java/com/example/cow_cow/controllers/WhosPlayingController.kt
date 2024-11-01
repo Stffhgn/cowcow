@@ -1,7 +1,6 @@
 package com.example.cow_cow.controllers
 
 import android.content.Context
-import android.os.Bundle
 import android.util.Log
 import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
@@ -11,9 +10,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.DialogWhosPlayingBinding
+import com.example.cow_cow.managers.ScoreManager // Import ScoreManager here
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.playerFragment.PlayerStatsDialogFragment
-import com.example.cow_cow.playerFragment.PlayerStatsFragment
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.utils.PlayerIDGenerator
 import com.example.cow_cow.viewModels.PlayerListViewModel
@@ -23,8 +22,8 @@ class WhosPlayingController(
     private val context: Context,
     private val binding: DialogWhosPlayingBinding,
     private val lifecycleOwner: LifecycleOwner,
-    private val playerController: PlayerController // Inject PlayerController to handle player actions
-
+    private val playerController: PlayerController, // Inject PlayerController to handle player actions
+    private val scoreManager: ScoreManager // Inject ScoreManager instance
 ) {
 
     private lateinit var viewModel: PlayerListViewModel
@@ -36,7 +35,7 @@ class WhosPlayingController(
         val repository = PlayerRepository(context)
 
         // Initialize ViewModel with PlayerListViewModelFactory
-        val factory = PlayerListViewModelFactory((context as androidx.fragment.app.FragmentActivity).application, repository)
+        val factory = PlayerListViewModelFactory((context as FragmentActivity).application, repository)
         viewModel = ViewModelProvider(context, factory).get(PlayerListViewModel::class.java)
 
         // Log for ViewModel initialization
@@ -50,14 +49,11 @@ class WhosPlayingController(
     }
 
     private fun setupRecyclerView() {
-        // Create an instance of ScoreManager (adjust based on how it's implemented in your project)
-        val scoreManager = com.example.cow_cow.managers.ScoreManager // If ScoreManager is an object, no need to invoke it.
-
         // Initialize the PlayerAdapter with the required parameters
         adapter = PlayerAdapter(
             isWhoCalledItContext = true, // Set this based on your context (e.g., if this is being used in a WhoCalledItFragment)
             onPlayerClick = { player -> onPlayerClick(player) }, // Pass the click handling lambda
-            scoreManager = scoreManager // Inject the ScoreManager instance
+            scoreManager = scoreManager // Use the injected ScoreManager instance
         )
 
         binding.playerRecyclerView.adapter = adapter
@@ -66,7 +62,6 @@ class WhosPlayingController(
         // Log RecyclerView setup
         Log.d(TAG, "RecyclerView set up with PlayerAdapter using ScoreManager.")
     }
-
 
     private fun onPlayerClick(player: Player) {
         // Log the player click action
@@ -78,8 +73,6 @@ class WhosPlayingController(
         // Show the PlayerStatsDialogFragment
         dialogFragment.show((context as FragmentActivity).supportFragmentManager, PlayerStatsDialogFragment.TAG)
     }
-
-
 
     private fun observePlayers() {
         viewModel.players.observe(lifecycleOwner, Observer { players ->
@@ -130,7 +123,6 @@ class WhosPlayingController(
             Log.d(TAG, "Player name input is empty, not adding player.")
         }
     }
-
 
     fun refreshPlayers() {
         viewModel.loadPlayers()

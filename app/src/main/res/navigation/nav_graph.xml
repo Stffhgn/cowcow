@@ -137,7 +137,7 @@
     <!-- WhosPlayingDialogFragment -->
     <dialog
         android:id="@+id/whosPlayingDialogFragment"
-        android:name="com.example.cow_cow.gameFragments.WhosPlayingDialogFragment"
+        android:name="com.example.cow_cow.dialogs.WhosPlayingDialogFragment"
         android:label="Who's Playing"
         tools:layout="@layout/dialog_whos_playing">
 

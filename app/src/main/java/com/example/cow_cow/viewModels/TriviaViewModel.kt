@@ -1,4 +1,4 @@
-package com.example.cow_cow.viewmodel
+package com.example.cow_cow.viewModels
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -8,12 +8,15 @@ import com.example.cow_cow.managers.TriviaManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.TriviaQuestion
 
-class TriviaViewModel(private val triviaManager: TriviaManager, private val player: Player) : ViewModel() {
+class TriviaViewModel(
+    private val triviaManager: TriviaManager,
+    private val player: Player,
+    private val scoreManager: ScoreManager,
+
+) : ViewModel() {
 
     private val _currentQuestion = MutableLiveData<TriviaQuestion?>()
     val currentQuestion: LiveData<TriviaQuestion?> get() = _currentQuestion
-
-    private val scoreManager = ScoreManager
 
     private val _score = MutableLiveData<Int>()
     val score: LiveData<Int> get() = _score

@@ -1,19 +1,27 @@
 package com.example.cow_cow.viewModels
 
+import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import com.example.cow_cow.managers.PenaltyManager
 import com.example.cow_cow.models.Penalty
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.enums.PenaltyType
+import com.example.cow_cow.managers.PlayerManager
 import com.example.cow_cow.models.calculatePenaltyPoints
+import com.example.cow_cow.repositories.PlayerRepository
 
-class PenaltyViewModel : ViewModel() {
+class PenaltyViewModel(application: Application) : AndroidViewModel(application) {
+
 
     // Instance of PenaltyManager to handle penalty logic
-    private val penaltyManager = PenaltyManager
+    private val context = getApplication<Application>().applicationContext
+    private val playerRepository = PlayerRepository(context)
+    private val playerManager = PlayerManager(playerRepository)
+    private val penaltyManager = PenaltyManager(playerManager)
 
     // LiveData for penalties (observed by the UI)
     private val _penalties = MutableLiveData<List<Penalty>>()

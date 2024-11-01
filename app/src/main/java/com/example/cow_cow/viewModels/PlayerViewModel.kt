@@ -13,7 +13,10 @@ import kotlinx.coroutines.withContext
 
 class PlayerViewModel(
     application: Application,
-    private val repository: PlayerRepository
+    private val repository: PlayerRepository,
+    private val playerManager: PlayerManager,
+    private val penaltyManager: PenaltyManager
+
 ) : AndroidViewModel(application) {
 
     // Tag for logging
@@ -26,8 +29,7 @@ class PlayerViewModel(
     // LiveData for Players from Repository
     val players: LiveData<List<Player>> = repository.playersLiveData
 
-    // Initialize playerManager using the repository
-    private val playerManager = PlayerManager(repository)
+    // Remove duplicate initialization here (as it’s already being injected via constructor)
 
     // LiveData for Team Players
     private val _teamPlayers = MutableLiveData<List<Player>>()
@@ -191,7 +193,7 @@ class PlayerViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // Use PlayerController or PenaltyManager to apply the penalty
-                PenaltyManager.applyPenalty(player, penalty)
+                penaltyManager.applyPenalty(player,penalty)
                 repository.updatePlayer(player) // Update the player's state in the repository
                 _statusMessage.postValue("Penalty '${penalty.name}' applied to ${player.name}.")
                 Log.d(TAG, "Penalty '${penalty.name}' applied successfully to ${player.name}.")

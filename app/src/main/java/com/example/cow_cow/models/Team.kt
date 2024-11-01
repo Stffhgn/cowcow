@@ -7,15 +7,15 @@ import com.example.cow_cow.utils.TeamUtils
 
 data class Team(
     var id: String,                                 // Unique identifier for the team
-    var name: String = TeamUtils.generateRandomTeamName(),                            // Name of the team
+    var name: String,                               // Name of the team
     var members: MutableList<Player> = mutableListOf(),  // List of team members (players)
-    var teamScore: Int = 0,                      // Total team score
+    var teamScore: Int = 0,                         // Total team score
     var teamBonuses: MutableList<TeamBonus> = mutableListOf(),  // List of active team bonuses
     var achievements: MutableList<Achievement> = mutableListOf(), // List of team achievements
-    var teamWins: Int = 0,                       // Count of team victories
-    var teamLosses: Int = 0,                     // Count of team losses
+    var teamWins: Int = 0,                          // Count of team victories
+    var teamLosses: Int = 0,                        // Count of team losses
     var teamPenalties: MutableList<Penalty> = mutableListOf(),   // List of penalties applied to the team
-    var teamRank: Int = 0                        // Current ranking of the team (if applicable)
+    var teamRank: Int = 0                           // Current ranking of the team (if applicable)
 ) : Parcelable {
 
     // Function to add a player to the team
@@ -104,5 +104,13 @@ data class Team(
     companion object CREATOR : Parcelable.Creator<Team> {
         override fun createFromParcel(parcel: Parcel): Team = Team(parcel)
         override fun newArray(size: Int): Array<Team?> = arrayOfNulls(size)
+
+        /**
+         * Factory method to create a Team instance with a generated name using TeamUtils.
+         */
+        fun createTeamWithGeneratedName(id: String, teamUtils: TeamUtils): Team {
+            val generatedName = teamUtils.generateRandomTeamName()
+            return Team(id, generatedName)
+        }
     }
 }

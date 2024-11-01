@@ -10,6 +10,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentTeamManagementBinding
+import com.example.cow_cow.managers.PenaltyManager
+import com.example.cow_cow.managers.PlayerManager
+import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
 import com.example.cow_cow.utils.DataUtils
@@ -24,6 +27,9 @@ class TeamManagementFragment : Fragment() {
     private lateinit var playerViewModel: PlayerViewModel
     private lateinit var availablePlayerAdapter: PlayerAdapter
     private lateinit var teamPlayerAdapter: PlayerAdapter
+    private lateinit var scoreManager: ScoreManager
+    private lateinit var playerManager: PlayerManager
+    private lateinit var penaltyManager: PenaltyManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,10 +42,16 @@ class TeamManagementFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize the ViewModel
+        // Initialize the ScoreManager instance
+        scoreManager = ScoreManager(playerManager)
+
+        // Initialize the PlayerRepository and PlayerManager
         val playerRepository = PlayerRepository(requireContext())
-        val factory = PlayerViewModelFactory(requireActivity().application, playerRepository)
+        playerManager = PlayerManager(playerRepository)
+
+        val factory = PlayerViewModelFactory(requireActivity().application, playerRepository, playerManager, penaltyManager)
         playerViewModel = ViewModelProvider(this, factory).get(PlayerViewModel::class.java)
+
 
         // Set up RecyclerViews
         setupRecyclerViews()
@@ -69,19 +81,16 @@ class TeamManagementFragment : Fragment() {
             }
         }
 
-// Save team button functionality
+        // Save team button functionality
         binding.saveTeamButton.setOnClickListener {
             // Call the saveTeam function from DataUtils
             DataUtils.saveTeam(requireContext())
             Toast.makeText(requireContext(), "Team saved successfully!", Toast.LENGTH_SHORT).show()
         }
-
     }
 
     // Function to initialize RecyclerViews
     private fun setupRecyclerViews() {
-        val scoreManager = com.example.cow_cow.managers.ScoreManager // Ensure this is correctly referenced
-
         availablePlayerAdapter = PlayerAdapter(
             isWhoCalledItContext = false,
             onPlayerClick = { player -> playerViewModel.addPlayerToTeam(player) },

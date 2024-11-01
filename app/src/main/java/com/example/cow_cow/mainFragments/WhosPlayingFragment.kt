@@ -15,6 +15,7 @@ import com.example.cow_cow.R
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentWhosPlayingBinding
 import com.example.cow_cow.interfaces.OnPlayerSelectedListener
+import com.example.cow_cow.managers.PlayerManager
 import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
@@ -31,6 +32,7 @@ class WhosPlayingFragment : Fragment() {
 
     private val TAG = "WhosPlayingFragment"
     private var listener: OnPlayerSelectedListener? = null
+    private lateinit var scoreManager: ScoreManager // Initialize ScoreManager
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -57,6 +59,9 @@ class WhosPlayingFragment : Fragment() {
         val factory = PlayerListViewModelFactory(requireActivity().application, repository)
         viewModel = ViewModelProvider(this, factory).get(PlayerListViewModel::class.java)
 
+        // Initialize ScoreManager
+        scoreManager = ScoreManager(playerManager = PlayerManager(repository))
+
         setupRecyclerView()
         setupViewModelObservers()
         setupButtonListeners()
@@ -68,7 +73,7 @@ class WhosPlayingFragment : Fragment() {
         adapter = PlayerAdapter(
             isWhoCalledItContext = true,
             onPlayerClick = { player -> onPlayerClick(player) },
-            scoreManager = ScoreManager
+            scoreManager = scoreManager // Pass the instance of ScoreManager
         )
         binding.playerRecyclerView.apply {
             adapter = this@WhosPlayingFragment.adapter

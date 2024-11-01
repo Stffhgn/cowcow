@@ -5,7 +5,10 @@ import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Team
 import com.example.cow_cow.repositories.PlayerRepository
 
-class TeamManager(private val playerRepository: PlayerRepository) {
+class TeamManager(
+    private val playerRepository: PlayerRepository,
+    private val scoreManager: ScoreManager
+) {
 
     private val TAG = "TeamManager"
     private var team: Team? = null  // Single instance of the team
@@ -63,7 +66,7 @@ class TeamManager(private val playerRepository: PlayerRepository) {
      */
     fun updateTeamScore() {
         team?.let {
-            it.teamScore = it.members.sumOf { player -> ScoreManager.calculatePlayerScore(player) }
+            it.teamScore = it.members.sumOf { player -> scoreManager.calculatePlayerScore(player) }
             Log.d(TAG, "Updated team score: ${it.teamScore}")
         }
     }
@@ -79,7 +82,7 @@ class TeamManager(private val playerRepository: PlayerRepository) {
             val pointsPerPlayer = points / currentTeam.members.size
             Log.d(TAG, "Distributing $points points among ${currentTeam.members.size} players ($pointsPerPlayer points each).")
             currentTeam.members.forEach { player ->
-                ScoreManager.addPointsToPlayer(player, pointsPerPlayer)
+                scoreManager.addPointsToPlayer(player, pointsPerPlayer)
             }
             updateTeamScore()
         } else {

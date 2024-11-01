@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cow_cow.R
 import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.databinding.FragmentPlayerListBinding
+import com.example.cow_cow.managers.PlayerManager
 import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
@@ -57,6 +58,7 @@ class PlayerListFragment : Fragment() {
 
         // Initialize ViewModel using PlayerListViewModelFactory
         val playerRepository = PlayerRepository(requireActivity().applicationContext)
+        val playerManager = PlayerManager(playerRepository)
         val factory = PlayerListViewModelFactory(requireActivity().application, playerRepository)
         playerListViewModel = ViewModelProvider(requireActivity(), factory).get(PlayerListViewModel::class.java)
 
@@ -79,7 +81,7 @@ class PlayerListFragment : Fragment() {
                     Log.e(TAG, "Navigation error: NavController not found. Error: ${e.message}")
                 }
             },
-            scoreManager = ScoreManager // Pass the ScoreManager instance
+            scoreManager = ScoreManager(playerManager) // Pass the ScoreManager instance
         )
 
 

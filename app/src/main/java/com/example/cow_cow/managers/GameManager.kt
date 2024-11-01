@@ -12,7 +12,11 @@ import com.example.cow_cow.models.Team
 import com.example.cow_cow.utils.GameUtils
 import com.example.cow_cow.models.CustomRule
 
-class GameManager(private val playerManager: PlayerManager) {
+class GameManager(
+    private val playerManager: PlayerManager,
+    private val customRuleManager: CustomRuleManager,
+    private val gameUtils: GameUtils
+) {
 
     var currentGameMode: GameMode? = null
     private var gameTimer: GameTimer? = null
@@ -136,21 +140,21 @@ class GameManager(private val playerManager: PlayerManager) {
      * Example method to get the current game's leading player.
      */
     fun getLeadingPlayer(players: List<Player>): Player? {
-        return GameUtils.getPlayerWithHighestScore(players)
+        return gameUtils.getPlayerWithHighestScore(players)
     }
 
     /**
      * Example method to reset all players at the end of the game.
      */
     fun resetPlayers(players: List<Player>) {
-        GameUtils.resetAllPlayersCounts(players)
+        gameUtils.resetAllPlayersCounts(players)
     }
 
     /**
      * Distribute points to the players in a team.
      */
     fun distributePointsToTeam(team: Team, points: Int) {
-        GameUtils.distributeTeamPoints(team, points)
+        gameUtils.distributeTeamPoints(team, points)
     }
 
     /**
@@ -163,7 +167,7 @@ class GameManager(private val playerManager: PlayerManager) {
             val rule = getCustomRuleForGameMode(gameMode)
             rule?.let {
                 player.customRule = it
-                CustomRuleManager.applyCustomRule(player, rule)
+                customRuleManager.applyCustomRule(player, rule) // Use customRuleManager instance
                 Log.d("GameManager", "Assigned custom rule '${rule.ruleName}' to player '${player.name}'")
             } ?: Log.w("GameManager", "No custom rule found for player '${player.name}' in mode $gameMode")
         }

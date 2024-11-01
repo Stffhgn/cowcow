@@ -112,6 +112,36 @@ class PlayerRepository(private val context: Context) {
     }
 
     /**
+     * Deletes a player from SharedPreferences and updates LiveData.
+     *
+     * @param player The player to delete.
+     */
+    fun deletePlayer(player: Player) {
+        Log.d("PlayerRepository", "Deleting player: ${player.name}")
+
+        CoroutineScope(Dispatchers.IO).launch {
+            // Fetch the current list of players
+            val players = getPlayers().toMutableList()
+
+            // Remove the player from the list
+            players.removeIf { it.id == player.id }
+
+            // Save the updated list back to SharedPreferences
+            val prefs = getSharedPreferences()
+            val editor = prefs.edit()
+            val json = gson.toJson(players)
+            editor.putString(PLAYERS_KEY, json)
+            editor.apply()
+
+            // Update LiveData on the main thread to notify observers
+            withContext(Dispatchers.Main) {
+                _playersLiveData.value = players
+                Log.d("PlayerRepository", "Player ${player.name} deleted successfully.")
+            }
+        }
+    }
+
+    /**
      * Updates a specific player and saves the changes.
      */
     fun updatePlayer(player: Player) {

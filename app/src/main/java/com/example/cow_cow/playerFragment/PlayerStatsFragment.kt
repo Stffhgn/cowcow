@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.navArgs
 import com.example.cow_cow.R
 import com.example.cow_cow.databinding.FragmentPlayerStatsBinding
+import com.example.cow_cow.managers.PenaltyManager
+import com.example.cow_cow.managers.PlayerManager
 import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.PlayerRepository
@@ -24,6 +26,8 @@ class PlayerStatsFragment : Fragment(R.layout.fragment_player_stats) {
     private lateinit var playerStatsViewModel: PlayerStatsViewModel
     private lateinit var playerViewModel: PlayerViewModel
     private lateinit var playerId: String
+    private lateinit var scoreManager: ScoreManager
+    private lateinit var penaltyManager: PenaltyManager
 
     private val args: PlayerStatsFragmentArgs by navArgs()
 
@@ -37,14 +41,15 @@ class PlayerStatsFragment : Fragment(R.layout.fragment_player_stats) {
 
         // Initialize the PlayerRepository
         val application = requireActivity().application
-        val repository = PlayerRepository(application)
+        val playerRepository = PlayerRepository(application)
+        val playerManager = PlayerManager(playerRepository)
 
         // Set up ViewModel with PlayerStatsViewModelFactory
-        val statsFactory = PlayerStatsViewModelFactory(application, repository, playerId)
+        val statsFactory = PlayerStatsViewModelFactory(application, playerRepository, playerId)
         playerStatsViewModel = ViewModelProvider(this, statsFactory).get(PlayerStatsViewModel::class.java)
 
         // Create the PlayerViewModelFactory
-        val playerFactory = PlayerViewModelFactory(application, repository)
+        val playerFactory = PlayerViewModelFactory(application, playerRepository, playerManager, penaltyManager)
         playerViewModel = ViewModelProvider(this, playerFactory).get(PlayerViewModel::class.java)
 
         // Observe the players LiveData
@@ -70,7 +75,7 @@ class PlayerStatsFragment : Fragment(R.layout.fragment_player_stats) {
             playerNameTextView.text = getString(R.string.player_name, player.name)
             totalScoreTextView.text = getString(
                 R.string.total_score,
-                ScoreManager.calculatePlayerScore(player)
+                scoreManager.calculatePlayerScore(player)
             )
             cowStatTextView.text = getString(R.string.cows_spotted, player.cowCount)
             churchStatTextView.text = getString(R.string.churches_spotted, player.churchCount)

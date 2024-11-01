@@ -12,6 +12,7 @@ import com.example.cow_cow.adapters.PlayerAdapter
 import com.example.cow_cow.controllers.PlayerController
 import com.example.cow_cow.databinding.DialogWhosPlayingBinding
 import com.example.cow_cow.interfaces.OnPlayerSelectedListener
+import com.example.cow_cow.managers.PenaltyManager
 import com.example.cow_cow.managers.PlayerManager
 import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
@@ -22,11 +23,14 @@ class WhosPlayingDialogFragment : DialogFragment() {
 
     private var _binding: DialogWhosPlayingBinding? = null
     private val binding get() = _binding!!
+
     private var onPlayerSelectedListener: OnPlayerSelectedListener? = null
     private lateinit var playerAdapter: PlayerAdapter
     private lateinit var playerManager: PlayerManager
     private lateinit var playerController: PlayerController
-    private lateinit var players: MutableList<Player>
+    private lateinit var scoreManager: ScoreManager
+    private lateinit var penaltyManager: PenaltyManager
+    private var players: MutableList<Player> = mutableListOf()
 
     companion object {
         const val TAG_DIALOG = "WhosPlayingDialogFragment"
@@ -53,12 +57,16 @@ class WhosPlayingDialogFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Initialize repositories, manager, and controller
         val playerRepository = PlayerRepository(requireContext())
         playerManager = PlayerManager(playerRepository)
-        players = playerManager.getAllPlayers().toMutableList()
+        playerController = PlayerController(players, penaltyManager) // Ensure playerController is initialized
+        scoreManager = ScoreManager(playerManager)
 
+        players = playerManager.getAllPlayers().toMutableList()
         setupRecyclerView()
 
+        // Set up add player button functionality
         binding.addPlayerButton.setOnClickListener {
             val playerName = binding.playerNameInput.text.toString().trim()
             if (playerName.isNotEmpty()) {
@@ -67,46 +75,54 @@ class WhosPlayingDialogFragment : DialogFragment() {
             }
         }
 
+        // Set up dialog close button functionality
         binding.okayButton.setOnClickListener {
             dismiss()
         }
     }
 
     private fun setupRecyclerView() {
-        val scoreManager = ScoreManager
         playerAdapter = PlayerAdapter(
             isWhoCalledItContext = false,
-            onPlayerClick = { player ->
-                onPlayerSelectedListener?.onPlayerSelected(player.id)
-            },
+            onPlayerClick = { player -> onPlayerSelectedListener?.onPlayerSelected(player.id) },
             scoreManager = scoreManager
         )
 
+        // Submit players list and configure the RecyclerView layout
         playerAdapter.submitList(players)
         binding.playerRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = playerAdapter
         }
+
+        // Show message if no players are available
+        if (players.isEmpty()) {
+            //binding.noPlayersMessage.visibility = View.VISIBLE
+        } else {
+            //binding.noPlayersMessage.visibility = View.GONE
+        }
     }
 
-    /**
-     * Adds a player to the list using PlayerController and updates the adapter.
-     * @param playerName The name of the player to add.
-     */
     private fun addPlayer(playerName: String) {
-        // Create a new Player instance
         val newPlayer = Player(id = UUID.randomUUID().toString(), name = playerName)
-
-        // Add player using PlayerController and check success
         val isAdded = playerController.addPlayer(newPlayer)
+
         if (isAdded) {
-            players.add(newPlayer) // Update local list for display
-            playerAdapter.submitList(players.toList()) // Refresh adapter with updated list
+            players.add(newPlayer)
+            playerAdapter.submitList(players.toList())
             playerAdapter.notifyDataSetChanged()
             Log.d(TAG_DIALOG, "Player added: $playerName")
         } else {
             Log.d(TAG_DIALOG, "Player with name $playerName already exists or duplicate ID.")
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        dialog?.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ) // Makes the dialog width match the parent width
     }
 
     override fun onDetach() {

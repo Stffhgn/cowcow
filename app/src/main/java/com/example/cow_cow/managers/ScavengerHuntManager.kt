@@ -1,132 +1,169 @@
 package com.example.cow_cow.managers
 
 import android.util.Log
-import com.example.cow_cow.enums.AchievementType
+import com.example.cow_cow.enums.DifficultyLevel
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.ScavengerHuntItem
 import com.example.cow_cow.repositories.ScavengerHuntRepository
 import com.example.cow_cow.utils.ScavengerHuntItemGenerator
 
-object ScavengerHuntManager {
+class ScavengerHuntManager(
+    private val scavengerHuntRepository: ScavengerHuntRepository,
+    private val scoreManager: ScoreManager // Injected ScoreManager instance
+) {
 
-    private val activeScavengerHuntItems = mutableListOf<ScavengerHuntItem>()
-    private val generatedItems = mutableSetOf<String>()  // Track names of generated items
-    private var huntCompleted: Boolean = false
-    private lateinit var scavengerHuntRepository: ScavengerHuntRepository
-    private const val TAG = "ScavengerHuntManager"
+    private val allScavengerHuntItems = mutableListOf<ScavengerHuntItem>()
+    private val TAG = "ScavengerHuntManager"
 
-    /**
-     * Initializes the ScavengerHuntManager with the repository, called once by the ViewModel.
-     */
-    fun initialize(repository: ScavengerHuntRepository) {
-        scavengerHuntRepository = repository
-        Log.d(TAG, "ScavengerHuntManager initialized with repository.")
+    init {
+        initialize()
     }
 
-    /**
-     * Starts a new scavenger hunt by generating items for players.
-     */
-    fun startScavengerHunt(players: List<Player>) {
-        Log.d(TAG, "Starting scavenger hunt for ${players.size} players.")
+    fun initialize() {
+        allScavengerHuntItems.clear()
+        Log.d(TAG, "Initializing ScavengerHuntManager with repository.")
 
-        // Clear previous items and states
-        activeScavengerHuntItems.clear()
-        generatedItems.clear()
-        huntCompleted = false
-
-        // Generate initial unique items for the scavenger hunt
-        repeat(5) {
-            val player = players.random()
-            addNewScavengerHuntItem(player)
+        val savedItems = scavengerHuntRepository.getSavedScavengerHuntItems()
+        if (savedItems.isEmpty()) {
+            Log.d(TAG, "No saved items found. Generating new items.")
+            allScavengerHuntItems.addAll(ScavengerHuntItemGenerator.generateAllItems())
+            saveAllItems()
+            Log.d(TAG, "Generated and saved ${allScavengerHuntItems.size} new scavenger hunt items.")
+        } else {
+            allScavengerHuntItems.addAll(savedItems)
+            Log.d(TAG, "Loaded ${allScavengerHuntItems.size} items from saved data.")
         }
-        Log.d(TAG, "Scavenger hunt started with ${activeScavengerHuntItems.size} initial items.")
     }
 
     /**
-     * Marks an item as found, awards points, and refreshes items.
+     * Starts the scavenger hunt by ensuring active items are available.
      */
-    fun markItemAsFound(item: ScavengerHuntItem, player: Player) {
-        Log.d(TAG, "Attempting to mark item '${item.name}' as found by player '${player.name}'.")
-
-        activeScavengerHuntItems.find { it.name == item.name }?.let { foundItem ->
-            foundItem.isFound = true
-            val pointsAwarded = foundItem.getPoints()
-            ScoreManager.addPointsToPlayer(player, pointsAwarded)
-            Log.d(TAG, "Player '${player.name}' awarded $pointsAwarded points for finding item '${foundItem.name}'.")
-
-            activeScavengerHuntItems.remove(foundItem)
-            addNewScavengerHuntItem(player)
-            saveActiveItemsToRepository(player)
-
-            // Check for hunt completion
-            if (isHuntCompleted()) onHuntCompleted(player)
-        } ?: Log.w(TAG, "Item '${item.name}' not found in active scavenger hunt items.")
+    fun startScavengerHunt(): List<ScavengerHuntItem> {
+        Log.d(TAG, "Starting scavenger hunt.")
+        if (allScavengerHuntItems.isEmpty()) {
+            loadOrGenerateItems()
+        }
+        return refreshItems()
     }
 
     /**
-     * Adds a new, unique scavenger hunt item for a player.
+     * Refreshes active items on the board by replacing found items, returning the updated list.
      */
-    private fun addNewScavengerHuntItem(player: Player) {
-        var newItem: ScavengerHuntItem
-        var attempts = 0
-        val maxAttempts = 10
-
-        do {
-            newItem = ScavengerHuntItemGenerator.generateScavengerHuntItem(player)
-            attempts++
-            if (attempts > maxAttempts) {
-                Log.e(TAG, "Exceeded maximum attempts to generate a unique scavenger hunt item for ${player.name}")
-                return
+    fun refreshItems(): List<ScavengerHuntItem> {
+        Log.d(TAG, "Refreshing scavenger hunt items on the board.")
+        if (isHuntCompleted()) {
+            // Reset all items
+            allScavengerHuntItems.forEach {
+                it.isFound = false
+                it.isActive = false
             }
-        } while (newItem.name in generatedItems)
-
-        activeScavengerHuntItems.add(newItem)
-        generatedItems.add(newItem.name)
-        Log.d(TAG, "Generated new item '${newItem.name}' for player '${player.name}'.")
-
-        // Limit active items to a maximum of 5 by removing the oldest if necessary
-        if (activeScavengerHuntItems.size > 5) {
-            val removedItem = activeScavengerHuntItems.removeAt(0)
-            generatedItems.remove(removedItem.name)
-            Log.d(TAG, "Removed oldest item '${removedItem.name}' to maintain item limit.")
+            Log.d(TAG, "All items found. Scavenger hunt reset.")
         }
-    }
 
-    /**
-     * Saves the current active items for a player to the repository.
-     */
-    private fun saveActiveItemsToRepository(player: Player) {
-        Log.d(TAG, "Saving active scavenger hunt items for player '${player.name}' to repository.")
-        scavengerHuntRepository.saveScavengerHuntItems(player, activeScavengerHuntItems)
-    }
-
-    /**
-     * Handles actions to perform upon scavenger hunt completion, such as awarding achievements.
-     */
-    private fun onHuntCompleted(player: Player) {
-        Log.d(TAG, "Scavenger hunt completed! Awarding rewards to all players.")
-
-        PlayerManager.getAllPlayers().forEach {
-            ScoreManager.addPointsToPlayer(it, 100)
-            AchievementManager.trackProgress(it, AchievementType.SCAVENGER_HUNT, 1)
-            Log.d(TAG, "Player '${it.name}' awarded completion bonus and achievement.")
-        }
-    }
-
-    /**
-     * Retrieves the current active scavenger hunt items.
-     */
-    fun getActiveScavengerHuntItems(): List<ScavengerHuntItem> {
-        Log.d(TAG, "Retrieving ${activeScavengerHuntItems.size} active scavenger hunt items.")
-        return activeScavengerHuntItems
+        val activeItems = getActiveItemsForBoard()
+        saveAllItems()
+        Log.d(TAG, "Board refreshed with active items: ${activeItems.map { it.name }}")
+        return activeItems
     }
 
     /**
      * Checks if the scavenger hunt is complete.
      */
-    fun isHuntCompleted(): Boolean {
-        huntCompleted = activeScavengerHuntItems.all { it.isFound }
-        Log.d(TAG, "Hunt completion status: $huntCompleted")
+    private fun isHuntCompleted(): Boolean {
+        val huntCompleted = allScavengerHuntItems.all { it.isFound }
+        Log.d(TAG, "Hunt completed status: $huntCompleted")
         return huntCompleted
+    }
+
+    /**
+     * Marks an item as found and refreshes the board.
+     */
+    fun markItemAsFound(item: ScavengerHuntItem, player: Player): List<ScavengerHuntItem> {
+        allScavengerHuntItems.find { it.name == item.name }?.apply {
+            isFound = true
+            isActive = false
+            scoreManager.addPointsToPlayer(player, points)
+            Log.d(TAG, "Item '${name}' marked as found and set to inactive for player '${player.name}'.")
+            saveAllItems()
+        } ?: Log.e(TAG, "Error: Item '${item.name}' not found in scavenger hunt items.")
+
+        return refreshItems()
+    }
+
+    /**
+     * Loads items from the repository or generates new ones.
+     */
+    private fun loadOrGenerateItems() {
+        val savedItems = scavengerHuntRepository.getSavedScavengerHuntItems()
+        if (savedItems.isNotEmpty()) {
+            allScavengerHuntItems.clear()
+            allScavengerHuntItems.addAll(savedItems)
+            Log.d(TAG, "Loaded ${allScavengerHuntItems.size} saved scavenger hunt items.")
+        } else {
+            allScavengerHuntItems.clear()
+            allScavengerHuntItems.addAll(ScavengerHuntItemGenerator.generateAllItems())
+            saveAllItems()
+            Log.d(TAG, "Generated and saved ${allScavengerHuntItems.size} new scavenger hunt items.")
+        }
+    }
+
+    /**
+     * Retrieves active items for the board, ensuring correct count per difficulty level.
+     */
+    fun getActiveItemsForBoard(): List<ScavengerHuntItem> {
+        val activeItems = mutableListOf<ScavengerHuntItem>()
+        activeItems.addAll(getActiveItemsForDifficulty(DifficultyLevel.EASY, 2))
+        activeItems.addAll(getActiveItemsForDifficulty(DifficultyLevel.MEDIUM, 2))
+        activeItems.addAll(getActiveItemsForDifficulty(DifficultyLevel.HARD, 1))
+
+        Log.d(TAG, "Active items for the board: ${activeItems.map { it.name }}")
+        return activeItems
+    }
+
+    private fun getActiveItemsForDifficulty(difficulty: DifficultyLevel, requiredCount: Int): List<ScavengerHuntItem> {
+        val activeItems = allScavengerHuntItems.filter {
+            it.difficultyLevel == difficulty && it.isActive && !it.isFound
+        }.toMutableList()
+
+        val itemsNeeded = requiredCount - activeItems.size
+
+        Log.d(TAG, "Required count for $difficulty: $requiredCount, currently active: ${activeItems.size}, items needed: $itemsNeeded")
+
+        if (itemsNeeded > 0) {
+            var availableItems = allScavengerHuntItems.filter {
+                it.difficultyLevel == difficulty && !it.isFound && !it.isActive
+            }
+
+            Log.d(TAG, "Available items for $difficulty after filtering: ${availableItems.size}")
+
+            if (availableItems.size < itemsNeeded) {
+                // Reset all items of this difficulty
+                allScavengerHuntItems.filter { it.difficultyLevel == difficulty }.forEach {
+                    it.isFound = false
+                    it.isActive = false
+                }
+                // Re-fetch available items after reset
+                availableItems = allScavengerHuntItems.filter {
+                    it.difficultyLevel == difficulty && !it.isFound && !it.isActive
+                }
+                Log.d(TAG, "Items after resetting found status for $difficulty: ${availableItems.size}")
+            }
+
+            val itemsToAdd = availableItems.take(itemsNeeded).onEach { it.isActive = true }
+            activeItems.addAll(itemsToAdd)
+            Log.d(TAG, "Added ${itemsToAdd.size} items of $difficulty difficulty to the active board.")
+        } else {
+            Log.d(TAG, "No additional items needed for $difficulty difficulty. Current count: ${activeItems.size}")
+        }
+
+        // Ensure we have exactly the required count
+        return activeItems.take(requiredCount)
+    }
+
+
+    private fun saveAllItems() {
+        Log.d(TAG, "Saving ${allScavengerHuntItems.size} scavenger hunt items to repository.")
+        scavengerHuntRepository.saveAllItems(allScavengerHuntItems)
+        Log.d(TAG, "Saved items to repository.")
     }
 }

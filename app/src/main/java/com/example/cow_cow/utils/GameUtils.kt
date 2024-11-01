@@ -5,7 +5,7 @@ import com.example.cow_cow.managers.ScoreManager
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Team
 
-object GameUtils {
+class GameUtils(private val scoreManager: ScoreManager) {
 
     /**
      * Adds the relevant object to the player's count.
@@ -53,10 +53,10 @@ object GameUtils {
      * Updates the total team score based on the scores of players who are on the team.
      */
     private fun updateTeamScore(team: Team) {
-        // Sum the points for all players who are marked as being on the team.
+        // Sum the points for all players who are marked as being on the team and return an integer
         team.teamScore = team.members
             .filter { it.isOnTeam }
-            .sumOf { ScoreManager.calculatePlayerScore(it) }
+            .sumOf { scoreManager.calculatePlayerScore(it).toInt() } // Ensure the return type is Int
 
         Log.d("GameUtils", "Updated team score for team '${team.name}': ${team.teamScore}")
     }
@@ -72,6 +72,6 @@ object GameUtils {
      * Returns the player with the highest total score.
      */
     fun getPlayerWithHighestScore(players: List<Player>): Player? {
-        return players.maxByOrNull { ScoreManager.calculatePlayerScore(it) }
+        return players.maxByOrNull { scoreManager.calculatePlayerScore(it) }
     }
 }

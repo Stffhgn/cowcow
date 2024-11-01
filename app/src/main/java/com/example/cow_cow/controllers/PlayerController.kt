@@ -9,7 +9,10 @@ import com.example.cow_cow.models.Player
 import com.example.cow_cow.models.Penalty
 import com.example.cow_cow.models.ScavengerHuntItem
 
-class PlayerController(private val players: MutableList<Player>) {
+class PlayerController(
+    private val players: MutableList<Player>,
+    private val penaltyManager: PenaltyManager,
+) {
 
     // Add a new player to the list of players
     fun addPlayer(player: Player): Boolean {
@@ -37,10 +40,12 @@ class PlayerController(private val players: MutableList<Player>) {
         Log.d(TAG, "New score for player ${player.name}: ${player.basePoints} base points.")
     }
 
-    // Apply a penalty to the player using the PenaltyManager
+    /**
+     * Apply a penalty to the player using the PenaltyManager instance
+     */
     fun applyPenalty(player: Player, penalty: Penalty) {
         Log.d(TAG, "Applying penalty ${penalty.name} to player ${player.name} using PenaltyManager.")
-        PenaltyManager.applyPenalty(player, penalty)
+        penaltyManager.applyPenalty(player, penalty) // Use instance of PenaltyManager
     }
 
     // Assign a player to a team (and mark them as part of the team)
@@ -86,45 +91,6 @@ class PlayerController(private val players: MutableList<Player>) {
         player.gamesPlayed = 0
         player.activePowerUps.clear()
         Log.d(TAG, "Player ${player.name} stats reset.")
-    }
-
-    // --- Scavenger Hunt Related Logic ---
-
-    // Check if the player can access a given scavenger hunt item.
-    fun canPlayerAccessItem(player: Player, item: ScavengerHuntItem): Boolean {
-        val canAccess = when {
-            item.isFree -> true
-            item.isPremium && player.premiumAccess -> true
-            item.isPurchased && player.purchasedItems.contains(item) -> true
-            else -> false
-        }
-        Log.d(TAG, "Player ${player.name} can ${if (canAccess) "" else "not "}access item: ${item.name}.")
-        return canAccess
-    }
-
-    // Add a purchased scavenger hunt item to the player's inventory.
-    fun purchaseScavengerHuntItem(player: Player, item: ScavengerHuntItem): Boolean {
-        return if (item.isPurchased && !player.purchasedItems.contains(item)) {
-            player.purchasedItems.add(item)
-            Log.d(TAG, "Player ${player.name} purchased item: ${item.name}.")
-            true
-        } else {
-            Log.d(TAG, "Player ${player.name} already owns or cannot purchase item: ${item.name}.")
-            false
-        }
-    }
-
-    // Add an object (e.g., Cow, Church, Water Tower) to the player's list of called objects.
-    fun addObjectCalled(player: Player, objectType: String) {
-        player.objectsCalled.add(objectType)
-        val pointsAwarded = when (objectType) {
-            "Cow" -> 1
-            "Church" -> 2
-            "Water Tower" -> 3
-            else -> 0
-        }
-        player.basePoints += pointsAwarded
-        Log.d(TAG, "Player ${player.name} called $objectType and was awarded $pointsAwarded points.")
     }
 
     // Calculate the total points for the player, including base points, bonuses, and penalties.
