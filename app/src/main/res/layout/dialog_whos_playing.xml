@@ -3,8 +3,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/whosPlayingDialogLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/ad_background_color"
     tools:context=".dialogs.WhosPlayingDialogFragment">
 
     <!-- Title displaying current players or the header -->
@@ -13,8 +15,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Who's Playing"
-        android:textSize="20sp"
+        android:textSize="24sp"
         android:textStyle="bold"
+        android:textColor="@color/colorPrimary"
         android:gravity="center"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -25,7 +28,8 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/playerRecyclerView"
         android:layout_width="0dp"
-        android:layout_height="300dp"
+        android:layout_height="0dp"
+        android:background="@color/white"
         app:layout_constraintTop_toBottomOf="@id/playerListTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -33,17 +37,36 @@
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp" />
 
+    <!-- TextView to display when there are no players -->
+    <TextView
+        android:id="@+id/noPlayersMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No players are currently playing."
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="@id/playerRecyclerView"
+        app:layout_constraintBottom_toBottomOf="@id/playerRecyclerView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone" />
+
     <!-- Text input for player name -->
     <EditText
         android:id="@+id/playerNameInput"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Enter Player Name"
-        android:inputType="text"
+        android:inputType="textPersonName"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
+        android:backgroundTint="@color/colorPrimary"
         app:layout_constraintTop_toBottomOf="@id/playerRecyclerView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="16dp" />
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp" />
 
     <!-- Container for Add Player and Okay Buttons -->
     <LinearLayout
@@ -51,6 +74,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/playerNameInput"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -64,6 +88,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Add Player"
+            android:textColor="@color/colorOnPrimary"
+            android:backgroundTint="@color/colorPrimary"
             android:layout_marginEnd="8dp" />
 
         <!-- Okay Button to Close Dialog -->
@@ -73,6 +99,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Okay"
+            android:textColor="@color/colorOnSecondary"
+            android:backgroundTint="@color/colorSecondary"
             android:layout_marginStart="8dp" />
     </LinearLayout>
 

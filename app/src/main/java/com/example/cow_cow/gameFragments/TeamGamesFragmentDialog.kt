@@ -63,8 +63,7 @@ class TeamGamesFragmentDialog : DialogFragment() {
 
         when (game) {
             "Trivia" -> {
-                replaceFragment(TriviaFragment())
-            }
+                            }
             "Scavenger Hunt" -> {
                 gameActivity.loadScavengerHuntButtons()
                     ?: Log.e(TAG_DIALOG, "Failed to load Scavenger Hunt UI.")

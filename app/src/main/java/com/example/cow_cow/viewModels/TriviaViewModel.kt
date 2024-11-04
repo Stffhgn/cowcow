@@ -1,5 +1,6 @@
 package com.example.cow_cow.viewModels
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,8 +12,7 @@ import com.example.cow_cow.models.TriviaQuestion
 class TriviaViewModel(
     private val triviaManager: TriviaManager,
     private val player: Player,
-    private val scoreManager: ScoreManager,
-
+    private val scoreManager: ScoreManager
 ) : ViewModel() {
 
     private val _currentQuestion = MutableLiveData<TriviaQuestion?>()
@@ -27,17 +27,16 @@ class TriviaViewModel(
     private val _triviaCompleted = MutableLiveData<Boolean>()
     val triviaCompleted: LiveData<Boolean> get() = _triviaCompleted
 
+    private val _travelingSalesmanLog = MutableLiveData<String>()
+    val travelingSalesmanLog: LiveData<String> get() = _travelingSalesmanLog
+
+    // New property to track the previously loaded question
+    private var _previousQuestion: TriviaQuestion? = null
+
     init {
         _score.value = scoreManager.calculatePlayerScore(player)
-        loadTriviaQuestions()
-    }
-
-    /**
-     * Load trivia questions from the manager.
-     */
-    private fun loadTriviaQuestions() {
-        triviaManager.loadQuestions(shuffle = true)  // Shuffle questions if needed
         loadNextQuestion()
+        _travelingSalesmanLog.value = triviaManager.getTravelingSalesmenLog()
     }
 
     /**
@@ -45,25 +44,22 @@ class TriviaViewModel(
      * If there are no more questions, mark the trivia game as completed.
      */
     fun loadNextQuestion() {
-        val nextQuestion = triviaManager.getNextQuestion()
-        if (nextQuestion == null) {
-            _triviaCompleted.value = true
+        triviaManager.loadNextQuestion() // Load the next question
+        val loadedQuestion = triviaManager.getCurrentQuestion()
+        _currentQuestion.value = loadedQuestion
+        _travelingSalesmanLog.value = triviaManager.getTravelingSalesmenLog() // Update log
+
+        if (loadedQuestion == null) {
+            _triviaCompleted.value = true // Mark the game as completed if no question is loaded
         } else {
-            _currentQuestion.value = nextQuestion
+            // Ensure that the loaded question is not the same as the previously completed question
+            if (_previousQuestion != null && loadedQuestion.questionText == _previousQuestion?.questionText) {
+                _currentQuestion.value = null
+                _triviaCompleted.value = true
+                Log.d("TriviaViewModel", "No new unique question available. Trivia game marked as completed.")
+            }
+            _previousQuestion = loadedQuestion // Update the previous question reference
         }
-    }
-
-    /**
-     * Submit the player's answer and validate it.
-     * Update score and whether the answer was correct.
-     */
-    fun submitAnswer(selectedAnswer: String) {
-        val isCorrect = triviaManager.validateAnswer(player, selectedAnswer)
-        _isAnswerCorrect.value = isCorrect
-        _score.value = scoreManager.calculatePlayerScore(player)
-
-        // Load next question after validation
-        loadNextQuestion()
     }
 
     /**
@@ -72,6 +68,10 @@ class TriviaViewModel(
     fun resetTriviaGame() {
         triviaManager.resetTriviaGame()
         _triviaCompleted.value = false
-        loadTriviaQuestions()
+        _currentQuestion.value = null
+        _score.value = scoreManager.calculatePlayerScore(player)
+        _travelingSalesmanLog.value = triviaManager.getTravelingSalesmenLog() // Reset log
+        _previousQuestion = null // Reset the previous question
+        loadNextQuestion()
     }
 }

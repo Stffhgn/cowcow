@@ -1,5 +1,6 @@
 package com.example.cow_cow.mainFragments
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -26,10 +27,9 @@ class StartFragment : Fragment() {
 
     private lateinit var playerViewModel: PlayerViewModel
 
-    // Initialize instances for managers that require a repository
+    // Managers initialization
     private lateinit var playerManager: PlayerManager
     private lateinit var teamManager: TeamManager
-    private lateinit var triviaManager: TriviaManager
     private lateinit var penaltyManager: PenaltyManager
     private lateinit var scoreManager: ScoreManager
 
@@ -44,19 +44,18 @@ class StartFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize the repositories and managers in the correct order
+        // Initialize the repositories and managers relevant to the fragment
         val playerRepository = PlayerRepository(requireContext())
         playerManager = PlayerManager(playerRepository)
         scoreManager = ScoreManager(playerManager)
         teamManager = TeamManager(playerRepository, scoreManager)
         penaltyManager = PenaltyManager(playerManager)
-        triviaManager = TriviaManager(TriviaRepository())
 
         // Create ViewModel using the custom factory
         val factory = PlayerViewModelFactory(requireActivity().application, playerRepository, playerManager, penaltyManager)
         playerViewModel = ViewModelProvider(this, factory).get(PlayerViewModel::class.java)
 
-        // Observe the list of players
+        // Observe the list of players and set up buttons
         playerViewModel.players.observe(viewLifecycleOwner) { players ->
             binding.playerButton.text = if (players.isNullOrEmpty()) {
                 "Add Player"
@@ -64,44 +63,32 @@ class StartFragment : Fragment() {
                 "Who is Playing"
             }
         }
-
-        // Set up button listeners
         setupButtons()
     }
+
 
     // Set up button click listeners
     private fun setupButtons() {
         binding.apply {
-            // Start Game Button
             startGameButton.setOnClickListener {
                 navigateToGameOrAddPlayer()
             }
-
-            // Add Player or Who is Playing Button
             playerButton.setOnClickListener {
                 Log.d("StartFragment", "Navigating to Who's Playing/Add Player fragment")
                 findNavController().navigate(R.id.action_startFragment_to_whosPlayingFragment)
             }
-
-            // How To Play Button
             howToPlayButton.setOnClickListener {
                 Log.d("StartFragment", "Navigating to How To Play fragment")
                 findNavController().navigate(R.id.action_startFragment_to_howToPlayFragment)
             }
-
-            // Settings Button
             settingsButton.setOnClickListener {
                 Log.d("StartFragment", "Navigating to Settings fragment")
                 findNavController().navigate(R.id.action_startFragment_to_appSettingsFragment)
             }
-
-            // Store Button
             storeButton.setOnClickListener {
                 Log.d("StartFragment", "Navigating to Store fragment")
                 findNavController().navigate(R.id.action_startFragment_to_storeFragment)
             }
-
-            // Reset Button
             resetButton.setOnClickListener {
                 resetAllData()
             }
@@ -123,18 +110,13 @@ class StartFragment : Fragment() {
 
     private fun resetAllData() {
         Log.d("StartFragment", "Resetting all game data")
-
-        // Clear penalties and power-ups for each player and save their updated state
         playerManager.getAllPlayers().forEach { player ->
-            penaltyManager.clearAllPenalties(player) // Clear penalties for each player
-            PowerUpController.clearAllActivePowerUpsForPlayer(player) // Clear power-ups
-            playerManager.savePlayer(player) // Save updated player state
+            penaltyManager.clearAllPenalties(player)
+            PowerUpController.clearAllActivePowerUpsForPlayer(player)
+            playerManager.savePlayer(player)
         }
-        playerManager.resetAllPlayerStats() // Reset all player stats
-
-        // Reset team data
+        playerManager.resetAllPlayerStats()
         teamManager.resetTeam()
-
         Log.d("StartFragment", "All game data reset completed.")
     }
 

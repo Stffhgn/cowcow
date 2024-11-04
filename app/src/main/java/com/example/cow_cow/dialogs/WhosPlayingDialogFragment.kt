@@ -1,4 +1,4 @@
-package com.example.cow_cow.gameFragments
+package com.example.cow_cow.dialogs
 
 import android.content.Context
 import android.os.Bundle
@@ -57,13 +57,10 @@ class WhosPlayingDialogFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize repositories, manager, and controller
-        val playerRepository = PlayerRepository(requireContext())
-        playerManager = PlayerManager(playerRepository)
-        playerController = PlayerController(players, penaltyManager) // Ensure playerController is initialized
-        scoreManager = ScoreManager(playerManager)
+        // Initialize repositories, managers, and controllers
+        initializeManagersAndControllers()
 
-        players = playerManager.getAllPlayers().toMutableList()
+        // Set up RecyclerView
         setupRecyclerView()
 
         // Set up add player button functionality
@@ -79,6 +76,24 @@ class WhosPlayingDialogFragment : DialogFragment() {
         binding.okayButton.setOnClickListener {
             dismiss()
         }
+    }
+
+    private fun initializeManagersAndControllers() {
+        // Initialize PlayerRepository and PlayerManager
+        val playerRepository = PlayerRepository(requireContext())
+        playerManager = PlayerManager(playerRepository)
+
+        // Initialize players list
+        players = playerManager.getAllPlayers().toMutableList()
+
+        // Initialize PenaltyManager
+        penaltyManager = PenaltyManager(playerManager)
+
+        // Initialize PlayerController
+        playerController = PlayerController(players, penaltyManager)
+
+        // Initialize ScoreManager
+        scoreManager = ScoreManager(playerManager)
     }
 
     private fun setupRecyclerView() {
@@ -97,9 +112,9 @@ class WhosPlayingDialogFragment : DialogFragment() {
 
         // Show message if no players are available
         if (players.isEmpty()) {
-            //binding.noPlayersMessage.visibility = View.VISIBLE
+            binding.noPlayersMessage.visibility = View.VISIBLE
         } else {
-            //binding.noPlayersMessage.visibility = View.GONE
+            binding.noPlayersMessage.visibility = View.GONE
         }
     }
 

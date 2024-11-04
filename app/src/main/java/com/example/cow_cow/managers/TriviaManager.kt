@@ -1,153 +1,196 @@
 package com.example.cow_cow.managers
 
 import android.util.Log
+import androidx.core.view.children
+import com.example.cow_cow.controllers.TriviaController
 import com.example.cow_cow.models.TriviaQuestion
 import com.example.cow_cow.models.Player
 import com.example.cow_cow.repositories.TriviaRepository
+import com.example.cow_cow.utils.TriviaQuestionGenerator
 
-class TriviaManager(private val repository: TriviaRepository) {
+class TriviaManager(
+    private val repository: TriviaRepository,
+    private val scoreManager: ScoreManager,
+    private val players: List<Player>,
+    private var triviaController: TriviaController? = null
+) {
 
-    private var currentQuestionIndex: Int = 0
-    private var triviaQuestions: List<TriviaQuestion> = listOf()
+    private var currentQuestion: TriviaQuestion? = null
     private var totalCorrectAnswers: Int = 0
     private var totalIncorrectAnswers: Int = 0
-    private var playerProgress: MutableMap<Player, Int> = mutableMapOf() // Track each player's progress
-    private var gameActive: Boolean = false
+    private var playerProgress: MutableMap<Player, Int> = mutableMapOf()
+    private var gameActive: Boolean = true // Set to true to indicate the game is active
+    private var travelingSalesman: String = "Starting journey"
     private val TAG = "TriviaManager"
 
     init {
-        // Load questions from the repository at initialization
-        triviaQuestions = repository.loadTriviaQuestions()
+        updateSalesmanRoute("Init called")
+        Log.d(TAG, "Initializing TriviaManager and loading the first question. Salesman route: $travelingSalesman")
+        loadNextQuestion() // Load the first question on initialization
+    }
+
+    // Method to set the triviaController after initialization
+    fun setTriviaController(controller: TriviaController) {
+        this.triviaController = controller
     }
 
     /**
-     * Load trivia questions from the repository and initialize the game.
+     * Load the next trivia question.
+     * If there are no more questions, end the game.
      */
-    fun loadQuestions(shuffle: Boolean = false) {
-        triviaQuestions = repository.loadTriviaQuestions()
-        initializeTriviaQuestions(triviaQuestions, shuffle)
-    }
-
-    /**
-     * Initialize the trivia questions for the game.
-     * Optionally, it can shuffle questions to randomize them.
-     */
-    fun initializeTriviaQuestions(questionList: List<TriviaQuestion>, shuffle: Boolean = false) {
-        triviaQuestions = if (shuffle) {
-            questionList.shuffled()
-        } else {
-            questionList
+    fun loadNextQuestion() {
+        updateSalesmanRoute("loadNextQuestion called")
+        if (!gameActive) {
+            Log.d(TAG, "Game is not active. Cannot load next question.")
+            return
         }
-        currentQuestionIndex = 0
-        totalCorrectAnswers = 0
-        totalIncorrectAnswers = 0
-        playerProgress.clear() // Reset progress for all players
-        gameActive = true
+
+        // Check if there are unused questions in the repository
+        if (!repository.hasUnusedQuestions()) {
+            Log.d(TAG, "No unused questions available. Reloading the question set.")
+            repository.reloadQuestions(TriviaQuestionGenerator.generateQuestionSet())
+        }
+
+        // Load the next unused question from the repository
+        val nextQuestion = repository.loadNextUnusedQuestion()
+        nextQuestion?.let {
+            currentQuestion = it
+            Log.d(TAG, "Loaded new trivia question: ${it.questionText}. Salesman route: $travelingSalesman")
+        } ?: run {
+            Log.d(TAG, "No new questions could be loaded. Ending game.")
+            endTriviaGame()
+        }
     }
 
     /**
-     * Get the current question based on the game progress.
+     * Get the current question.
      */
     fun getCurrentQuestion(): TriviaQuestion? {
-        return if (currentQuestionIndex < triviaQuestions.size) {
-            triviaQuestions[currentQuestionIndex]
-        } else {
-            null  // No more questions
+        updateSalesmanRoute("getCurrentQuestion called")
+        Log.d(
+            TAG,
+            "Fetching current question: ${currentQuestion?.questionText ?: "No question available"}. Salesman route: $travelingSalesman"
+        )
+        return currentQuestion
+    }
+
+    /**
+     * Validate the answer and update the players' scores based on the result.
+     */
+    fun validateAnswer(selectedAnswer: String): Boolean {
+        updateSalesmanRoute("validateAnswer called")
+        currentQuestion?.let { question ->
+            val isCorrect = question.correctAnswer.trim().equals(selectedAnswer.trim(), ignoreCase = true)
+
+            Log.d(
+                TAG,
+                "Validating answer. Selected: '$selectedAnswer', Correct: '${question.correctAnswer}', Is correct: $isCorrect. Salesman route: $travelingSalesman"
+            )
+
+            if (isCorrect) {
+                handleCorrectAnswer(question)
+            } else {
+                handleIncorrectAnswer(question)
+            }
+
+            return isCorrect
+        }
+        updateSalesmanRoute("No current question to validate")
+        Log.d(TAG, "No current question to validate against. Salesman route: $travelingSalesman")
+        return false
+    }
+
+    /**
+     * Handle logic for a correct answer.
+     */
+    private fun handleCorrectAnswer(question: TriviaQuestion) {
+        updateSalesmanRoute("Answer correct")
+        players.forEach { player ->
+            scoreManager.addPointsToPlayer(player, question.points)
+            Log.d(
+                TAG,
+                "Added ${question.points} points to player: ${player.name}. Salesman route: $travelingSalesman"
+            )
+        }
+        totalCorrectAnswers++
+        question.used = true // Mark the question as used
+
+        repository.removeQuestion(question) // Remove the question from the repository
+        currentQuestion = null // Clear currentQuestion to avoid reuse
+
+        // Update the UI
+        triviaController?.let {
+            it.clearTriviaButton()
+            loadNextQuestion() // Load the next question
+            val newQuestion = getCurrentQuestion()
+            if (newQuestion != null) {
+                it.loadTriviaButton()
+            } else {
+                Log.d(TAG, "No more questions available. Ending game.")
+                endTriviaGame()
+            }
         }
     }
 
     /**
-     * Get the next trivia question in the list.
+     * Handle logic for an incorrect answer.
      */
-    fun getNextQuestion(): TriviaQuestion? {
-        return if (currentQuestionIndex < triviaQuestions.size) {
-            val question = triviaQuestions[currentQuestionIndex]
-            currentQuestionIndex++
-            question
+    private fun handleIncorrectAnswer(question: TriviaQuestion) {
+        updateSalesmanRoute("Answer incorrect")
+        totalIncorrectAnswers++
+        Log.d(
+            TAG,
+            "Answer was incorrect. Showing explanation: ${question.explanation}. Salesman route: $travelingSalesman"
+        )
+
+        if (question.timesUsed == 0) {
+            question.timesUsed++
+            Log.d(
+                TAG,
+                "Incremented timesUsed for the question and saved to repository. Salesman route: $travelingSalesman"
+            )
         } else {
-            null  // No more questions available
+            question.hint?.let {
+                Log.d(TAG, "Hint for next attempt: $it. Salesman route: $travelingSalesman")
+            }
         }
     }
 
     /**
-     * Validate the answer and update player's score and progress.
-     * Tracks total correct and incorrect answers.
-     */
-    fun validateAnswer(player: Player, selectedAnswer: String): Boolean {
-        val currentQuestion = triviaQuestions.getOrNull(currentQuestionIndex - 1)
-        return if (currentQuestion?.correctAnswer == selectedAnswer) {
-            // Correct answer
-            player.basePoints += currentQuestion.points  // Update the player's score
-            totalCorrectAnswers++
-            incrementPlayerProgress(player)
-            Log.d(TAG, "Player ${player.name} answered correctly and earned ${currentQuestion.points} points. Total base points: ${player.basePoints}")
-            true
-        } else {
-            // Incorrect answer
-            totalIncorrectAnswers++
-            incrementPlayerProgress(player)
-            Log.d(TAG, "Player ${player.name} answered incorrectly. No points awarded.")
-            false
-        }
-    }
-
-    /**
-     * Increment the player's progress in the game.
-     */
-    private fun incrementPlayerProgress(player: Player) {
-        val progress = playerProgress.getOrDefault(player, 0) + 1
-        playerProgress[player] = progress
-    }
-
-    /**
-     * Get the player's progress (e.g., number of questions answered).
-     */
-    fun getPlayerProgress(player: Player): Int {
-        return playerProgress.getOrDefault(player, 0)
-    }
-
-    /**
-     * Shuffle trivia questions to randomize their order.
-     */
-    fun shuffleQuestions() {
-        triviaQuestions = triviaQuestions.shuffled()
-    }
-
-    /**
-     * End the current trivia game session and stop accepting answers.
+     * End the trivia game and reset game state.
      */
     fun endTriviaGame() {
         gameActive = false
+        currentQuestion = null
+        triviaController?.clearTriviaButton() // Clear the trivia button from UI
+        Log.d(TAG, "Trivia game ended.")
     }
 
     /**
-     * Returns whether the trivia game is still active.
+     * Check if the trivia game is active.
      */
-    fun isGameActive(): Boolean {
-        return gameActive
-    }
+    fun isGameActive(): Boolean = gameActive
 
     /**
-     * Get statistics about the trivia game.
-     */
-    fun getTriviaStatistics(): Map<String, Any> {
-        return mapOf(
-            "totalQuestions" to triviaQuestions.size,
-            "answeredCorrectly" to totalCorrectAnswers,
-            "answeredIncorrectly" to totalIncorrectAnswers,
-            "questionsLeft" to triviaQuestions.size - currentQuestionIndex
-        )
-    }
-
-    /**
-     * Reset the game progress, clearing all questions and scores.
+     * Reset the trivia game and load a new set of questions.
      */
     fun resetTriviaGame() {
-        currentQuestionIndex = 0
         totalCorrectAnswers = 0
         totalIncorrectAnswers = 0
-        gameActive = true
         playerProgress.clear()
-        Log.d(TAG, "Trivia game reset.")
+        gameActive = true
+        repository.clearAllQuestions() // Clear existing questions
+        repository.reloadQuestions(TriviaQuestionGenerator.generateQuestionSet()) // Load new questions
+        Log.d(TAG, "Trivia game reset. Loading new questions.")
+        loadNextQuestion()
+    }
+
+    private fun updateSalesmanRoute(step: String) {
+        travelingSalesman += " -> $step"
+    }
+
+    fun getTravelingSalesmenLog(): String {
+        Log.d(TAG, "Retrieving travelingSalesman log: $travelingSalesman")
+        return travelingSalesman
     }
 }

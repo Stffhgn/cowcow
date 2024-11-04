@@ -90,6 +90,7 @@ dependencies {
     implementation("androidx.compose.material:material:1.5.1")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.1")
     implementation("androidx.activity:activity-compose:1.7.2")
+    implementation(libs.filament.android)
 
     // Debugging tools for Jetpack Compose
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.1")
